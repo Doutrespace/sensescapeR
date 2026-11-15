@@ -163,16 +163,17 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.surfaceHighlight,
   },
+  // Narrow column: keep the date on one line and let badges wrap beneath it.
   header: {
-    flex: 1,
-    marginBottom: 8,
+    width: 104,
+    marginRight: 12,
   },
   dateContainer: {
     marginBottom: 8,
   },
   date: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 15,
+    fontWeight: '700',
     color: Colors.text,
   },
   time: {
@@ -198,7 +199,8 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   details: {
-    flex: 2,
+    flex: 1,
+    minWidth: 0,
   },
   detailRow: {
     flexDirection: 'row',

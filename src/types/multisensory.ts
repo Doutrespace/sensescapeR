@@ -58,6 +58,8 @@ export type MultisensoryModuleKey = keyof MultisensoryAssessment;
 export interface ScaleItem<K extends string = string> {
   key: K;
   label: string;
+  /** Small pictogram shown next to the label. */
+  emoji: string;
   /** Statement or question the participant rates. */
   prompt: string;
   min: number;
@@ -68,6 +70,8 @@ export interface ScaleItem<K extends string = string> {
   valueLabels?: Record<number, string>;
   /** Scale runs through a neutral zero; drawn from the centre outwards. */
   bipolar?: boolean;
+  /** One colour per scale point, for scales where colour carries meaning. */
+  stepColors?: string[];
 }
 
 const KAPLAN_SCALE = { min: 1, max: 5 } as const;
@@ -75,6 +79,7 @@ const KAPLAN_SCALE = { min: 1, max: 5 } as const;
 export const VISUAL_ITEMS: ScaleItem<VisualKey>[] = [
   {
     key: 'coherence',
+    emoji: '🧩',
     label: 'Coherence',
     prompt: 'The scene hangs together and is easy to take in at a glance.',
     minLabel: 'Disordered',
@@ -83,6 +88,7 @@ export const VISUAL_ITEMS: ScaleItem<VisualKey>[] = [
   },
   {
     key: 'complexity',
+    emoji: '🎨',
     label: 'Complexity',
     prompt: 'There is a lot to look at; the scene is varied and rich in detail.',
     minLabel: 'Plain',
@@ -91,6 +97,7 @@ export const VISUAL_ITEMS: ScaleItem<VisualKey>[] = [
   },
   {
     key: 'legibility',
+    emoji: '🧭',
     label: 'Legibility',
     prompt: 'I could easily find my way around here and back again.',
     minLabel: 'Confusing',
@@ -99,6 +106,7 @@ export const VISUAL_ITEMS: ScaleItem<VisualKey>[] = [
   },
   {
     key: 'mystery',
+    emoji: '🗝️',
     label: 'Mystery',
     prompt: 'The scene promises more to discover if I went further in.',
     minLabel: 'Nothing hidden',
@@ -107,9 +115,15 @@ export const VISUAL_ITEMS: ScaleItem<VisualKey>[] = [
   },
 ];
 
+/** Cold-to-hot ramp for the 7-point thermal scales (index 0 = -3). */
+export const THERMAL_RAMP = ['#3B6E8C', '#6C9AB5', '#A3C0D0', '#B8B2A4', '#E0AE86', '#D0834F', '#B5483A'];
+/** Comfortable-to-uncomfortable ramp for the 5-point comfort scale. */
+export const COMFORT_RAMP = ['#4B7A58', '#9AA85A', '#D3A64A', '#C97A45', '#B5483A'];
+
 export const THERMAL_ITEMS: ScaleItem<ThermalKey>[] = [
   {
     key: 'sensation',
+    emoji: '🌡️',
     label: 'Thermal sensation',
     prompt: 'How do you feel right now?',
     min: -3,
@@ -117,6 +131,7 @@ export const THERMAL_ITEMS: ScaleItem<ThermalKey>[] = [
     minLabel: 'Cold',
     maxLabel: 'Hot',
     bipolar: true,
+    stepColors: THERMAL_RAMP,
     valueLabels: {
       [-3]: 'Cold',
       [-2]: 'Cool',
@@ -129,12 +144,14 @@ export const THERMAL_ITEMS: ScaleItem<ThermalKey>[] = [
   },
   {
     key: 'comfort',
+    emoji: '😌',
     label: 'Thermal comfort',
     prompt: 'Do you find this…?',
     min: 0,
     max: 4,
     minLabel: 'Comfortable',
     maxLabel: 'Extremely uncomfortable',
+    stepColors: COMFORT_RAMP,
     valueLabels: {
       0: 'Comfortable',
       1: 'Slightly uncomfortable',
@@ -145,6 +162,7 @@ export const THERMAL_ITEMS: ScaleItem<ThermalKey>[] = [
   },
   {
     key: 'preference',
+    emoji: '🎚️',
     label: 'Thermal preference',
     prompt: 'How would you prefer to be right now?',
     min: -3,
@@ -152,6 +170,7 @@ export const THERMAL_ITEMS: ScaleItem<ThermalKey>[] = [
     minLabel: 'Much cooler',
     maxLabel: 'Much warmer',
     bipolar: true,
+    stepColors: THERMAL_RAMP,
     valueLabels: {
       [-3]: 'Much cooler',
       [-2]: 'Cooler',
@@ -169,24 +188,28 @@ const PRS_SCALE = { min: 0, max: 6, minLabel: 'Not at all', maxLabel: 'Completel
 export const RESTORATIVENESS_ITEMS: ScaleItem<RestorativenessKey>[] = [
   {
     key: 'beingAway',
+    emoji: '🏝️',
     label: 'Being away',
     prompt: 'Being here is an escape from my everyday demands.',
     ...PRS_SCALE,
   },
   {
     key: 'fascination',
+    emoji: '✨',
     label: 'Fascination',
     prompt: 'This place holds my attention without effort.',
     ...PRS_SCALE,
   },
   {
     key: 'extent',
+    emoji: '🌍',
     label: 'Extent',
     prompt: 'This place feels like a world of its own with plenty to explore.',
     ...PRS_SCALE,
   },
   {
     key: 'compatibility',
+    emoji: '🤝',
     label: 'Compatibility',
     prompt: 'I can do the things I like here; the place suits me.',
     ...PRS_SCALE,
@@ -196,28 +219,28 @@ export const RESTORATIVENESS_ITEMS: ScaleItem<RestorativenessKey>[] = [
 const PSD_SCALE = { min: 1, max: 5, minLabel: 'Not at all', maxLabel: 'Very much' } as const;
 
 export const ENVIRONMENT_ITEMS: ScaleItem<EnvironmentKey>[] = [
-  { key: 'serene', label: 'Serene', prompt: 'Quiet, calm and undisturbed.', ...PSD_SCALE },
-  { key: 'nature', label: 'Nature', prompt: 'Wild and untouched, shaped by nature itself.', ...PSD_SCALE },
-  { key: 'richInSpecies', label: 'Rich in species', prompt: 'Many different plants and animals.', ...PSD_SCALE },
-  { key: 'space', label: 'Space', prompt: 'Spacious and connected, like entering another world.', ...PSD_SCALE },
-  { key: 'prospect', label: 'Prospect', prompt: 'Open, with wide views over the surroundings.', ...PSD_SCALE },
-  { key: 'refuge', label: 'Refuge', prompt: 'Enclosed and safe; a sheltered place to retreat to.', ...PSD_SCALE },
-  { key: 'social', label: 'Social', prompt: 'A place for meeting people and activities.', ...PSD_SCALE },
-  { key: 'culture', label: 'Culture', prompt: 'Marked by history, art or human craft.', ...PSD_SCALE },
+  { key: 'serene', emoji: '🤫', label: 'Serene', prompt: 'Quiet, calm and undisturbed.', ...PSD_SCALE },
+  { key: 'nature', emoji: '🌿', label: 'Nature', prompt: 'Wild and untouched, shaped by nature itself.', ...PSD_SCALE },
+  { key: 'richInSpecies', emoji: '🦋', label: 'Rich in species', prompt: 'Many different plants and animals.', ...PSD_SCALE },
+  { key: 'space', emoji: '🌌', label: 'Space', prompt: 'Spacious and connected, like entering another world.', ...PSD_SCALE },
+  { key: 'prospect', emoji: '🔭', label: 'Prospect', prompt: 'Open, with wide views over the surroundings.', ...PSD_SCALE },
+  { key: 'refuge', emoji: '🛖', label: 'Refuge', prompt: 'Enclosed and safe; a sheltered place to retreat to.', ...PSD_SCALE },
+  { key: 'social', emoji: '👥', label: 'Social', prompt: 'A place for meeting people and activities.', ...PSD_SCALE },
+  { key: 'culture', emoji: '🏛️', label: 'Culture', prompt: 'Marked by history, art or human craft.', ...PSD_SCALE },
 ];
 
-export const SMELL_SOURCES: Array<{ key: string; label: string }> = [
-  { key: 'none', label: 'No noticeable smell' },
-  { key: 'vegetation', label: 'Plants / soil' },
-  { key: 'water', label: 'Water / damp' },
-  { key: 'food', label: 'Food / drink' },
-  { key: 'traffic', label: 'Traffic / exhaust' },
-  { key: 'smoke', label: 'Smoke / tobacco' },
-  { key: 'waste', label: 'Waste / sewage' },
-  { key: 'industry', label: 'Industry / chemicals' },
-  { key: 'cleaning', label: 'Cleaning / perfume' },
-  { key: 'animals', label: 'Animals' },
-  { key: 'other', label: 'Other' },
+export const SMELL_SOURCES: Array<{ key: string; label: string; emoji: string }> = [
+  { key: 'none', emoji: '🚫', label: 'No noticeable smell' },
+  { key: 'vegetation', emoji: '🌿', label: 'Plants / soil' },
+  { key: 'water', emoji: '💧', label: 'Water / damp' },
+  { key: 'food', emoji: '🍞', label: 'Food / drink' },
+  { key: 'traffic', emoji: '🚗', label: 'Traffic / exhaust' },
+  { key: 'smoke', emoji: '🚬', label: 'Smoke / tobacco' },
+  { key: 'waste', emoji: '🗑️', label: 'Waste / sewage' },
+  { key: 'industry', emoji: '🏭', label: 'Industry / chemicals' },
+  { key: 'cleaning', emoji: '🧴', label: 'Cleaning / perfume' },
+  { key: 'animals', emoji: '🐾', label: 'Animals' },
+  { key: 'other', emoji: '❔', label: 'Other' },
 ];
 
 export const SAM_SCALE = { min: 1, max: 9 } as const;
@@ -226,17 +249,21 @@ export interface MultisensoryModuleInfo {
   key: MultisensoryModuleKey;
   title: string;
   framework: string;
+  emoji: string;
+  /** Accent colour (dark enough for white text) and its soft background. */
+  color: string;
+  softColor: string;
   /** Number of items needed for the module to count as complete. */
   requiredItems: number;
 }
 
 export const MULTISENSORY_MODULES: MultisensoryModuleInfo[] = [
-  { key: 'visual', title: 'Visualscape', framework: 'Kaplan preference matrix', requiredItems: 4 },
-  { key: 'smell', title: 'Smellscape', framework: 'Smellscape assessment', requiredItems: 2 },
-  { key: 'thermal', title: 'Thermal perception', framework: 'ISO 10551', requiredItems: 3 },
-  { key: 'restorativeness', title: 'Restorativeness', framework: 'PRS / Attention Restoration Theory', requiredItems: 4 },
-  { key: 'emotion', title: 'Emotional response', framework: 'Self-Assessment Manikin (SAM)', requiredItems: 2 },
-  { key: 'environment', title: 'Environmental qualities', framework: 'Perceived Sensory Dimensions', requiredItems: 8 },
+  { key: 'visual', emoji: '👀', color: '#3B6E8C', softColor: '#D6E3EC', title: 'Visualscape', framework: 'Kaplan preference matrix', requiredItems: 4 },
+  { key: 'smell', emoji: '👃', color: '#7A5C9C', softColor: '#E4DBEE', title: 'Smellscape', framework: 'Smellscape assessment', requiredItems: 2 },
+  { key: 'thermal', emoji: '🌡️', color: '#B0602F', softColor: '#F3DFCF', title: 'Thermal perception', framework: 'ISO 10551', requiredItems: 3 },
+  { key: 'restorativeness', emoji: '🧘', color: '#4B7A58', softColor: '#D7E6DA', title: 'Restorativeness', framework: 'PRS / Attention Restoration Theory', requiredItems: 4 },
+  { key: 'emotion', emoji: '💭', color: '#B04A5C', softColor: '#F2D6DB', title: 'Emotional response', framework: 'Self-Assessment Manikin (SAM)', requiredItems: 2 },
+  { key: 'environment', emoji: '🌳', color: '#69782F', softColor: '#E4E8CD', title: 'Environmental qualities', framework: 'Perceived Sensory Dimensions', requiredItems: 8 },
 ];
 
 function isNumber(value: unknown): value is number {

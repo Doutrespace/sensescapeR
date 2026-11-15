@@ -25,7 +25,13 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
   const style = document.createElement('style');
   style.textContent = `
     html, body, #root { height: 100%; }
-    body { overscroll-behavior: none; -webkit-tap-highlight-color: transparent; background: #F3EFE6; }
+    body {
+      overscroll-behavior: none;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-text-size-adjust: 100%;
+      touch-action: manipulation;
+      background: #F3EFE6;
+    }
   `;
   document.head.appendChild(style);
 }

@@ -470,7 +470,8 @@ export default function EnhancedRecorder({
   const durationLabel = formatDuration(Math.max(0, duration));
   const remainingLabel = formatDuration(Math.max(0, remainingMs));
   const recordButtonSize = 84;
-  const floatingButtonBottom = tabBarHeight + insets.bottom + 12;
+  // The tab bar floats 16px above the bottom edge; clear it with a small gap.
+  const floatingButtonBottom = tabBarHeight + insets.bottom + 16 + 12;
   const resultsBottomInset = floatingButtonBottom + recordButtonSize + 20;
 
   // GPS coordinates for overlay

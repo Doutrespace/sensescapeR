@@ -3,13 +3,21 @@ import { PanResponder, Platform, StyleSheet, Text, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { Colors, Radius } from '../../theme/colors';
 
-const MARKER_SIZE = 34;
+const MARKER_SIZE = 44;
 
 export interface GridPoint {
   /** -1 (left) to 1 (right) */
   x: number;
   /** -1 (bottom) to 1 (top) */
   y: number;
+}
+
+/** Values for the four quadrants, in reading order. */
+export interface Quadrants<T> {
+  topLeft: T;
+  topRight: T;
+  bottomLeft: T;
+  bottomRight: T;
 }
 
 interface Props {
@@ -23,6 +31,13 @@ interface Props {
   rightLabel: string;
   topLabel: string;
   bottomLabel: string;
+  accentColor?: string;
+  /** Background tint per quadrant. */
+  quadrantColors?: Quadrants<string>;
+  /** Pictogram shown in each corner as an orientation aid. */
+  quadrantEmoji?: Quadrants<string>;
+  /** Shown on the marker itself, e.g. a face that follows the rating. */
+  markerEmoji?: string;
   accessibilityLabel: string;
 }
 
@@ -48,6 +63,10 @@ export function Grid2DInput({
   rightLabel,
   topLabel,
   bottomLabel,
+  accentColor = Colors.primary,
+  quadrantColors,
+  quadrantEmoji,
+  markerEmoji,
   accessibilityLabel,
 }: Props) {
   const latest = useRef({ size, steps, value, onChange });
@@ -118,6 +137,15 @@ export function Grid2DInput({
       accessibilityLabel={accessibilityLabel}
       accessibilityHint="Tap or drag inside the square to place the marker"
     >
+      {quadrantColors && (
+        <View pointerEvents="none" style={styles.quadrants}>
+          <View style={[styles.quadrant, { backgroundColor: quadrantColors.topLeft }]} />
+          <View style={[styles.quadrant, { backgroundColor: quadrantColors.topRight }]} />
+          <View style={[styles.quadrant, { backgroundColor: quadrantColors.bottomLeft }]} />
+          <View style={[styles.quadrant, { backgroundColor: quadrantColors.bottomRight }]} />
+        </View>
+      )}
+
       {gridLines.map((percent) => (
         <React.Fragment key={percent}>
           <View pointerEvents="none" style={[styles.gridLine, styles.gridHorizontal, { top: `${percent}%` }]} />
@@ -125,7 +153,16 @@ export function Grid2DInput({
         </React.Fragment>
       ))}
 
-      {/* Axis labels sit inside the pad so it can use the full card width. */}
+      {quadrantEmoji && (
+        <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+          <Text style={[styles.cornerEmoji, styles.cornerTopLeft]}>{quadrantEmoji.topLeft}</Text>
+          <Text style={[styles.cornerEmoji, styles.cornerTopRight]}>{quadrantEmoji.topRight}</Text>
+          <Text style={[styles.cornerEmoji, styles.cornerBottomLeft]}>{quadrantEmoji.bottomLeft}</Text>
+          <Text style={[styles.cornerEmoji, styles.cornerBottomRight]}>{quadrantEmoji.bottomRight}</Text>
+        </View>
+      )}
+
+      {/* Axis labels sit inside the pad so it can use the full screen width. */}
       <View pointerEvents="none" style={[styles.axisLabelRow, styles.axisTop]}>
         <Text style={styles.axisLabel}>{topLabel}</Text>
       </View>
@@ -147,14 +184,21 @@ export function Grid2DInput({
             {
               left: toPixels(value.x, false) - MARKER_SIZE / 2,
               top: toPixels(value.y, true) - MARKER_SIZE / 2,
+              borderColor: accentColor,
             },
           ]}
         >
-          <View style={styles.markerCore} />
+          {markerEmoji ? (
+            <Text style={styles.markerEmoji}>{markerEmoji}</Text>
+          ) : (
+            <View style={[styles.markerCore, { backgroundColor: accentColor }]} />
+          )}
         </View>
       ) : (
         <View style={styles.hint} pointerEvents="none">
-          <Text style={styles.hintText}>Tap or drag to place</Text>
+          <View style={styles.hintPill}>
+            <Text style={styles.hintText}>Tap or drag to place</Text>
+          </View>
         </View>
       )}
     </View>
@@ -166,52 +210,26 @@ const webTouchStyle = Platform.OS === 'web'
   : null;
 
 const styles = StyleSheet.create({
-  axisLabelRow: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    alignItems: 'center',
-  },
-  axisTop: {
-    top: 6,
-  },
-  axisBottom: {
-    bottom: 6,
-  },
-  axisLabelColumn: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    justifyContent: 'center',
-  },
-  axisLeft: {
-    left: 6,
-  },
-  axisRight: {
-    right: 6,
-  },
-  axisLabel: {
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 0.6,
-    textTransform: 'uppercase',
-    color: Colors.textMuted,
-    backgroundColor: 'rgba(248, 245, 238, 0.85)',
-    paddingHorizontal: 4,
-    borderRadius: 4,
-    overflow: 'hidden',
-  },
   plane: {
     alignSelf: 'center',
-    borderRadius: Radius.md,
+    borderRadius: Radius.lg,
     overflow: 'hidden',
     backgroundColor: '#F8F5EE',
     borderWidth: 1,
     borderColor: Colors.surfaceHighlight,
   },
+  quadrants: {
+    ...StyleSheet.absoluteFillObject,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  quadrant: {
+    width: '50%',
+    height: '50%',
+  },
   gridLine: {
     position: 'absolute',
-    backgroundColor: 'rgba(23, 23, 23, 0.08)',
+    backgroundColor: 'rgba(23, 23, 23, 0.07)',
   },
   gridHorizontal: {
     left: 0,
@@ -223,32 +241,103 @@ const styles = StyleSheet.create({
     bottom: 0,
     width: 1,
   },
+  cornerEmoji: {
+    position: 'absolute',
+    fontSize: 26,
+    opacity: 0.85,
+  },
+  cornerTopLeft: {
+    top: 28,
+    left: 14,
+  },
+  cornerTopRight: {
+    top: 28,
+    right: 14,
+  },
+  cornerBottomLeft: {
+    bottom: 28,
+    left: 14,
+  },
+  cornerBottomRight: {
+    bottom: 28,
+    right: 14,
+  },
+  axisLabelRow: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+  },
+  axisTop: {
+    top: 8,
+  },
+  axisBottom: {
+    bottom: 8,
+  },
+  axisLabelColumn: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    justifyContent: 'center',
+  },
+  axisLeft: {
+    left: 8,
+  },
+  axisRight: {
+    right: 8,
+  },
+  axisLabel: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+    color: Colors.text,
+    backgroundColor: 'rgba(255, 255, 255, 0.78)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    overflow: 'hidden',
+  },
   marker: {
     position: 'absolute',
     width: MARKER_SIZE,
     height: MARKER_SIZE,
     borderRadius: MARKER_SIZE / 2,
-    backgroundColor: Colors.surface,
-    borderWidth: 2,
-    borderColor: Colors.primary,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 4,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    elevation: 4,
   },
   markerCore: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: Colors.primary,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+  },
+  markerEmoji: {
+    fontSize: 22,
+    lineHeight: 28,
   },
   hint: {
     ...StyleSheet.absoluteFillObject,
     alignItems: 'center',
     justifyContent: 'center',
     // Sit below the centre line so it does not run into the side labels.
-    paddingTop: 48,
+    paddingTop: 64,
+  },
+  hintPill: {
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 100,
   },
   hintText: {
-    fontSize: 12,
-    color: Colors.textDisabled,
+    fontSize: 13,
+    fontWeight: '600',
+    color: Colors.textMuted,
   },
 });
