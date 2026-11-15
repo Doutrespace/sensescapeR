@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, PanResponder } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Colors, Spacing, Radius } from '../../theme/colors';
 import { SourceDominance } from '../../types/recording';
+import { t } from '../../i18n';
 
 interface Props {
   value: SourceDominance;
@@ -142,10 +143,9 @@ export default function SourceDominanceMixer({ value, onChange }: Props) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Sound Source Dominance</Text>
+      <Text style={styles.title}>{t('Sound Source Dominance')}</Text>
       <Text style={styles.subtitle}>
-        Adjust sliders to indicate the balance of sound sources.
-        Total must equal 100%.
+        {t('Adjust sliders to indicate the balance of sound sources. Total must equal 100%.')}
       </Text>
 
       <SourceSlider
@@ -177,7 +177,7 @@ export default function SourceDominanceMixer({ value, onChange }: Props) {
 
       {/* Total indicator */}
       <View style={[styles.totalContainer, total !== 100 && styles.totalError]}>
-        <Text style={styles.totalLabel}>Total:</Text>
+        <Text style={styles.totalLabel}>{t('Total:')}</Text>
         <Text style={[styles.totalValue, total !== 100 && styles.totalValueError]}>
           {total}%
         </Text>

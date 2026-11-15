@@ -8,6 +8,7 @@ import { HabitatType, SettingContext, PrivacyMode, CommunityVisibility } from '.
 import { usePreferencesStore } from '../../stores/usePreferencesStore';
 import HabitatSelector from './HabitatSelector';
 import SettingChips from './SettingChips';
+import { t } from '../../i18n';
 
 interface Props {
   habitatType: HabitatType | null;
@@ -63,16 +64,16 @@ export default function ContextScreen({
   return (
     <View style={styles.container}>
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
-        <Text style={styles.title}>Measurement Context</Text>
+        <Text style={styles.title}>{t('Measurement Context')}</Text>
         <Text style={styles.subtitle}>
-          Optional metadata about place and situation before you save the recording
+          {t('Optional metadata about place and situation before you save the recording')}
         </Text>
 
         {locationError && (
           <View style={styles.locationWarning}>
             <MaterialIcons name="location-off" size={20} color={Colors.warning} />
             <View style={styles.locationWarningContent}>
-              <Text style={styles.locationWarningTitle}>Location unavailable</Text>
+              <Text style={styles.locationWarningTitle}>{t('Location unavailable')}</Text>
               <Text style={styles.locationWarningText}>{locationError}</Text>
             </View>
           </View>
@@ -81,7 +82,7 @@ export default function ContextScreen({
         <View style={styles.profileDefaultsNote}>
           <MaterialIcons name="manage-accounts" size={18} color={Colors.textMuted} />
           <Text style={styles.profileDefaultsNoteText}>
-            License and location privacy use your current Profile defaults.
+            {t('License and location privacy use your current Profile defaults.')}
           </Text>
         </View>
 
@@ -98,11 +99,11 @@ export default function ContextScreen({
           style={styles.saveButton}
           onPress={handleSavePress}
           accessibilityRole="button"
-          accessibilityLabel="Save recording"
-          accessibilityHint="Choose whether to keep the recording private or share it with the community before saving"
+          accessibilityLabel={t('Save recording')}
+          accessibilityHint={t('Choose whether to keep the recording private or share it with the community before saving')}
         >
           <Text style={styles.saveButtonText}>
-            Save Recording
+            {t('Save Recording')}
           </Text>
         </TouchableOpacity>
       </View>
@@ -117,20 +118,20 @@ export default function ContextScreen({
           style={styles.sheetBackdrop}
           onPress={() => setShowVisibilitySheet(false)}
           accessibilityRole="button"
-          accessibilityLabel="Close sharing options"
+          accessibilityLabel={t('Close sharing options')}
         />
         <View style={[styles.sheetContainer, { paddingBottom: Math.max(insets.bottom, 16) + 8 }]}>
           <View style={styles.sheetHandle} />
-          <Text style={styles.sheetEyebrow}>Sharing</Text>
-          <Text style={styles.sheetTitle}>How should this recording be saved?</Text>
+          <Text style={styles.sheetEyebrow}>{t('Sharing')}</Text>
+          <Text style={styles.sheetTitle}>{t('How should this recording be saved?')}</Text>
           <Text style={styles.sheetText}>
-            Choose whether this recording stays in your private cloud archive or appears on the Explore map for the community.
+            {t('Choose whether this recording stays in your private cloud archive or appears on the Explore map for the community.')}
           </Text>
 
           <View style={styles.currentDefaultRow}>
             <MaterialIcons name="history-toggle-off" size={16} color={Colors.textMuted} />
             <Text style={styles.currentDefaultText}>
-              Current default: {defaultCommunityVisibility === 'community' ? 'Community' : 'Private'}
+              {t('Current default: {value}', { value: defaultCommunityVisibility === 'community' ? t('Community') : t('Private') })}
             </Text>
           </View>
 
@@ -143,7 +144,7 @@ export default function ContextScreen({
               onPress={() => setPendingVisibility('private')}
               accessibilityRole="button"
               accessibilityState={{ selected: pendingVisibility === 'private' }}
-              accessibilityLabel="Save as private recording"
+              accessibilityLabel={t('Save as private recording')}
             >
               <MaterialIcons
                 name="lock"
@@ -155,10 +156,10 @@ export default function ContextScreen({
                   styles.sheetOptionTitle,
                   pendingVisibility === 'private' && styles.sheetOptionTitleActive,
                 ]}>
-                  Private
+                  {t('Private')}
                 </Text>
                 <Text style={styles.sheetOptionText}>
-                  Syncs to your own account archive, but stays off the Explore map unless you publish it later.
+                  {t('Syncs to your own account archive, but stays off the Explore map unless you publish it later.')}
                 </Text>
               </View>
             </TouchableOpacity>
@@ -171,7 +172,7 @@ export default function ContextScreen({
               onPress={() => setPendingVisibility('community')}
               accessibilityRole="button"
               accessibilityState={{ selected: pendingVisibility === 'community' }}
-              accessibilityLabel="Publish to the community"
+              accessibilityLabel={t('Publish to the community')}
             >
               <MaterialIcons
                 name="public"
@@ -183,10 +184,10 @@ export default function ContextScreen({
                   styles.sheetOptionTitle,
                   pendingVisibility === 'community' && styles.sheetOptionTitleActive,
                 ]}>
-                  Community
+                  {t('Community')}
                 </Text>
                 <Text style={styles.sheetOptionText}>
-                  Shared to Explore after sync so others can discover it on the map.
+                  {t('Shared to Explore after sync so others can discover it on the map.')}
                 </Text>
               </View>
             </TouchableOpacity>
@@ -196,7 +197,7 @@ export default function ContextScreen({
             <View style={styles.sheetWarning}>
               <MaterialIcons name="info-outline" size={18} color={Colors.warning} />
               <Text style={styles.sheetWarningText}>
-                Hidden location keeps this recording off the Explore map. Use exact or approximate coordinates if you want it to appear publicly.
+                {t('Hidden location keeps this recording off the Explore map. Use exact or approximate coordinates if you want it to appear publicly.')}
               </Text>
             </View>
           )}
@@ -206,7 +207,7 @@ export default function ContextScreen({
             onPress={() => setApplyAsDefault((current) => !current)}
             accessibilityRole="checkbox"
             accessibilityState={{ checked: applyAsDefault }}
-            accessibilityLabel="Use this visibility for future recordings"
+            accessibilityLabel={t('Use this visibility for future recordings')}
           >
             <MaterialIcons
               name={applyAsDefault ? 'check-box' : 'check-box-outline-blank'}
@@ -214,7 +215,7 @@ export default function ContextScreen({
               color={applyAsDefault ? Colors.primary : Colors.textMuted}
             />
             <Text style={styles.defaultToggleText}>
-              Use this as the default for future recordings
+              {t('Use this as the default for future recordings')}
             </Text>
           </TouchableOpacity>
 
@@ -223,19 +224,19 @@ export default function ContextScreen({
               style={styles.sheetSecondaryButton}
               onPress={() => setShowVisibilitySheet(false)}
               accessibilityRole="button"
-              accessibilityLabel="Cancel saving"
+              accessibilityLabel={t('Cancel saving')}
             >
-              <Text style={styles.sheetSecondaryButtonText}>Back</Text>
+              <Text style={styles.sheetSecondaryButtonText}>{t('Back')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.sheetPrimaryButton}
               onPress={handleConfirmVisibility}
               accessibilityRole="button"
-              accessibilityLabel={pendingVisibility === 'community' ? 'Share recording with community' : 'Save private recording'}
+              accessibilityLabel={pendingVisibility === 'community' ? t('Share recording with community') : t('Save private recording')}
             >
               <Text style={styles.sheetPrimaryButtonText}>
-                {pendingVisibility === 'community' ? 'Share & Save' : 'Save Private'}
+                {pendingVisibility === 'community' ? t('Share & Save') : t('Save Private')}
               </Text>
             </TouchableOpacity>
           </View>

@@ -7,6 +7,7 @@ import { extractNoteThemes } from '../../utils/noteAnalysis';
 import { assessVisualContext, formatVisualIndicatorSummary } from '../../utils/visualContext';
 import type { AcousticMetrics } from '../audio/acousticMetrics';
 import type { ResearchProfile } from '../../types/researchProfile';
+import { getRatedPaq } from '../database/perceptions';
 
 interface SoundscapyRow {
   RecordID: string;
@@ -150,6 +151,9 @@ function toSoundscapyRow(
   const dominantEnvironment = inferDominantScene(photoClassification);
   const visualContext = assessVisualContext(photoClassification);
   const noteThemes = extractNoteThemes(recording.fieldNotes, recording.spokenDescription);
+  // PAQ1-8 are filled only with ratings the participant gave. For circumplex
+  // placements, use ISOPleasant / ISOEventful directly.
+  const ratedPaq = getRatedPaq(recording.perception);
 
   return {
     RecordID: recording.id,
@@ -157,14 +161,14 @@ function toSoundscapyRow(
     SessionID: recording.id,
     LocationID: buildLocationId(recording),
     Timestamp: recording.recordedAt,
-    pleasant: recording.perception?.paqPleasant ?? '',
-    vibrant: recording.perception?.paqVibrant ?? '',
-    eventful: recording.perception?.paqEventful ?? '',
-    chaotic: recording.perception?.paqChaotic ?? '',
-    annoying: recording.perception?.paqAnnoying ?? '',
-    monotonous: recording.perception?.paqMonotonous ?? '',
-    uneventful: recording.perception?.paqUneventful ?? '',
-    calm: recording.perception?.paqCalm ?? '',
+    pleasant: ratedPaq?.pleasant ?? '',
+    vibrant: ratedPaq?.vibrant ?? '',
+    eventful: ratedPaq?.eventful ?? '',
+    chaotic: ratedPaq?.chaotic ?? '',
+    annoying: ratedPaq?.annoying ?? '',
+    monotonous: ratedPaq?.monotonous ?? '',
+    uneventful: ratedPaq?.uneventful ?? '',
+    calm: ratedPaq?.calm ?? '',
     ISOPleasant: recording.perception?.isoPleasant ?? '',
     ISOEventful: recording.perception?.isoEventful ?? '',
     Quadrant: recording.perception

@@ -3,6 +3,7 @@ import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { Colors, Radius, Spacing } from '../../theme/colors';
 import { SoundClassification } from '../../hooks/useAudioClassifier';
 import { MacroClassification } from '../../utils/audioClassification';
+import { t } from '../../i18n';
 
 interface ResultsPanelProps {
   classifications: SoundClassification[];
@@ -27,7 +28,7 @@ function ClassRow({ item }: { item: SoundClassification }) {
           <View style={styles.rowLabelWrap}>
             <View style={styles.rowLabelLine}>
               <Text style={styles.rowLabel} numberOfLines={2} ellipsizeMode="tail">
-                {item.label}
+                {t(item.label)}
               </Text>
               {repeated ? (
                 <View style={styles.repeatBadge}>
@@ -88,16 +89,16 @@ export function ResultsPanel({
   const header = (
     <View style={styles.headerBlock}>
       <View style={styles.resultsHeader}>
-        <Text style={styles.resultsTitle}>Results</Text>
+        <Text style={styles.resultsTitle}>{t('Results')}</Text>
         <Text style={styles.resultsMeta}>{locationLabel}</Text>
       </View>
 
       <View style={styles.statusRow}>
         <View style={styles.statusChip}>
           <View style={styles.liveDot} />
-          <Text style={styles.statusChipText}>Recording {durationLabel}</Text>
+          <Text style={styles.statusChipText}>{t('Recording {duration}', { duration: durationLabel })}</Text>
         </View>
-        <Text style={styles.remainingText}>{remainingLabel} remaining</Text>
+        <Text style={styles.remainingText}>{t('{duration} remaining', { duration: remainingLabel })}</Text>
       </View>
 
       <View style={styles.progressTrack}>
@@ -108,7 +109,7 @@ export function ResultsPanel({
         <View style={styles.macroRow}>
           {macroClassifications.map((item, index) => (
             <View
-              key={`${item.label}-${index}`}
+              key={`${t(item.label)}-${index}`}
               style={[
                 styles.macroChip,
                 {
@@ -116,7 +117,7 @@ export function ResultsPanel({
                 },
               ]}
             >
-              <Text style={styles.macroChipLabel}>{item.label}</Text>
+              <Text style={styles.macroChipLabel}>{t(item.label)}</Text>
               <Text style={styles.macroChipScore}>{Math.round(item.score * 100)}%</Text>
             </View>
           ))}
@@ -127,9 +128,9 @@ export function ResultsPanel({
         <View style={styles.dualPanel}>
           <View style={styles.panelColumn}>
             <View style={styles.panelHeader}>
-              <Text style={styles.panelEyebrow}>Specific classes</Text>
+              <Text style={styles.panelEyebrow}>{t('Specific classes')}</Text>
               {topDetection ? (
-                <Text style={styles.panelMeta}>{Math.round(topDetection.adjustedScore * 100)}% top</Text>
+                <Text style={styles.panelMeta}>{t('{percent}% top', { percent: Math.round(topDetection.adjustedScore * 100) })}</Text>
               ) : null}
             </View>
             <View style={styles.panelBody}>
@@ -143,9 +144,9 @@ export function ResultsPanel({
 
           <View style={styles.panelColumn}>
             <View style={styles.panelHeader}>
-              <Text style={styles.panelEyebrow}>Higher hierarchy</Text>
+              <Text style={styles.panelEyebrow}>{t('Higher hierarchy')}</Text>
               {broadRows.length > 0 ? (
-                <Text style={styles.panelMeta}>{broadRows.length} broad labels</Text>
+                <Text style={styles.panelMeta}>{broadRows.length}</Text>
               ) : null}
             </View>
             <View style={styles.panelBody}>
@@ -156,7 +157,7 @@ export function ResultsPanel({
                   </View>
                 ))
               ) : (
-                <Text style={styles.panelEmptyText}>No confident broad labels yet.</Text>
+                <Text style={styles.panelEmptyText}>{t('No confident broad labels yet.')}</Text>
               )}
             </View>
           </View>
@@ -166,7 +167,7 @@ export function ResultsPanel({
       {!topDetection && !error && (
         <View style={styles.emptyState}>
           <Text style={styles.emptyText}>
-            {isLoading ? 'Initializing YAMNet…' : isReady ? 'Listening…' : 'Loading…'}
+            {isLoading ? t('Initializing YAMNet…') : isReady ? t('Listening…') : t('Loading…')}
           </Text>
         </View>
       )}
@@ -222,7 +223,11 @@ const styles = StyleSheet.create({
     color: Colors.text,
   },
   resultsMeta: {
-    fontSize: 13,
+    // Shrinks and wraps so a long (translated) status never runs into the title.
+    flex: 1,
+    marginLeft: 12,
+    textAlign: 'right',
+    fontSize: 12,
     color: Colors.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 0.6,
@@ -316,6 +321,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'baseline',
     justifyContent: 'space-between',
+    // Longer (translated) headings wrap instead of running into the count.
+    flexWrap: 'wrap',
+    columnGap: 6,
     marginBottom: 8,
   },
   panelEyebrow: {

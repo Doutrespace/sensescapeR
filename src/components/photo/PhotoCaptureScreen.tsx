@@ -30,6 +30,7 @@ import {
   formatVisualIndicatorSummary,
 } from '../../utils/visualContext';
 import DetectionOverlayImage, { getDetectionAccent } from './DetectionOverlayImage';
+import { t } from '../../i18n';
 
 interface Props {
   onPhotoCaptured: (uri: string, classifications?: ImageClassification[]) => void;
@@ -77,11 +78,11 @@ export default function PhotoCaptureScreen({ onPhotoCaptured, onSkip }: Props) {
     const result = await requestPermission();
     if (!result.granted) {
       Alert.alert(
-        'Camera Permission Required',
-        'This feature needs camera access to capture photos of the environment. Please enable it in your device settings.',
+        t('Camera Permission Required'),
+        t('This feature needs camera access to capture photos of the environment. Please enable it in your device settings.'),
         [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Open Settings', onPress: () => Linking.openSettings() },
+          { text: t('Cancel'), style: 'cancel' },
+          { text: t('Open Settings'), onPress: () => Linking.openSettings() },
         ]
       );
     }
@@ -140,7 +141,7 @@ export default function PhotoCaptureScreen({ onPhotoCaptured, onSkip }: Props) {
       });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       Alert.alert(
-        'Photo unavailable',
+        t('Photo unavailable'),
         getPhotoCaptureErrorMessage(err instanceof Error ? err.message : undefined)
       );
     } finally {
@@ -171,7 +172,7 @@ export default function PhotoCaptureScreen({ onPhotoCaptured, onSkip }: Props) {
           });
           setClassifications([]);
           setSegmentationOverlayUri(null);
-          setClassificationError(err instanceof Error ? err.message : 'Object detection failed.');
+          setClassificationError(err instanceof Error ? err.message : t('Object detection failed.'));
         })
         .finally(() => {
           setIsClassifying(false);
@@ -245,9 +246,9 @@ export default function PhotoCaptureScreen({ onPhotoCaptured, onSkip }: Props) {
       <View style={styles.container}>
         <View style={styles.permissionContainer}>
           <MaterialIcons name="camera-alt" size={64} color={Colors.textMuted} />
-          <Text style={styles.permissionTitle}>Camera Access</Text>
+          <Text style={styles.permissionTitle}>{t('Camera Access')}</Text>
           <Text style={styles.permissionText}>
-            Loading camera permissions...
+            {t('Loading camera permissions...')}
           </Text>
         </View>
       </View>
@@ -260,25 +261,25 @@ export default function PhotoCaptureScreen({ onPhotoCaptured, onSkip }: Props) {
       <View style={styles.container}>
         <View style={styles.permissionContainer}>
           <MaterialIcons name="camera-alt" size={64} color={Colors.textMuted} />
-          <Text style={styles.permissionTitle}>Camera Access Required</Text>
+          <Text style={styles.permissionTitle}>{t('Camera Access Required')}</Text>
           <Text style={styles.permissionText}>
-            Capture a photo of your environment to help classify the soundscape context.
+            {t('Capture a photo of your environment to help classify the soundscape context.')}
           </Text>
           <TouchableOpacity
             style={styles.permissionButton}
             onPress={handleRequestPermission}
             accessibilityRole="button"
-            accessibilityLabel="Grant camera access"
+            accessibilityLabel={t('Grant camera access')}
           >
-            <Text style={styles.permissionButtonText}>Grant Access</Text>
+            <Text style={styles.permissionButtonText}>{t('Grant Access')}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.skipLink}
             onPress={onSkip}
             accessibilityRole="button"
-            accessibilityLabel="Skip photo step"
+            accessibilityLabel={t('Skip photo step')}
           >
-            <Text style={styles.skipLinkText}>Skip this step</Text>
+            <Text style={styles.skipLinkText}>{t('Skip this step')}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -297,17 +298,17 @@ export default function PhotoCaptureScreen({ onPhotoCaptured, onSkip }: Props) {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.header}>
-            <Text style={styles.title}>Photo Captured</Text>
+            <Text style={styles.title}>{t('Photo Captured')}</Text>
             <Text style={styles.subtitle}>
               {isDetectorBusy
-                ? 'Running on-device photo analysis...'
+                ? t('Running on-device photo analysis...')
                 : classifications.length > 0
-                  ? 'Detected objects and environmental context'
+                  ? t('Detected objects and environmental context')
                   : detectorErrorMessage
-                    ? 'Photo analysis unavailable'
+                    ? t('Photo analysis unavailable')
                     : classifierReady
-                    ? 'No confident context found'
-                    : 'Preparing models...'}
+                    ? t('No confident context found')
+                    : t('Preparing models...')}
             </Text>
           </View>
 
@@ -328,7 +329,7 @@ export default function PhotoCaptureScreen({ onPhotoCaptured, onSkip }: Props) {
                 <View style={styles.classifyingOverlay}>
                   <ActivityIndicator size="large" color={Colors.primary} />
                   <Text style={styles.classifyingText}>
-                    {classifierReady ? 'Analyzing...' : 'Loading detector...'}
+                    {classifierReady ? t('Analyzing...') : t('Loading detector...')}
                   </Text>
                 </View>
               )}
@@ -341,7 +342,7 @@ export default function PhotoCaptureScreen({ onPhotoCaptured, onSkip }: Props) {
                     style={styles.overlayToggle}
                     onPress={() => setShowDetectionBoxes((current) => !current)}
                     accessibilityRole="button"
-                    accessibilityLabel={showDetectionBoxes ? 'Hide detection boxes' : 'Show detection boxes'}
+                    accessibilityLabel={showDetectionBoxes ? t('Hide detection boxes') : t('Show detection boxes')}
                   >
                     <MaterialIcons
                       name={showDetectionBoxes ? 'visibility-off' : 'visibility'}
@@ -349,7 +350,7 @@ export default function PhotoCaptureScreen({ onPhotoCaptured, onSkip }: Props) {
                       color={Colors.textMuted}
                     />
                     <Text style={styles.overlayToggleText}>
-                      {showDetectionBoxes ? 'Hide detection boxes' : 'Show detection boxes'}
+                      {showDetectionBoxes ? t('Hide detection boxes') : t('Show detection boxes')}
                     </Text>
                   </TouchableOpacity>
                 )}
@@ -358,7 +359,7 @@ export default function PhotoCaptureScreen({ onPhotoCaptured, onSkip }: Props) {
                     style={styles.overlayToggle}
                     onPress={() => setShowSegmentationOverlay((current) => !current)}
                     accessibilityRole="button"
-                    accessibilityLabel={showSegmentationOverlay ? 'Hide segmentation map' : 'Show segmentation map'}
+                    accessibilityLabel={showSegmentationOverlay ? t('Hide segmentation map') : t('Show segmentation map')}
                   >
                     <MaterialIcons
                       name={showSegmentationOverlay ? 'layers-clear' : 'layers'}
@@ -366,7 +367,7 @@ export default function PhotoCaptureScreen({ onPhotoCaptured, onSkip }: Props) {
                       color={Colors.textMuted}
                     />
                     <Text style={styles.overlayToggleText}>
-                      {showSegmentationOverlay ? 'Hide segmentation map' : 'Show segmentation map'}
+                      {showSegmentationOverlay ? t('Hide segmentation map') : t('Show segmentation map')}
                     </Text>
                   </TouchableOpacity>
                 )}
@@ -378,8 +379,8 @@ export default function PhotoCaptureScreen({ onPhotoCaptured, onSkip }: Props) {
             <View style={styles.classificationResults}>
             {groupedObjectDetections.length > 0 && (
               <>
-                <Text style={styles.classificationTitle}>Detected objects saved with photo</Text>
-                <Text style={styles.classificationHint}>Tap anything that was not actually present.</Text>
+                <Text style={styles.classificationTitle}>{t('Detected objects saved with photo')}</Text>
+                <Text style={styles.classificationHint}>{t('Tap anything that was not actually present.')}</Text>
                 <View style={styles.classificationList}>
                   {groupedObjectDetections.map((item, index) => {
                     const accentColor = getDetectionAccent(index);
@@ -396,7 +397,7 @@ export default function PhotoCaptureScreen({ onPhotoCaptured, onSkip }: Props) {
                           isExcluded && styles.classificationRowExcluded,
                         ]}
                         accessibilityRole="button"
-                        accessibilityLabel={`${isExcluded ? 'Re-include' : 'Exclude'} ${item.label}`}
+                        accessibilityLabel={`${isExcluded ? t('Re-include') : t('Exclude')} ${t(item.label)}`}
                       >
                         <View style={styles.classificationRowHeader}>
                           <View style={styles.classificationMeta}>
@@ -411,7 +412,7 @@ export default function PhotoCaptureScreen({ onPhotoCaptured, onSkip }: Props) {
                               </Text>
                             </View>
                             <Text style={[styles.classificationLabel, isExcluded && styles.classificationLabelExcluded]}>
-                              {item.label}
+                              {t(item.label)}
                             </Text>
                             {item.count > 1 && (
                               <View style={styles.classificationCountBadge}>
@@ -443,7 +444,7 @@ export default function PhotoCaptureScreen({ onPhotoCaptured, onSkip }: Props) {
 
             {groupedEnvironmentSegments.length > 0 && (
               <>
-                <Text style={styles.classificationTitle}>Environmental context from segmentation</Text>
+                <Text style={styles.classificationTitle}>{t('Environmental context from segmentation')}</Text>
                 <View style={styles.classificationList}>
                   {groupedEnvironmentSegments.map((item, index) => {
                     const accentColor = getDetectionAccent(index + groupedObjectDetections.length);
@@ -460,7 +461,7 @@ export default function PhotoCaptureScreen({ onPhotoCaptured, onSkip }: Props) {
                           isExcluded && styles.classificationRowExcluded,
                         ]}
                         accessibilityRole="button"
-                        accessibilityLabel={`${isExcluded ? 'Re-include' : 'Exclude'} ${item.label}`}
+                        accessibilityLabel={`${isExcluded ? t('Re-include') : t('Exclude')} ${t(item.label)}`}
                       >
                         <View style={styles.classificationRowHeader}>
                           <View style={styles.classificationMeta}>
@@ -475,7 +476,7 @@ export default function PhotoCaptureScreen({ onPhotoCaptured, onSkip }: Props) {
                               </Text>
                             </View>
                             <Text style={[styles.classificationLabel, isExcluded && styles.classificationLabelExcluded]}>
-                              {item.label}
+                              {t(item.label)}
                             </Text>
                           </View>
                           <Text style={[styles.classificationConfidence, { color: accentColor }]}>
@@ -502,7 +503,7 @@ export default function PhotoCaptureScreen({ onPhotoCaptured, onSkip }: Props) {
 
             {includedClassifications.length > 0 && (
               <>
-                <Text style={styles.classificationTitle}>Visual soundscape context</Text>
+                <Text style={styles.classificationTitle}>{t('Visual soundscape context')}</Text>
                 <View style={styles.contextCard}>
                   <Text style={styles.contextHeadline}>{visualContext.dominantContext}</Text>
                   <Text style={styles.contextSummary}>
@@ -515,7 +516,7 @@ export default function PhotoCaptureScreen({ onPhotoCaptured, onSkip }: Props) {
                       .map((item) => (
                         <View key={item.key} style={styles.contextTag}>
                           <Text style={styles.contextTagText}>
-                            {item.label} {item.level}
+                            {t(item.label)} {item.level}
                           </Text>
                         </View>
                       ))}
@@ -533,7 +534,7 @@ export default function PhotoCaptureScreen({ onPhotoCaptured, onSkip }: Props) {
                   <MaterialIcons name="error-outline" size={16} color={Colors.warning} />
                 </View>
                 <View style={styles.detectorWarningContent}>
-                  <Text style={styles.detectorWarningTitle}>Photo analysis failed</Text>
+                  <Text style={styles.detectorWarningTitle}>{t('Photo analysis failed')}</Text>
                   <Text style={styles.detectorWarningText}>{detectorErrorMessage}</Text>
                 </View>
               </View>
@@ -547,10 +548,10 @@ export default function PhotoCaptureScreen({ onPhotoCaptured, onSkip }: Props) {
               style={styles.retakeButton}
               onPress={handleRetake}
               accessibilityRole="button"
-              accessibilityLabel="Retake photo"
+              accessibilityLabel={t('Retake photo')}
             >
               <MaterialIcons name="refresh" size={24} color={Colors.text} />
-              <Text style={styles.retakeButtonText}>Retake</Text>
+              <Text style={styles.retakeButtonText}>{t('Retake')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -558,11 +559,11 @@ export default function PhotoCaptureScreen({ onPhotoCaptured, onSkip }: Props) {
               onPress={handleConfirm}
               disabled={isDetectorBusy}
               accessibilityRole="button"
-              accessibilityLabel="Use captured photo"
+              accessibilityLabel={t('Use captured photo')}
               accessibilityState={{ disabled: isDetectorBusy }}
             >
               <MaterialIcons name="check" size={24} color={Colors.background} />
-              <Text style={styles.confirmButtonText}>Use Photo</Text>
+              <Text style={styles.confirmButtonText}>{t('Use Photo')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -574,9 +575,9 @@ export default function PhotoCaptureScreen({ onPhotoCaptured, onSkip }: Props) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Capture Environment</Text>
+        <Text style={styles.title}>{t('Capture Environment')}</Text>
         <Text style={styles.subtitle}>
-          Take a photo of your surroundings
+          {t('Take a photo of your surroundings')}
         </Text>
       </View>
 
@@ -592,7 +593,7 @@ export default function PhotoCaptureScreen({ onPhotoCaptured, onSkip }: Props) {
             style={styles.flipButton}
             onPress={handleFlipCamera}
             accessibilityRole="button"
-            accessibilityLabel="Flip camera"
+            accessibilityLabel={t('Flip camera')}
           >
             <MaterialIcons name="flip-camera-ios" size={28} color="#FFFFFF" />
           </TouchableOpacity>
@@ -605,9 +606,9 @@ export default function PhotoCaptureScreen({ onPhotoCaptured, onSkip }: Props) {
             style={styles.skipButton}
             onPress={onSkip}
             accessibilityRole="button"
-            accessibilityLabel="Skip photo step"
+            accessibilityLabel={t('Skip photo step')}
           >
-            <Text style={styles.skipButtonText}>Skip</Text>
+            <Text style={styles.skipButtonText}>{t('Skip')}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -615,7 +616,7 @@ export default function PhotoCaptureScreen({ onPhotoCaptured, onSkip }: Props) {
             onPress={handleCapture}
             disabled={isCapturing}
             accessibilityRole="button"
-            accessibilityLabel="Capture photo"
+            accessibilityLabel={t('Capture photo')}
             accessibilityState={{ disabled: isCapturing }}
           >
             <View style={styles.captureButtonInner} />

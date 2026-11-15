@@ -18,11 +18,12 @@ import Animated, {
   SlideOutDown,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
-import { format } from 'date-fns';
+import { formatDate } from '../../i18n/dates';
 import { BadgeDefinition, EarnedBadge } from '../../badges/types';
 import { ALL_BADGES, getProgressToNextBadge, getNextMilestoneBadge } from '../../badges/definitions';
 import { BadgeIcon } from './BadgeIcon';
 import { Colors, Typography, Spacing, Radius } from '../../theme/colors';
+import { t } from '../../i18n';
 
 interface BadgeDetailModalProps {
   visible: boolean;
@@ -116,13 +117,13 @@ export function BadgeDetailModal({
                   showGlow
                   animated={earnedBadgeIds.has(selectedBadge.id)}
                 />
-                <Text style={styles.selectedBadgeName}>{selectedBadge.name}</Text>
+                <Text style={styles.selectedBadgeName}>{t(selectedBadge.name)}</Text>
                 <Text style={styles.selectedBadgeDescription}>
-                  {selectedBadge.description}
+                  {t(selectedBadge.description)}
                 </Text>
                 {selectedEarnedData && (
                   <Text style={styles.earnedDate}>
-                    Earned {format(new Date(selectedEarnedData.earnedAt), 'MMMM d, yyyy')}
+                    {t('Earned {date}', { date: formatDate(new Date(selectedEarnedData.earnedAt), 'month') })}
                   </Text>
                 )}
                 {!earnedBadgeIds.has(selectedBadge.id) && (
@@ -138,7 +139,7 @@ export function BadgeDetailModal({
             {/* Progress to next badge */}
             {nextBadge && (
               <View style={styles.progressSection}>
-                <Text style={styles.sectionTitle}>Progress to {nextBadge.name}</Text>
+                <Text style={styles.sectionTitle}>Progress to {t(nextBadge.name)}</Text>
                 <View style={styles.progressBar}>
                   <Animated.View
                     style={[
@@ -159,7 +160,7 @@ export function BadgeDetailModal({
             {/* Badge collection grid */}
             <View style={styles.collectionSection}>
               <Text style={styles.sectionTitle}>
-                Your Collection ({earnedBadges.length}/{ALL_BADGES.length})
+                {t('Your Collection ({earned}/{total})', { earned: earnedBadges.length, total: ALL_BADGES.length })}
               </Text>
               <View style={styles.badgeGrid}>
                 {ALL_BADGES.map((badge) => {

@@ -14,39 +14,40 @@ import { LoggingService } from '../services/logging/LoggingService';
 import { queueForUpload } from '../services/sync/syncManager';
 import { QualityFlags } from '../types/recording';
 import { serializeMultisensory } from '../types/multisensory';
+import { t } from '../i18n';
 import type { ImageClassification } from '../utils/imageClassification';
 
 function getLocationErrorMessage(error?: string): string {
   if (!error) {
-    return 'Location could not be determined. You can still save the recording without coordinates.';
+    return t('Location could not be determined. You can still save the recording without coordinates.');
   }
 
   const normalized = error.toLowerCase();
   if (normalized.includes('denied')) {
-    return 'Location permission was denied. You can still save the recording without coordinates.';
+    return t('Location permission was denied. You can still save the recording without coordinates.');
   }
   if (normalized.includes('timeout')) {
-    return 'Location lookup timed out. Move to a more open area or save without coordinates.';
+    return t('Location lookup timed out. Move to a more open area or save without coordinates.');
   }
-  return 'Location could not be determined. You can still save the recording without coordinates.';
+  return t('Location could not be determined. You can still save the recording without coordinates.');
 }
 
 function getSaveErrorMessage(error?: string): string {
   if (!error) {
-    return 'The recording could not be saved. Please try again.';
+    return t('The recording could not be saved. Please try again.');
   }
 
   const normalized = error.toLowerCase();
   if (normalized.includes('invalid audio file path')) {
-    return 'The recorded audio file could not be found anymore. Retake the recording and save again.';
+    return t('The recorded audio file could not be found anymore. Retake the recording and save again.');
   }
   if (normalized.includes('invalid coordinates')) {
-    return 'The saved location data was invalid. Review the privacy settings or save without coordinates.';
+    return t('The saved location data was invalid. Review the privacy settings or save without coordinates.');
   }
   if (normalized.includes('disk') || normalized.includes('space') || normalized.includes('storage')) {
-    return 'There is not enough local storage to save this recording. Free some space and try again.';
+    return t('There is not enough local storage to save this recording. Free some space and try again.');
   }
-  return 'The recording could not be saved. Please try again.';
+  return t('The recording could not be saved. Please try again.');
 }
 
 export function useRecordingFlow() {
@@ -138,7 +139,7 @@ export function useRecordingFlow() {
       LoggingService.warn('Failed to capture location for recording', {
         error: err instanceof Error ? err.message : String(err),
       });
-      const message = err instanceof Error ? err.message : 'Failed to get location';
+      const message = err instanceof Error ? err.message : t('Failed to get location');
       store.setLocationError(getLocationErrorMessage(message));
     }
 
@@ -148,12 +149,12 @@ export function useRecordingFlow() {
   const handleRecordingCancel = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     Alert.alert(
-      'Cancel Recording',
-      'Are you sure you want to cancel this recording session?',
+      t('Cancel Recording'),
+      t('Are you sure you want to cancel this recording session?'),
       [
-        { text: 'Continue Recording', style: 'cancel' },
+        { text: t('Continue Recording'), style: 'cancel' },
         {
-          text: 'Cancel',
+          text: t('Cancel'),
           style: 'destructive',
           onPress: () => {
             animateTransition(() => store.reset());
@@ -240,7 +241,7 @@ export function useRecordingFlow() {
     store.setState('SAVING');
 
     try {
-      const deviceModel = Device.modelName ?? 'Unknown';
+      const deviceModel = Device.modelName ?? t('Unknown');
       const osVersion = `${Device.osName} ${Device.osVersion}`;
       const storedLocation = (() => {
         if (!current.location) {
@@ -329,11 +330,11 @@ export function useRecordingFlow() {
       // Don't show alert if we have badges to celebrate - the celebration overlay handles feedback
       if (badgeResult.newBadges.length === 0) {
         Alert.alert(
-          'Recording Saved',
+          t('Recording Saved'),
           current.communityVisibility === 'community'
-            ? 'Your soundscape recording has been saved and queued for community publication when sync completes.'
-            : 'Your soundscape recording has been saved and queued for your private cloud archive.',
-          [{ text: 'OK' }]
+            ? t('Your soundscape recording has been saved and queued for community publication when sync completes.')
+            : t('Your soundscape recording has been saved and queued for your private cloud archive.'),
+          [{ text: t('OK') }]
         );
       }
 
@@ -343,7 +344,7 @@ export function useRecordingFlow() {
         error: err instanceof Error ? err.message : String(err),
       });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert('Save failed', getSaveErrorMessage(err instanceof Error ? err.message : undefined));
+      Alert.alert(t('Save failed'), getSaveErrorMessage(err instanceof Error ? err.message : undefined));
       store.setState('CONTEXT');
     }
   }, [getStoredLocation, store, libraryStore]);
@@ -361,12 +362,12 @@ export function useRecordingFlow() {
   const handleReturnHome = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     Alert.alert(
-      'Discard this session?',
-      'This will cancel the current recording workflow and return to the start screen without saving.',
+      t('Discard this session?'),
+      t('This will cancel the current recording workflow and return to the start screen without saving.'),
       [
-        { text: 'Keep editing', style: 'cancel' },
+        { text: t('Keep editing'), style: 'cancel' },
         {
-          text: 'Discard',
+          text: t('Discard'),
           style: 'destructive',
           onPress: () => {
             animateTransition(() => store.reset());

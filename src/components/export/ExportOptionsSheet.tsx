@@ -14,6 +14,7 @@ import { Colors, Spacing, Radius, Shadows } from '../../theme/colors';
 import { RecordingWithPerception } from '../../types/recording';
 import { ExportService, ExportFormat } from '../../services/export';
 import { useActivityStore } from '../../stores/useActivityStore';
+import { t } from '../../i18n';
 
 interface Props {
   recording: RecordingWithPerception | null;
@@ -69,7 +70,7 @@ const EXPORT_OPTIONS: ExportOption[] = [
     id: 'soundscapy',
     icon: 'science',
     label: 'Export for Soundscapy',
-    description: 'Research CSV with ISO and derived PAQ fields',
+    description: 'Research CSV with ISO coordinates; PAQ only if rated',
     available: () => true,
   },
   {
@@ -143,7 +144,7 @@ export function ExportOptionsSheet({ recording, visible, onClose }: Props) {
           message: result.error || 'The export could not be completed.',
           status: 'error',
         });
-        Alert.alert('Export failed', result.error || 'The selected export could not be completed.');
+        Alert.alert(t('Export failed'), result.error || 'The selected export could not be completed.');
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       } else {
         setLastExport({
@@ -159,7 +160,7 @@ export function ExportOptionsSheet({ recording, visible, onClose }: Props) {
         message: error.message || 'The selected export could not be completed.',
         status: 'error',
       });
-      Alert.alert('Export failed', error.message || 'The selected export could not be completed.');
+      Alert.alert(t('Export failed'), error.message || 'The selected export could not be completed.');
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } finally {
       setIsExporting(null);
@@ -189,7 +190,7 @@ export function ExportOptionsSheet({ recording, visible, onClose }: Props) {
                 onClose();
               }}
               accessibilityRole="button"
-              accessibilityLabel="Close export options"
+              accessibilityLabel={t('Close export options')}
             >
               <MaterialIcons name="close" size={24} color={Colors.textMuted} />
             </TouchableOpacity>
@@ -213,7 +214,7 @@ export function ExportOptionsSheet({ recording, visible, onClose }: Props) {
                   activeOpacity={0.7}
                   accessibilityRole="button"
                   accessibilityLabel={option.label}
-                  accessibilityHint={isAvailable ? option.description : 'Not available for this recording'}
+                  accessibilityHint={isAvailable ? option.description : t('Not available for this recording')}
                   accessibilityState={{ disabled: !isAvailable || isExporting !== null }}
                 >
                   <View style={[
@@ -235,13 +236,13 @@ export function ExportOptionsSheet({ recording, visible, onClose }: Props) {
                       styles.optionLabel,
                       !isAvailable && styles.optionLabelDisabled,
                     ]}>
-                      {option.label}
+                      {t(option.label)}
                     </Text>
                     <Text style={[
                       styles.optionDescription,
                       !isAvailable && styles.optionDescriptionDisabled,
                     ]}>
-                      {isAvailable ? option.description : 'Not available for this recording'}
+                      {isAvailable ? option.description : t('Not available for this recording')}
                     </Text>
                   </View>
                   <MaterialIcons
@@ -258,7 +259,7 @@ export function ExportOptionsSheet({ recording, visible, onClose }: Props) {
           <View style={styles.info}>
             <MaterialIcons name="info-outline" size={16} color={Colors.textMuted} />
             <Text style={styles.infoText}>
-              JSON and CSV preserve the full payload, while Soundscapy CSV uses research-friendly column names for downstream analysis.
+              {t('JSON and CSV preserve the full payload, while Soundscapy CSV uses research-friendly column names for downstream analysis.')}
             </Text>
           </View>
         </View>

@@ -4,6 +4,7 @@ import { Canvas, ColorMatrix, FilterMode, Image, Paint, Skia, useImage } from '@
 import { Colors } from '../../theme/colors';
 import { SpectrogramData } from '../../hooks/useSpectrogramData';
 import { LoggingService } from '../../services/logging/LoggingService';
+import { t } from '../../i18n';
 
 // Frequency labels for the Y-axis
 const FREQUENCY_LABELS = [
@@ -125,7 +126,7 @@ function SpectrogramViewInner(
           ) : (
             <View style={[styles.noDataOverlay, StyleSheet.absoluteFill]}>
               <Text style={styles.noDataText}>
-                {spectrogramData ? 'Processing audio...' : 'Waiting for audio...'}
+                {spectrogramData ? t('Processing audio...') : t('Waiting for audio...')}
               </Text>
             </View>
           )}
@@ -197,7 +198,7 @@ export function StaticSpectrogram({
         style={[styles.placeholder, { height: propHeight, width: propWidth }]}
         onLayout={handleLayout}
       >
-        <Text style={styles.placeholderText}>No spectrogram available</Text>
+        <Text style={styles.placeholderText}>{t('No spectrogram available')}</Text>
       </View>
     );
   }
@@ -234,7 +235,7 @@ export function StaticSpectrogram({
         </Canvas>
       ) : (
         <View style={styles.placeholder}>
-          <Text style={styles.placeholderText}>Loading spectrogram...</Text>
+          <Text style={styles.placeholderText}>{t('Loading spectrogram...')}</Text>
         </View>
       )}
     </View>

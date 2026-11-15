@@ -2,6 +2,7 @@ import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { Colors } from '../../theme/colors';
+import { t } from '../../i18n';
 
 interface Props {
   min: number;
@@ -36,7 +37,7 @@ export function DotScale({ min, max, value, onChange, accentColor, accessibility
             }}
             activeOpacity={0.7}
             accessibilityRole="radio"
-            accessibilityLabel={`${point} of ${max}`}
+            accessibilityLabel={t('{value} of {max}', { value: point, max })}
             accessibilityState={{ selected: isSelected }}
           >
             <View

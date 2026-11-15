@@ -7,6 +7,7 @@ import {
   LIVING_AREA_OPTIONS,
   ResearchProfile,
 } from '../../types/researchProfile';
+import { t } from '../../i18n';
 
 interface Props {
   value: ResearchProfile;
@@ -56,10 +57,9 @@ export function ResearchProfileFields({ value, onChange, showIntro = true }: Pro
     <View style={styles.container}>
       {showIntro && (
         <View style={styles.infoBox}>
-          <Text style={styles.infoTitle}>Optional research profile</Text>
+          <Text style={styles.infoTitle}>{t('Optional research profile')}</Text>
           <Text style={styles.infoText}>
-            These details are optional and stored securely with your account. They are intended
-            for soundscape research context and are not shown publicly on the map.
+            {t('These details are optional and stored securely with your account. They are intended for soundscape research context and are not shown publicly on the map.')}
           </Text>
         </View>
       )}
@@ -86,15 +86,15 @@ export function ResearchProfileFields({ value, onChange, showIntro = true }: Pro
       />
 
       <View style={styles.group}>
-        <Text style={styles.label}>Occupation</Text>
+        <Text style={styles.label}>{t('Occupation')}</Text>
         <TextInput
           style={styles.input}
           value={value.occupation ?? ''}
           onChangeText={(occupation) => onChange({ ...value, occupation })}
-          placeholder="Optional"
+          placeholder={t('Optional')}
           placeholderTextColor={Colors.textMuted}
           autoCapitalize="words"
-          accessibilityLabel="Occupation"
+          accessibilityLabel={t('Occupation')}
         />
       </View>
     </View>

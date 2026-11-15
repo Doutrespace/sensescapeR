@@ -10,6 +10,7 @@ import { isSupabaseConfigured } from '../../src/utils/supabase';
 import { formatDuration } from '../../src/constants/protocols';
 import OpenStreetMapView, { OpenStreetMapBounds } from '../../src/components/map/OpenStreetMapView';
 import { CommunityRecordingModal } from '../../src/components/explore/CommunityRecordingModal';
+import { t, tPlural } from '../../src/i18n';
 type Basemap = 'light' | 'satellite';
 
 const BASEMAP_SEQUENCE: Basemap[] = ['light', 'satellite'];
@@ -168,7 +169,7 @@ export default function ExploreScreen() {
         latitude: only.latitude,
         longitude: only.longitude,
         color: getMarkerColor(only.perception?.isoPleasant ?? null),
-        title: `${group.length} recordings here`,
+        title: t('{count} recordings here', { count: group.length }),
         subtitle: 'Tap to expand',
         count: group.length,
         isCluster: true,
@@ -189,7 +190,7 @@ export default function ExploreScreen() {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={Colors.primary} />
-        <Text style={styles.loadingText}>Loading map...</Text>
+        <Text style={styles.loadingText}>{t('Loading map...')}</Text>
       </View>
     );
   }
@@ -238,13 +239,13 @@ export default function ExploreScreen() {
       {/* Header overlay */}
       <View style={styles.header}>
         <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>Explore Soundscapes</Text>
+          <Text style={styles.headerTitle}>{t('Explore Soundscapes')}</Text>
           <Text style={styles.headerSubtitle}>
             {isSupabaseConfigured
               ? uniqueLocationCount < mappableRecordings.length
-                ? `${mappableRecordings.length} recordings across ${uniqueLocationCount} locations`
-                : `${mappableRecordings.length} recordings in this area`
-              : 'Configure cloud to see community recordings'}
+                ? t('{count} recordings across {locations} locations', { count: mappableRecordings.length, locations: uniqueLocationCount })
+                : tPlural(mappableRecordings.length, '{count} recording in this area', '{count} recordings in this area')
+              : t('Configure cloud to see community recordings')}
           </Text>
         </View>
         <View style={styles.headerActions}>
@@ -252,14 +253,14 @@ export default function ExploreScreen() {
             style={styles.basemapButton}
             onPress={cycleBasemap}
             accessibilityRole="button"
-            accessibilityLabel={`Current basemap ${currentBasemapMeta.label}. Tap to switch basemap`}
+            accessibilityLabel={t('Current basemap {name}. Tap to switch basemap', { name: t(currentBasemapMeta.label) })}
           >
             <MaterialIcons
               name={currentBasemapMeta.icon}
               size={18}
               color={Colors.text}
             />
-            <Text style={styles.basemapButtonText}>{currentBasemapMeta.label}</Text>
+            <Text style={styles.basemapButtonText}>{t(currentBasemapMeta.label)}</Text>
           </TouchableOpacity>
           {isSupabaseConfigured && (
             <TouchableOpacity
@@ -289,9 +290,9 @@ export default function ExploreScreen() {
       {!isLoading && mappableRecordings.length === 0 && isSupabaseConfigured && (
         <View style={styles.emptyOverlay}>
           <MaterialIcons name="explore" size={48} color={Colors.textMuted} />
-          <Text style={styles.emptyTitle}>No recordings here yet</Text>
+          <Text style={styles.emptyTitle}>{t('No recordings here yet')}</Text>
           <Text style={styles.emptyText}>
-            Only recordings published to the community with location enabled appear here. Be the first to share one in this area.
+            {t('Only recordings published to the community with location enabled appear here. Be the first to share one in this area.')}
           </Text>
         </View>
       )}
@@ -300,9 +301,9 @@ export default function ExploreScreen() {
       {!isSupabaseConfigured && (
         <View style={styles.emptyOverlay}>
           <MaterialIcons name="cloud-off" size={48} color={Colors.textMuted} />
-          <Text style={styles.emptyTitle}>Cloud Not Configured</Text>
+          <Text style={styles.emptyTitle}>{t('Cloud Not Configured')}</Text>
           <Text style={styles.emptyText}>
-            Set up Supabase to explore community recordings from around the world
+            {t('Set up Supabase to explore community recordings from around the world')}
           </Text>
         </View>
       )}
@@ -311,15 +312,15 @@ export default function ExploreScreen() {
       <View style={[styles.legend, { bottom: tabBarHeight + 12 }]}>
         <View style={styles.legendItem}>
           <View style={[styles.legendDot, { backgroundColor: Colors.success }]} />
-          <Text style={styles.legendText}>Pleasant</Text>
+          <Text style={styles.legendText}>{t('Pleasant')}</Text>
         </View>
         <View style={styles.legendItem}>
           <View style={[styles.legendDot, { backgroundColor: Colors.warning }]} />
-          <Text style={styles.legendText}>Neutral</Text>
+          <Text style={styles.legendText}>{t('Neutral')}</Text>
         </View>
         <View style={styles.legendItem}>
           <View style={[styles.legendDot, { backgroundColor: Colors.error }]} />
-          <Text style={styles.legendText}>Unpleasant</Text>
+          <Text style={styles.legendText}>{t('Unpleasant')}</Text>
         </View>
       </View>
 

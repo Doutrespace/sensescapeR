@@ -1,5 +1,6 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { ProtocolType } from '../types/recording';
+import { t, tPlural } from '../i18n';
 
 export type IconName = keyof typeof MaterialIcons.glyphMap;
 
@@ -27,7 +28,7 @@ export const PROTOCOLS: ProtocolOption[] = [
     value: 'stationary_60s',
     label: 'Stationary 60s',
     shortLabel: '60s',
-    description: 'ISO 12913-2 compliant 60-second recording',
+    description: 'Fixed-position 60-second recording, following ISO/TS 12913-2',
     defaultDuration: 60000,
     allowedDurations: [60000],
     icon: 'gps-fixed',
@@ -56,7 +57,7 @@ export function getProtocolOption(value: ProtocolType): ProtocolOption | undefin
 }
 
 export function getProtocolLabel(value: ProtocolType): string {
-  return PROTOCOLS.find((p) => p.value === value)?.label ?? value;
+  return t(PROTOCOLS.find((p) => p.value === value)?.label ?? value);
 }
 
 export function formatDuration(ms: number): string {
@@ -79,10 +80,10 @@ export function formatDurationLong(ms: number): string {
   const remainingSeconds = seconds % 60;
 
   if (minutes === 0) {
-    return `${seconds} seconds`;
+    return t('{count} seconds', { count: seconds });
   }
   if (remainingSeconds === 0) {
-    return minutes === 1 ? '1 minute' : `${minutes} minutes`;
+    return tPlural(minutes, '{count} minute', '{count} minutes');
   }
   return `${minutes}m ${remainingSeconds}s`;
 }

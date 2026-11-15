@@ -12,6 +12,7 @@ import SpectrogramPlayer from './SpectrogramPlayer';
 import PlaybackControls from './PlaybackControls';
 import QualityHints from '../recording/QualityHints';
 import { StoredDetectedSound, getIncludedDetectedSounds } from '../../utils/detectedSounds';
+import { t, tPlural } from '../../i18n';
 
 interface Props {
   audioUri: string;
@@ -90,10 +91,10 @@ export default function ReviewScreen({
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
-          <Text style={styles.eyebrow}>Quality Check</Text>
-          <Text style={[styles.title, compact && styles.titleCompact]}>Review Recording</Text>
+          <Text style={styles.eyebrow}>{t('Quality Check')}</Text>
+          <Text style={[styles.title, compact && styles.titleCompact]}>{t('Review Recording')}</Text>
           <Text style={styles.subtitle}>
-            Listen back and verify the take before continuing
+            {t('Listen back and verify the take before continuing')}
           </Text>
         </View>
 
@@ -126,7 +127,7 @@ export default function ReviewScreen({
                 <View style={styles.metricIconWrap}>
                   <MaterialIcons name="timer" size={14} color={Colors.textMuted} />
                 </View>
-                <Text style={styles.metricLabel}>Duration</Text>
+                <Text style={styles.metricLabel}>{t('Duration')}</Text>
               </View>
               <Text style={styles.metricValue}>{formatDuration(duration)}</Text>
             </View>
@@ -138,10 +139,10 @@ export default function ReviewScreen({
                 <View style={styles.metricIconWrap}>
                   <MaterialIcons name="graphic-eq" size={14} color={Colors.textMuted} />
                 </View>
-                <Text style={styles.metricLabel}>Peak level</Text>
+                <Text style={styles.metricLabel}>{t('Peak level')}</Text>
               </View>
               <Text style={styles.metricValue}>{peakLevel.percent}%</Text>
-              <Text style={styles.metricDetail}>{peakLevel.label}</Text>
+              <Text style={styles.metricDetail}>{t(peakLevel.label)}</Text>
               <View style={styles.levelBar}>
                 <View
                   style={[
@@ -152,7 +153,7 @@ export default function ReviewScreen({
                 />
               </View>
               <Text style={styles.metricDbfs}>
-                {normalizationApplied ? `${formatDbfs(displayPeakDb)} leveled` : formatDbfs(qualityFlags.peakDb)}
+                {normalizationApplied ? t('{level} leveled', { level: formatDbfs(displayPeakDb) }) : formatDbfs(qualityFlags.peakDb)}
               </Text>
             </View>
 
@@ -163,10 +164,10 @@ export default function ReviewScreen({
                 <View style={styles.metricIconWrap}>
                   <MaterialIcons name="equalizer" size={14} color={Colors.textMuted} />
                 </View>
-                <Text style={styles.metricLabel}>Average level</Text>
+                <Text style={styles.metricLabel}>{t('Average level')}</Text>
               </View>
               <Text style={styles.metricValue}>{rmsLevel.percent}%</Text>
-              <Text style={styles.metricDetail}>{rmsLevel.label}</Text>
+              <Text style={styles.metricDetail}>{t(rmsLevel.label)}</Text>
               <View style={styles.levelBar}>
                 <View
                   style={[
@@ -177,7 +178,7 @@ export default function ReviewScreen({
                 />
               </View>
               <Text style={styles.metricDbfs}>
-                {normalizationApplied ? `${formatDbfs(displayRmsDb)} leveled` : formatDbfs(qualityFlags.rmsDb)}
+                {normalizationApplied ? t('{level} leveled', { level: formatDbfs(displayRmsDb) }) : formatDbfs(qualityFlags.rmsDb)}
               </Text>
             </View>
           </View>
@@ -186,7 +187,7 @@ export default function ReviewScreen({
             <View style={styles.normalizationNote}>
               <MaterialIcons name="hearing" size={14} color={Colors.textMuted} />
               <Text style={styles.normalizationNoteText}>
-                Playback leveled for a quiet device ({normalizationGain.toFixed(1)}x).
+                {t('Playback leveled for a quiet device ({gain}x).', { gain: normalizationGain.toFixed(1) })}
               </Text>
             </View>
           )}
@@ -194,8 +195,8 @@ export default function ReviewScreen({
           {hasIssues && (
             <View style={styles.issueStrip}>
               <View style={styles.issueHeader}>
-                <Text style={styles.issueTitle}>Quality flags</Text>
-                <Text style={styles.issueMeta}>Retake if you need a cleaner sample</Text>
+                <Text style={styles.issueTitle}>{t('Quality flags')}</Text>
+                <Text style={styles.issueMeta}>{t('Retake if you need a cleaner sample')}</Text>
               </View>
               <QualityHints flags={qualityFlags} />
             </View>
@@ -204,8 +205,8 @@ export default function ReviewScreen({
           {reviewedSounds.length > 0 && (
             <View style={styles.detectedSoundsSection}>
               <View style={styles.detectedSoundsHeader}>
-                <Text style={styles.detectedSoundsTitle}>Detected sounds</Text>
-                <Text style={styles.detectedSoundsMeta}>Tap sounds that were not present</Text>
+                <Text style={styles.detectedSoundsTitle}>{t('Detected sounds')}</Text>
+                <Text style={styles.detectedSoundsMeta}>{t('Tap sounds that were not present')}</Text>
               </View>
               <View style={styles.detectedSoundList}>
                 {reviewedSounds.map((sound, index) => {
@@ -214,7 +215,7 @@ export default function ReviewScreen({
 
                   return (
                     <TouchableOpacity
-                      key={`${sound.label}-${index}`}
+                      key={`${t(sound.label)}-${index}`}
                       style={[
                         styles.detectedSoundRow,
                         repeated && !excluded && styles.detectedSoundRowRepeated,
@@ -223,16 +224,16 @@ export default function ReviewScreen({
                       onPress={() => toggleSound(sound.label)}
                       activeOpacity={0.78}
                       accessibilityRole="button"
-                      accessibilityLabel={`${excluded ? 'Re-include' : 'Exclude'} detected sound ${sound.label}`}
+                      accessibilityLabel={`${excluded ? t('Re-include') : t('Exclude')} detected sound ${t(sound.label)}`}
                     >
                       <View style={styles.detectedSoundTextWrap}>
                         <View style={styles.detectedSoundLabelLine}>
                           <Text style={[styles.detectedSoundLabel, excluded && styles.detectedSoundLabelExcluded]}>
-                            {sound.label}
+                            {t(sound.label)}
                           </Text>
                           <View style={styles.detectedSoundHierarchyBadge}>
                             <Text style={styles.detectedSoundHierarchyBadgeText}>
-                              {sound.hierarchy === 'broad' ? 'Broad' : 'Specific'}
+                              {sound.hierarchy === 'broad' ? t('Broad') : t('Specific')}
                             </Text>
                           </View>
                           {repeated ? (
@@ -260,8 +261,8 @@ export default function ReviewScreen({
               </View>
               <Text style={styles.detectedSoundsFootnote}>
                 {includedSounds.length > 0
-                  ? `${includedSounds.length} sound${includedSounds.length === 1 ? '' : 's'} will be kept with this recording.`
-                  : 'No sounds selected. You can still continue.'}
+                  ? tPlural(includedSounds.length, '{count} sound will be kept with this recording.', '{count} sounds will be kept with this recording.')
+                  : t('No sounds selected. You can still continue.')}
               </Text>
             </View>
           )}
@@ -275,10 +276,10 @@ export default function ReviewScreen({
             onPress={onRetake}
             activeOpacity={0.7}
             accessibilityRole="button"
-            accessibilityLabel="Retake recording"
-            accessibilityHint="Discard this take and return to the recording step"
+            accessibilityLabel={t('Retake recording')}
+            accessibilityHint={t('Discard this take and return to the recording step')}
           >
-            <Text style={styles.retakeButtonText}>Retake</Text>
+            <Text style={styles.retakeButtonText}>{t('Retake')}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -286,10 +287,10 @@ export default function ReviewScreen({
             onPress={() => onContinue(reviewedSounds)}
             activeOpacity={0.82}
             accessibilityRole="button"
-            accessibilityLabel="Continue after review"
-            accessibilityHint="Accept this recording and continue to the photo step"
+            accessibilityLabel={t('Continue after review')}
+            accessibilityHint={t('Accept this recording and continue to the photo step')}
           >
-            <Text style={styles.continueButtonText}>Continue</Text>
+            <Text style={styles.continueButtonText}>{t('Continue')}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -371,7 +372,8 @@ const styles = StyleSheet.create({
   },
   metricBlock: {
     flex: 1,
-    paddingHorizontal: 14,
+    minWidth: 0,
+    paddingHorizontal: 10,
   },
   metricMeta: {
     flexDirection: 'row',
@@ -388,10 +390,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#EEE6D8',
   },
   metricLabel: {
-    fontSize: 13,
+    flex: 1,
+    fontSize: 11,
+    lineHeight: 14,
     color: Colors.textMuted,
     textTransform: 'uppercase',
-    letterSpacing: 0.7,
+    letterSpacing: 0.5,
   },
   metricValue: {
     fontSize: 19,

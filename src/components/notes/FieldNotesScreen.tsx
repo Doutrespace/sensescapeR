@@ -18,6 +18,7 @@ import {
   appendPromptSeed,
   extractNoteThemes,
 } from '../../utils/noteAnalysis';
+import { t } from '../../i18n';
 
 interface Props {
   fieldNotes: string;
@@ -59,10 +60,10 @@ export default function FieldNotesScreen({
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.header}>
-          <Text style={styles.eyebrow}>Observation Notes</Text>
-          <Text style={styles.title}>Capture the experience in words</Text>
+          <Text style={styles.eyebrow}>{t('Observation Notes')}</Text>
+          <Text style={styles.title}>{t('Capture the experience in words')}</Text>
           <Text style={styles.subtitle}>
-            Add short field notes or a spoken description transcript before you rate the soundscape.
+            {t('Add short field notes or a spoken description transcript before you rate the soundscape.')}
           </Text>
         </View>
 
@@ -72,15 +73,15 @@ export default function FieldNotesScreen({
               <MaterialIcons name="edit-note" size={18} color={Colors.primary} />
             </View>
             <View style={styles.sectionText}>
-              <Text style={styles.sectionTitle}>Field notes</Text>
+              <Text style={styles.sectionTitle}>{t('Field notes')}</Text>
               <Text style={styles.sectionDescription}>
-                What stood out at this place? Include people, activities, weather, or notable sounds.
+                {t('What stood out at this place? Include people, activities, weather, or notable sounds.')}
               </Text>
             </View>
           </View>
 
           <View style={styles.promptGroup}>
-            <Text style={styles.promptGroupLabel}>Guided prompts</Text>
+            <Text style={styles.promptGroupLabel}>{t('Guided prompts')}</Text>
             <View style={styles.promptList}>
               {NOTE_PROMPTS.map((prompt) => (
                 <TouchableOpacity
@@ -89,9 +90,9 @@ export default function FieldNotesScreen({
                   onPress={() => onFieldNotesChange(appendPromptSeed(fieldNotes, prompt.seed))}
                   accessibilityRole="button"
                   accessibilityLabel={prompt.label}
-                  accessibilityHint="Insert a guided note prompt into the field notes"
+                  accessibilityHint={t('Insert a guided note prompt into the field notes')}
                 >
-                  <Text style={styles.promptChipText}>{prompt.label}</Text>
+                  <Text style={styles.promptChipText}>{t(prompt.label)}</Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -101,9 +102,9 @@ export default function FieldNotesScreen({
             style={styles.textArea}
             multiline
             textAlignVertical="top"
-            accessibilityLabel="Field notes"
-            accessibilityHint="Enter written notes about the place and notable sounds"
-            placeholder="Example: Light traffic from the road, birds in the trees, occasional conversation from nearby benches."
+            accessibilityLabel={t('Field notes')}
+            accessibilityHint={t('Enter written notes about the place and notable sounds')}
+            placeholder={t('Example: Light traffic from the road, birds in the trees, occasional conversation from nearby benches.')}
             placeholderTextColor={Colors.textDisabled}
             value={fieldNotes}
             onChangeText={onFieldNotesChange}
@@ -113,11 +114,11 @@ export default function FieldNotesScreen({
 
           {noteThemes.length > 0 && (
             <View style={styles.themeGroup}>
-              <Text style={styles.themeGroupLabel}>Detected note themes</Text>
+              <Text style={styles.themeGroupLabel}>{t('Detected note themes')}</Text>
               <View style={styles.themeList}>
                 {noteThemes.map((theme) => (
                   <View key={theme.key} style={styles.themeChip}>
-                    <Text style={styles.themeChipText}>{theme.label}</Text>
+                    <Text style={styles.themeChipText}>{t(theme.label)}</Text>
                   </View>
                 ))}
               </View>
@@ -131,10 +132,10 @@ export default function FieldNotesScreen({
               <MaterialIcons name="keyboard-voice" size={18} color={Colors.primary} />
             </View>
             <View style={styles.sectionText}>
-              <Text style={styles.sectionTitle}>Spoken description</Text>
+              <Text style={styles.sectionTitle}>{t('Spoken description')}</Text>
               {!voiceTranscriptionSupported && (
                 <Text style={styles.sectionDescription}>
-                  Use keyboard dictation if you prefer speaking.
+                  {t('Use keyboard dictation if you prefer speaking.')}
                 </Text>
               )}
             </View>
@@ -150,8 +151,8 @@ export default function FieldNotesScreen({
                 onPress={onRecordSpokenDescription}
                 activeOpacity={0.86}
                 accessibilityRole="button"
-                accessibilityLabel={isTranscribingSpokenDescription ? 'Stop spoken description recording' : 'Start spoken description recording'}
-                accessibilityHint="Start or stop voice transcription for the spoken description"
+                accessibilityLabel={isTranscribingSpokenDescription ? t('Stop spoken description recording') : t('Start spoken description recording')}
+                accessibilityHint={t('Start or stop voice transcription for the spoken description')}
               >
                 <MaterialIcons
                   name={isTranscribingSpokenDescription ? 'stop' : 'keyboard-voice'}
@@ -160,21 +161,21 @@ export default function FieldNotesScreen({
                 />
               </TouchableOpacity>
               <Text style={styles.voiceButtonLabel}>
-                {isTranscribingSpokenDescription ? 'Tap again to stop' : 'Tap to record'}
+                {isTranscribingSpokenDescription ? t('Tap again to stop') : t('Tap to record')}
               </Text>
 
               {spokenDescription.trim().length > 0 ? (
                 <View style={styles.transcriptCard}>
                   <View style={styles.transcriptCardHeader}>
-                    <Text style={styles.transcriptCardLabel}>Transcript</Text>
+                    <Text style={styles.transcriptCardLabel}>{t('Transcript')}</Text>
                     <View style={styles.transcriptActions}>
                       <TouchableOpacity
                         onPress={onClearSpokenDescription}
                         accessibilityRole="button"
-                        accessibilityLabel="Clear saved transcript"
+                        accessibilityLabel={t('Clear saved transcript')}
                       >
                         <Text style={styles.transcriptActionText}>
-                          Clear
+                          {t('Clear')}
                         </Text>
                       </TouchableOpacity>
                     </View>
@@ -188,9 +189,9 @@ export default function FieldNotesScreen({
               style={[styles.textArea, styles.transcriptArea]}
               multiline
               textAlignVertical="top"
-              accessibilityLabel="Spoken description transcript"
-              accessibilityHint="Enter or dictate a transcript describing the place"
-              placeholder="Dictated transcript or transcribed voice note"
+              accessibilityLabel={t('Spoken description transcript')}
+              accessibilityHint={t('Enter or dictate a transcript describing the place')}
+              placeholder={t('Dictated transcript or transcribed voice note')}
               placeholderTextColor={Colors.textDisabled}
               value={spokenDescription}
               onChangeText={onSpokenDescriptionChange}
@@ -207,10 +208,10 @@ export default function FieldNotesScreen({
           onPress={onContinue}
           activeOpacity={0.84}
           accessibilityRole="button"
-          accessibilityLabel="Continue from notes"
-          accessibilityHint="Save the notes and continue to perceptual assessment"
+          accessibilityLabel={t('Continue from notes')}
+          accessibilityHint={t('Save the notes and continue to perceptual assessment')}
         >
-          <Text style={styles.continueButtonText}>Continue</Text>
+          <Text style={styles.continueButtonText}>{t('Continue')}</Text>
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
@@ -392,6 +393,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   promptChip: {
+    maxWidth: '100%',
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: Radius.full,

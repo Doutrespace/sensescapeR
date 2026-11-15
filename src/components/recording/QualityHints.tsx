@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Colors, Radius } from '../../theme/colors';
 import { QualityFlags } from '../../types/recording';
+import { t } from '../../i18n';
 
 type IconName = keyof typeof MaterialIcons.glyphMap;
 
@@ -53,9 +54,9 @@ export default function QualityHints({ flags, showDetails = false }: Props) {
             <MaterialIcons name={issue.icon} size={16} color={Colors.error} />
           </View>
           <View style={styles.textContainer}>
-            <Text style={styles.label}>{issue.label}</Text>
+            <Text style={styles.label}>{t(issue.label)}</Text>
             {showDetails && (
-              <Text style={styles.description}>{issue.description}</Text>
+              <Text style={styles.description}>{t(issue.description)}</Text>
             )}
           </View>
         </View>

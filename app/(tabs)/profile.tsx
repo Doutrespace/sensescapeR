@@ -32,6 +32,8 @@ import {
   type LocalStorageUsage,
 } from '../../src/services/storage/localStorage';
 import { forceSyncNow } from '../../src/services/sync/syncManager';
+import { t, tPlural, getLocaleTag } from '../../src/i18n';
+import { LanguageToggle } from '../../src/components/ui/LanguageToggle';
 
 export default function ProfileScreen() {
   const { totalCount, uploadedCount, pendingCount, loadRecordings } = useLibraryStore();
@@ -89,7 +91,7 @@ export default function ProfileScreen() {
       researchProfile.livingArea,
       researchProfile.occupation,
     ].filter(Boolean);
-    return parts.length > 0 ? parts.join(' · ') : 'Optional demographic context for soundscape research';
+    return parts.length > 0 ? parts.join(' · ') : t('Optional demographic context for soundscape research');
   }, [researchProfile]);
   const emojiAvatarOptions = ['🌿', '🌍', '🎧', '🌧️', '🕊️', '🌳', '🏙️', '🌊', '🎙️', '🚶'];
 
@@ -100,8 +102,8 @@ export default function ProfileScreen() {
       setStorageUsage(usage);
     } catch (error) {
       Alert.alert(
-        'Storage unavailable',
-        error instanceof Error ? error.message : 'Unable to inspect local storage.'
+        t('Storage unavailable'),
+        error instanceof Error ? error.message : t('Unable to inspect local storage.')
       );
     } finally {
       setIsLoadingStorage(false);
@@ -164,26 +166,26 @@ export default function ProfileScreen() {
   };
 
   const getCommunityVisibilityLabel = (value: CommunityVisibility) => {
-    return value === 'community' ? 'Community by default' : 'Private by default';
+    return value === 'community' ? t('Community by default') : t('Private by default');
   };
 
   const getRetentionLabel = (value: number | null) => {
     if (value === null) {
-      return 'Disabled';
+      return t('Disabled');
     }
 
-    return `${value} days`;
+    return t('{count} days', { count: value });
   };
 
   const handleSignOut = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     Alert.alert(
-      'Sign Out',
-      'Are you sure you want to sign out?',
+      t('Sign Out'),
+      t('Are you sure you want to sign out?'),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('Cancel'), style: 'cancel' },
         {
-          text: 'Sign Out',
+          text: t('Sign Out'),
           style: 'destructive',
           onPress: async () => {
             await signOut();
@@ -202,7 +204,7 @@ export default function ProfileScreen() {
   const handlePickAvatarImage = useCallback(async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
-      Alert.alert('Permission needed', 'Allow photo access to choose a profile picture.');
+      Alert.alert(t('Permission needed'), t('Allow photo access to choose a profile picture.'));
       return;
     }
 
@@ -228,7 +230,7 @@ export default function ProfileScreen() {
     if (isSignedIn) {
       const { error } = await updateProfileMetadata({ avatar_emoji: emoji });
       if (error) {
-        Alert.alert('Profile updated locally', 'The emoji avatar was saved on this device, but could not be synced to your account.');
+        Alert.alert(t('Profile updated locally'), t('The emoji avatar was saved on this device, but could not be synced to your account.'));
       }
     }
 
@@ -242,7 +244,7 @@ export default function ProfileScreen() {
     if (isSignedIn) {
       const { error } = await updateProfileMetadata({ avatar_emoji: null });
       if (error) {
-        Alert.alert('Avatar reset locally', 'The default avatar was restored on this device, but account sync failed.');
+        Alert.alert(t('Avatar reset locally'), t('The default avatar was restored on this device, but account sync failed.'));
       }
     }
 
@@ -253,8 +255,8 @@ export default function ProfileScreen() {
   const handleOpenResearchProfile = useCallback(() => {
     if (!isSignedIn) {
       Alert.alert(
-        'Sign in required',
-        'Create or sign in to an account before saving optional research profile details securely.'
+        t('Sign in required'),
+        t('Create or sign in to an account before saving optional research profile details securely.')
       );
       setShowAuthModal(true);
       return;
@@ -272,7 +274,7 @@ export default function ProfileScreen() {
 
     if (error) {
       Alert.alert(
-        'Profile update failed',
+        t('Profile update failed'),
         error.message || 'The research profile could not be saved right now.'
       );
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -288,19 +290,19 @@ export default function ProfileScreen() {
 
     if (isUploading) {
       Alert.alert(
-        'Sync in progress',
-        'Wait until the current upload finishes before clearing local data.'
+        t('Sync in progress'),
+        t('Wait until the current upload finishes before clearing local data.')
       );
       return;
     }
 
     Alert.alert(
-      'Clear local recordings?',
-      'This removes all recordings, photos, spectrograms, and queued uploads from this device. Uploaded Supabase copies are not deleted.',
+      t('Clear local recordings?'),
+      t('This removes all recordings, photos, spectrograms, and queued uploads from this device. Uploaded Supabase copies are not deleted.'),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('Cancel'), style: 'cancel' },
         {
-          text: 'Clear',
+          text: t('Clear'),
           style: 'destructive',
           onPress: async () => {
             setIsClearingStorage(true);
@@ -311,13 +313,13 @@ export default function ProfileScreen() {
               await loadStorageUsage();
               await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
               Alert.alert(
-                'Local data cleared',
-                `${result.deletedRecordings} recording${result.deletedRecordings === 1 ? '' : 's'} and ${result.deletedFiles} file${result.deletedFiles === 1 ? '' : 's'} removed.\n\nFreed ${formatStorageSize(result.freedBytes)}.`
+                t('Local data cleared'),
+                t('Recordings removed: {recordings}. Files removed: {files}.\n\nFreed {size}.', { recordings: result.deletedRecordings, files: result.deletedFiles, size: formatStorageSize(result.freedBytes) })
               );
             } catch (error) {
               Alert.alert(
-                'Clear failed',
-                error instanceof Error ? error.message : 'Unable to clear local data.'
+                t('Clear failed'),
+                error instanceof Error ? error.message : t('Unable to clear local data.')
               );
             } finally {
               setIsClearingStorage(false);
@@ -331,14 +333,14 @@ export default function ProfileScreen() {
   const handleAutoCleanupRetention = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     Alert.alert(
-      'Auto cleanup retention',
-      'Choose how long local recordings should remain on device before automatic cleanup runs on startup.',
+      t('Auto cleanup retention'),
+      t('Choose how long local recordings should remain on device before automatic cleanup runs on startup.'),
       [
-        { text: '30 days', onPress: () => void setAutoCleanupRetentionDays(30) },
-        { text: '90 days', onPress: () => void setAutoCleanupRetentionDays(90) },
-        { text: '180 days', onPress: () => void setAutoCleanupRetentionDays(180) },
-        { text: 'Never', onPress: () => void setAutoCleanupRetentionDays(null) },
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('30 days'), onPress: () => void setAutoCleanupRetentionDays(30) },
+        { text: t('90 days'), onPress: () => void setAutoCleanupRetentionDays(90) },
+        { text: t('180 days'), onPress: () => void setAutoCleanupRetentionDays(180) },
+        { text: t('Never'), onPress: () => void setAutoCleanupRetentionDays(null) },
+        { text: t('Cancel'), style: 'cancel' },
       ]
     );
   }, [setAutoCleanupRetentionDays]);
@@ -346,12 +348,12 @@ export default function ProfileScreen() {
   const handleDefaultCommunityVisibility = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     Alert.alert(
-      'Default sharing',
-      'Choose whether new recordings start as community-shared or private by default.',
+      t('Default sharing'),
+      t('Choose whether new recordings start as community-shared or private by default.'),
       [
-        { text: 'Community', onPress: () => void setDefaultCommunityVisibility('community') },
-        { text: 'Private', onPress: () => void setDefaultCommunityVisibility('private') },
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('Community'), onPress: () => void setDefaultCommunityVisibility('community') },
+        { text: t('Private'), onPress: () => void setDefaultCommunityVisibility('private') },
+        { text: t('Cancel'), style: 'cancel' },
       ]
     );
   }, [setDefaultCommunityVisibility]);
@@ -359,16 +361,16 @@ export default function ProfileScreen() {
   const handleRunRetentionCleanup = useCallback(async () => {
     if (autoCleanupRetentionDays === null) {
       Alert.alert(
-        'Auto cleanup disabled',
-        'Choose a retention period first to remove expired local recordings.'
+        t('Auto cleanup disabled'),
+        t('Choose a retention period first to remove expired local recordings.')
       );
       return;
     }
 
     if (isUploading) {
       Alert.alert(
-        'Sync in progress',
-        'Wait until the current upload finishes before removing expired local recordings.'
+        t('Sync in progress'),
+        t('Wait until the current upload finishes before removing expired local recordings.')
       );
       return;
     }
@@ -386,15 +388,15 @@ export default function ProfileScreen() {
       await loadStorageUsage();
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       Alert.alert(
-        'Cleanup complete',
+        t('Cleanup complete'),
         result.deletedRecordings > 0
-          ? `${result.deletedRecordings} recording${result.deletedRecordings === 1 ? '' : 's'} and ${result.deletedFiles} file${result.deletedFiles === 1 ? '' : 's'} removed.\n\nFreed ${formatStorageSize(result.freedBytes)}.`
-          : 'No local recordings matched the current retention rule.'
+          ? t('Recordings removed: {recordings}. Files removed: {files}.\n\nFreed {size}.', { recordings: result.deletedRecordings, files: result.deletedFiles, size: formatStorageSize(result.freedBytes) })
+          : t('No local recordings matched the current retention rule.')
       );
     } catch (error) {
       Alert.alert(
-        'Cleanup failed',
-        error instanceof Error ? error.message : 'Unable to remove expired local recordings.'
+        t('Cleanup failed'),
+        error instanceof Error ? error.message : t('Unable to remove expired local recordings.')
       );
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } finally {
@@ -416,7 +418,7 @@ export default function ProfileScreen() {
     try {
       const recordings = await getRecordingsWithPerceptions();
       if (recordings.length === 0) {
-        Alert.alert('Nothing to export', 'Create at least one recording before exporting data.');
+        Alert.alert(t('Nothing to export'), t('Create at least one recording before exporting data.'));
         return;
       }
 
@@ -431,29 +433,29 @@ export default function ProfileScreen() {
       if (!result.success) {
         setLastExport({
           format,
-          message: result.error ?? 'The dataset export could not be completed.',
+          message: result.error ?? t('The dataset export could not be completed.'),
           status: 'error',
         });
-        Alert.alert('Export failed', result.error ?? 'Unable to export recordings.');
+        Alert.alert(t('Export failed'), result.error ?? t('Unable to export recordings.'));
         await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         return;
       }
 
       setLastExport({
         format,
-        message: `A ${format.toUpperCase()} dataset export was prepared from Profile.`,
+        message: t('A {format} dataset export was prepared from Profile.', { format: format.toUpperCase() }),
         status: 'success',
       });
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (error) {
       setLastExport({
         format,
-        message: error instanceof Error ? error.message : 'The dataset export could not be completed.',
+        message: error instanceof Error ? error.message : t('The dataset export could not be completed.'),
         status: 'error',
       });
       Alert.alert(
-        'Export failed',
-        error instanceof Error ? error.message : 'Unable to export recordings.'
+        t('Export failed'),
+        error instanceof Error ? error.message : t('Unable to export recordings.')
       );
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } finally {
@@ -542,7 +544,7 @@ export default function ProfileScreen() {
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalHeaderRow}>
-            <Text style={styles.modalTitle}>Default Privacy</Text>
+            <Text style={styles.modalTitle}>{t('Default Privacy')}</Text>
             <TouchableOpacity onPress={() => setShowPrivacyModal(false)}>
               <MaterialIcons name="close" size={24} color={Colors.text} />
             </TouchableOpacity>
@@ -567,7 +569,7 @@ export default function ProfileScreen() {
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalHeaderRow}>
-            <Text style={styles.modalTitle}>Default License</Text>
+            <Text style={styles.modalTitle}>{t('Default License')}</Text>
             <TouchableOpacity onPress={() => setShowLicenseModal(false)}>
               <MaterialIcons name="close" size={24} color={Colors.text} />
             </TouchableOpacity>
@@ -592,7 +594,7 @@ export default function ProfileScreen() {
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalHeaderRow}>
-            <Text style={styles.modalTitle}>Profile Picture</Text>
+            <Text style={styles.modalTitle}>{t('Profile Picture')}</Text>
             <TouchableOpacity onPress={() => setShowAvatarModal(false)}>
               <MaterialIcons name="close" size={24} color={Colors.text} />
             </TouchableOpacity>
@@ -601,13 +603,13 @@ export default function ProfileScreen() {
             <TouchableOpacity style={styles.avatarActionCard} onPress={() => void handlePickAvatarImage()}>
               <MaterialIcons name="photo-camera" size={22} color={Colors.primary} />
               <View style={styles.avatarActionContent}>
-                <Text style={styles.avatarActionTitle}>Choose Photo</Text>
-                <Text style={styles.avatarActionText}>Pick a profile image from your photo library.</Text>
+                <Text style={styles.avatarActionTitle}>{t('Choose Photo')}</Text>
+                <Text style={styles.avatarActionText}>{t('Pick a profile image from your photo library.')}</Text>
               </View>
             </TouchableOpacity>
 
             <View style={styles.avatarEmojiSection}>
-              <Text style={styles.avatarSectionTitle}>Or choose an emoji</Text>
+              <Text style={styles.avatarSectionTitle}>{t('Or choose an emoji')}</Text>
               <View style={styles.avatarEmojiGrid}>
                 {emojiAvatarOptions.map((emoji) => (
                   <TouchableOpacity
@@ -628,7 +630,7 @@ export default function ProfileScreen() {
 
             <TouchableOpacity style={styles.avatarResetButton} onPress={() => void handleClearAvatar()}>
               <MaterialIcons name="refresh" size={18} color={Colors.textMuted} />
-              <Text style={styles.avatarResetText}>Use default avatar</Text>
+              <Text style={styles.avatarResetText}>{t('Use default avatar')}</Text>
             </TouchableOpacity>
           </ScrollView>
         </View>
@@ -642,7 +644,7 @@ export default function ProfileScreen() {
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalHeaderRow}>
-            <Text style={styles.modalTitle}>Research Profile</Text>
+            <Text style={styles.modalTitle}>{t('Research Profile')}</Text>
             <TouchableOpacity onPress={() => setShowResearchProfileModal(false)}>
               <MaterialIcons name="close" size={24} color={Colors.text} />
             </TouchableOpacity>
@@ -658,10 +660,10 @@ export default function ProfileScreen() {
               onPress={() => void handleSaveResearchProfile()}
               activeOpacity={0.85}
               accessibilityRole="button"
-              accessibilityLabel="Save research profile"
-              accessibilityHint="Save optional demographic details securely to your account"
+              accessibilityLabel={t('Save research profile')}
+              accessibilityHint={t('Save optional demographic details securely to your account')}
             >
-              <Text style={styles.profileSaveButtonText}>Save Research Profile</Text>
+              <Text style={styles.profileSaveButtonText}>{t('Save Research Profile')}</Text>
             </TouchableOpacity>
           </ScrollView>
         </View>
@@ -674,8 +676,8 @@ export default function ProfileScreen() {
             style={styles.avatar}
             onPress={() => setShowAvatarModal(true)}
             accessibilityRole="button"
-            accessibilityLabel="Change profile picture"
-            accessibilityHint="Choose a profile photo or emoji"
+            accessibilityLabel={t('Change profile picture')}
+            accessibilityHint={t('Choose a profile photo or emoji')}
           >
             {effectiveAvatarMode === 'image' && profileAvatarImageUri ? (
               <Image source={{ uri: profileAvatarImageUri }} style={styles.avatarImage} />
@@ -690,7 +692,7 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         </ProfileBadge>
         <Text style={styles.title}>
-          {isSignedIn ? user?.email?.split('@')[0] : 'Soundscape Explorer'}
+          {isSignedIn ? user?.email?.split('@')[0] : t('Soundscape Explorer')}
         </Text>
         {isSignedIn && user && (
           <Text style={styles.emailText}>{user.email}</Text>
@@ -706,7 +708,7 @@ export default function ProfileScreen() {
             ]}
           />
           <Text style={styles.statusText}>
-            {isOnline ? 'Online' : 'Offline'}
+            {isOnline ? t('Online') : t('Offline')}
           </Text>
         </View>
 
@@ -723,7 +725,7 @@ export default function ProfileScreen() {
               color={isSignedIn ? Colors.error : Colors.background}
             />
             <Text style={[styles.authButtonText, isSignedIn && styles.authButtonTextSignOut]}>
-              {isSignedIn ? 'Sign Out' : 'Sign In'}
+              {isSignedIn ? t('Sign Out') : t('Sign In')}
             </Text>
           </TouchableOpacity>
         )}
@@ -737,26 +739,26 @@ export default function ProfileScreen() {
             <Text style={[styles.statValue, { color: stat.color }]}>
               {stat.value}
             </Text>
-            <Text style={styles.statLabel}>{stat.label}</Text>
+            <Text style={styles.statLabel}>{t(stat.label)}</Text>
           </View>
         ))}
       </View>
 
       {/* Contribution summary */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Your Contributions</Text>
+        <Text style={styles.sectionTitle}>{t('Your Contributions')}</Text>
         <View style={styles.contributionCard}>
           <View style={styles.contributionRow}>
             <MaterialIcons name="check-circle" size={20} color={Colors.success} />
             <Text style={styles.contributionText}>
-              {totalUploaded} recordings shared with the community
+              {tPlural(totalUploaded, '{count} recording shared with the community', '{count} recordings shared with the community')}
             </Text>
           </View>
           {totalFailed > 0 && (
             <View style={styles.contributionRow}>
               <MaterialIcons name="error" size={20} color={Colors.error} />
               <Text style={styles.contributionText}>
-                {totalFailed} uploads failed (will retry automatically)
+                {tPlural(totalFailed, '{count} upload failed (will retry automatically)', '{count} uploads failed (will retry automatically)')}
               </Text>
             </View>
           )}
@@ -764,7 +766,7 @@ export default function ProfileScreen() {
             <View style={styles.contributionRow}>
               <MaterialIcons name="mic" size={20} color={Colors.primary} />
               <Text style={styles.contributionText}>
-                Start recording to contribute to soundscape research!
+                {t('Start recording to contribute to soundscape research!')}
               </Text>
             </View>
           )}
@@ -773,7 +775,7 @@ export default function ProfileScreen() {
 
       {activityPreview.length > 0 && (
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Recent Activity</Text>
+          <Text style={styles.sectionTitle}>{t('Recent Activity')}</Text>
           <View style={styles.activityCard}>
             {activityPreview.map((activity) => (
               <View key={activity.id} style={styles.activityRow}>
@@ -791,12 +793,12 @@ export default function ProfileScreen() {
                 </View>
                 <View style={styles.activityContent}>
                   <Text style={styles.activityTitle}>
-                    {activity.title}
+                    {t(activity.title)}
                     {activity.type === 'export' && ' '}
                     {activity.type === 'export' ? `(${activity.format.toUpperCase()})` : ''}
                   </Text>
                   <Text style={styles.activityMessage}>{activity.message}</Text>
-                  <Text style={styles.activityTime}>{new Date(activity.at).toLocaleString()}</Text>
+                  <Text style={styles.activityTime}>{new Date(activity.at).toLocaleString(getLocaleTag())}</Text>
                 </View>
               </View>
             ))}
@@ -810,10 +812,10 @@ export default function ProfileScreen() {
                 }}
                 activeOpacity={0.8}
                 accessibilityRole="button"
-                accessibilityLabel="View full activity history"
-                accessibilityHint="Open the full sync and export activity history"
+                accessibilityLabel={t('View full activity history')}
+                accessibilityHint={t('Open the full sync and export activity history')}
               >
-                <Text style={styles.historyButtonText}>View full history</Text>
+                <Text style={styles.historyButtonText}>{t('View full history')}</Text>
                 <MaterialIcons name="chevron-right" size={18} color={Colors.primary} />
               </TouchableOpacity>
             )}
@@ -822,10 +824,10 @@ export default function ProfileScreen() {
       )}
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Export</Text>
+        <Text style={styles.sectionTitle}>{t('Export')}</Text>
         <View style={styles.exportCard}>
           <Text style={styles.exportIntro}>
-            Export your full local dataset for analysis or mapping.
+            {t('Export your full local dataset for analysis or mapping.')}
           </Text>
           <View style={styles.exportActions}>
             {[
@@ -843,8 +845,8 @@ export default function ProfileScreen() {
                   disabled={activeExportFormat !== null}
                   activeOpacity={0.8}
                   accessibilityRole="button"
-                  accessibilityLabel={`Export all recordings as ${option.label}`}
-                  accessibilityHint="Prepare a bulk export of all local recordings"
+                  accessibilityLabel={t('Export all recordings as {format}', { format: option.label })}
+                  accessibilityHint={t('Prepare a bulk export of all local recordings')}
                   accessibilityState={{ disabled: activeExportFormat !== null }}
                 >
                   {isActive ? (
@@ -852,20 +854,20 @@ export default function ProfileScreen() {
                   ) : (
                     <MaterialIcons name={option.icon} size={18} color={Colors.primary} />
                   )}
-                  <Text style={styles.exportActionText}>{option.label}</Text>
+                  <Text style={styles.exportActionText}>{t(option.label)}</Text>
                 </TouchableOpacity>
               );
             })}
           </View>
           <Text style={styles.exportFootnote}>
-            JSON preserves the full payload, CSV works for spreadsheets, GeoJSON opens in GIS tools, and Soundscapy CSV mirrors research-focused field names.
+            {t('JSON preserves the full payload, CSV works for spreadsheets, GeoJSON opens in GIS tools, and Soundscapy CSV mirrors research-focused field names.')}
           </Text>
         </View>
       </View>
 
       {/* Settings */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Settings</Text>
+        <Text style={styles.sectionTitle}>{t('Settings')}</Text>
 
         <TouchableOpacity
           style={styles.settingItem}
@@ -873,11 +875,11 @@ export default function ProfileScreen() {
         >
           <MaterialIcons name="cloud-upload" size={24} color={Colors.text} />
           <View style={styles.settingContent}>
-            <Text style={styles.settingLabel}>Auto-upload</Text>
+            <Text style={styles.settingLabel}>{t('Auto-upload')}</Text>
             <Text style={styles.settingDescription}>
               {autoUploadWifiOnly
-                ? 'Only sync queued recordings on Wi-Fi'
-                : 'Allow queued recordings to sync on any connection'}
+                ? t('Only sync queued recordings on Wi-Fi')
+                : t('Allow queued recordings to sync on any connection')}
             </Text>
           </View>
           <Switch
@@ -907,13 +909,22 @@ export default function ProfileScreen() {
         >
           <MaterialIcons name="shield" size={24} color={Colors.text} />
           <View style={styles.settingContent}>
-            <Text style={styles.settingLabel}>Default privacy</Text>
+            <Text style={styles.settingLabel}>{t('Default privacy')}</Text>
             <Text style={styles.settingDescription}>
               {getPrivacyLabel(defaultPrivacyMode)}
             </Text>
           </View>
           <MaterialIcons name="chevron-right" size={24} color={Colors.textMuted} />
         </TouchableOpacity>
+
+        <View style={styles.settingItem}>
+          <MaterialIcons name="language" size={24} color={Colors.text} />
+          <View style={styles.settingContent}>
+            <Text style={styles.settingLabel}>{t('Language')}</Text>
+            <Text style={styles.settingDescription}>{t('Language of the app')}</Text>
+          </View>
+          <LanguageToggle />
+        </View>
 
         <TouchableOpacity
           style={styles.settingItem}
@@ -925,7 +936,7 @@ export default function ProfileScreen() {
         >
           <MaterialIcons name="balance" size={24} color={Colors.text} />
           <View style={styles.settingContent}>
-            <Text style={styles.settingLabel}>Default license</Text>
+            <Text style={styles.settingLabel}>{t('Default license')}</Text>
             <Text style={styles.settingDescription}>
               {getLicenseLabel(defaultLicense)}
             </Text>
@@ -938,8 +949,8 @@ export default function ProfileScreen() {
           onPress={handleOpenResearchProfile}
           activeOpacity={0.7}
           accessibilityRole="button"
-          accessibilityLabel="Research profile"
-          accessibilityHint="Set optional demographic details for soundscape research"
+          accessibilityLabel={t('Research profile')}
+          accessibilityHint={t('Set optional demographic details for soundscape research')}
         >
           <MaterialIcons
             name={hasResearchProfileData(researchProfile) ? 'badge' : 'fact-check'}
@@ -947,7 +958,7 @@ export default function ProfileScreen() {
             color={Colors.text}
           />
           <View style={styles.settingContent}>
-            <Text style={styles.settingLabel}>Research profile</Text>
+            <Text style={styles.settingLabel}>{t('Research profile')}</Text>
             <Text style={styles.settingDescription}>
               {researchProfileSummary}
             </Text>
@@ -966,7 +977,7 @@ export default function ProfileScreen() {
             color={Colors.text}
           />
           <View style={styles.settingContent}>
-            <Text style={styles.settingLabel}>Default sharing</Text>
+            <Text style={styles.settingLabel}>{t('Default sharing')}</Text>
             <Text style={styles.settingDescription}>
               {getCommunityVisibilityLabel(defaultCommunityVisibility)}
             </Text>
@@ -979,15 +990,15 @@ export default function ProfileScreen() {
           onPress={loadStorageUsage}
           activeOpacity={0.7}
           accessibilityRole="button"
-          accessibilityLabel="Refresh storage usage"
-          accessibilityHint="Inspect the space used by local recordings and cached media"
+          accessibilityLabel={t('Refresh storage usage')}
+          accessibilityHint={t('Inspect the space used by local recordings and cached media')}
         >
           <MaterialIcons name="storage" size={24} color={Colors.text} />
           <View style={styles.settingContent}>
-            <Text style={styles.settingLabel}>Storage</Text>
+            <Text style={styles.settingLabel}>{t('Storage')}</Text>
             <Text style={styles.settingDescription}>
               {isLoadingStorage
-                ? 'Inspecting local recordings and cache...'
+                ? t('Inspecting local recordings and cache...')
                 : `${formatStorageSize(storageUsage?.totalBytes ?? 0)} on this device`}
             </Text>
           </View>
@@ -1001,19 +1012,19 @@ export default function ProfileScreen() {
         <View style={styles.storageCard}>
           <View style={styles.storageSummaryRow}>
             <View style={styles.storageStat}>
-              <Text style={styles.storageStatLabel}>Audio</Text>
+              <Text style={styles.storageStatLabel}>{t('Audio')}</Text>
               <Text style={styles.storageStatValue}>
                 {formatStorageSize(storageUsage?.audioBytes ?? 0)}
               </Text>
             </View>
             <View style={styles.storageStat}>
-              <Text style={styles.storageStatLabel}>Photos</Text>
+              <Text style={styles.storageStatLabel}>{t('Photos')}</Text>
               <Text style={styles.storageStatValue}>
                 {formatStorageSize(storageUsage?.photoBytes ?? 0)}
               </Text>
             </View>
             <View style={styles.storageStat}>
-              <Text style={styles.storageStatLabel}>Spectrograms</Text>
+              <Text style={styles.storageStatLabel}>{t('Spectrograms')}</Text>
               <Text style={styles.storageStatValue}>
                 {formatStorageSize(storageUsage?.spectrogramBytes ?? 0)}
               </Text>
@@ -1030,11 +1041,11 @@ export default function ProfileScreen() {
               onPress={handleAutoCleanupRetention}
               activeOpacity={0.8}
               accessibilityRole="button"
-              accessibilityLabel="Automatic cleanup retention"
-              accessibilityHint="Choose how long local recordings remain on device before automatic cleanup"
+              accessibilityLabel={t('Automatic cleanup retention')}
+              accessibilityHint={t('Choose how long local recordings remain on device before automatic cleanup')}
             >
               <View style={styles.retentionMeta}>
-                <Text style={styles.retentionLabel}>Automatic cleanup</Text>
+                <Text style={styles.retentionLabel}>{t('Automatic cleanup')}</Text>
                 <Text style={styles.retentionDescription}>
                   {getRetentionLabel(autoCleanupRetentionDays)}
                 </Text>
@@ -1044,9 +1055,9 @@ export default function ProfileScreen() {
 
             <View style={styles.retentionRow}>
               <View style={styles.retentionMeta}>
-                <Text style={styles.retentionLabel}>Uploaded only</Text>
+                <Text style={styles.retentionLabel}>{t('Uploaded only')}</Text>
                 <Text style={styles.retentionDescription}>
-                  Keep unsynced recordings on device and prune only uploaded copies
+                  {t('Keep unsynced recordings on device and prune only uploaded copies')}
                 </Text>
               </View>
               <Switch
@@ -1054,7 +1065,7 @@ export default function ProfileScreen() {
                 onValueChange={(value) => void setAutoCleanupUploadedOnly(value)}
                 trackColor={{ false: Colors.surfaceHighlight, true: Colors.primaryMuted }}
                 thumbColor={autoCleanupUploadedOnly ? Colors.primary : Colors.surface}
-                accessibilityLabel="Limit automatic cleanup to uploaded recordings"
+                accessibilityLabel={t('Limit automatic cleanup to uploaded recordings')}
               />
             </View>
 
@@ -1067,8 +1078,8 @@ export default function ProfileScreen() {
               disabled={isRunningRetentionCleanup || autoCleanupRetentionDays === null}
               activeOpacity={0.8}
               accessibilityRole="button"
-              accessibilityLabel="Run retention cleanup now"
-              accessibilityHint="Remove local recordings that exceed the current retention rule"
+              accessibilityLabel={t('Run retention cleanup now')}
+              accessibilityHint={t('Remove local recordings that exceed the current retention rule')}
               accessibilityState={{ disabled: isRunningRetentionCleanup || autoCleanupRetentionDays === null }}
             >
               {isRunningRetentionCleanup ? (
@@ -1077,7 +1088,7 @@ export default function ProfileScreen() {
                 <MaterialIcons name="auto-delete" size={18} color={Colors.text} />
               )}
               <Text style={styles.retentionRunText}>
-                {isRunningRetentionCleanup ? 'Cleaning...' : 'Run cleanup now'}
+                {isRunningRetentionCleanup ? t('Cleaning...') : t('Run cleanup now')}
               </Text>
             </TouchableOpacity>
           </View>
@@ -1088,8 +1099,8 @@ export default function ProfileScreen() {
             disabled={isClearingStorage}
             activeOpacity={0.8}
             accessibilityRole="button"
-            accessibilityLabel="Clear all local data"
-            accessibilityHint="Remove all recordings, photos, spectrograms, and queued uploads from this device"
+            accessibilityLabel={t('Clear all local data')}
+            accessibilityHint={t('Remove all recordings, photos, spectrograms, and queued uploads from this device')}
             accessibilityState={{ disabled: isClearingStorage }}
           >
             {isClearingStorage ? (
@@ -1098,7 +1109,7 @@ export default function ProfileScreen() {
               <MaterialIcons name="delete-outline" size={18} color={Colors.error} />
             )}
             <Text style={styles.clearStorageText}>
-              {isClearingStorage ? 'Clearing...' : 'Clear local data'}
+              {isClearingStorage ? t('Clearing...') : t('Clear local data')}
             </Text>
           </TouchableOpacity>
         </View>
@@ -1108,24 +1119,24 @@ export default function ProfileScreen() {
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             Alert.alert(
-              'Notifications not implemented',
-              'Background reminders and notification preferences are not wired yet.'
+              t('Notifications not implemented'),
+              t('Background reminders and notification preferences are not wired yet.')
             );
           }}
           activeOpacity={0.7}
           accessibilityRole="button"
-          accessibilityLabel="Notifications setting"
-          accessibilityHint="Notification preferences are not yet implemented"
+          accessibilityLabel={t('Notifications setting')}
+          accessibilityHint={t('Notification preferences are not yet implemented')}
         >
           <MaterialIcons name="notifications" size={24} color={Colors.text} />
           <View style={styles.settingContent}>
-            <Text style={styles.settingLabel}>Notifications</Text>
+            <Text style={styles.settingLabel}>{t('Notifications')}</Text>
             <Text style={styles.settingDescription}>
-              Recording reminders and upload status
+              {t('Recording reminders and upload status')}
             </Text>
           </View>
           <View style={styles.comingSoonBadge}>
-            <Text style={styles.comingSoonText}>Soon</Text>
+            <Text style={styles.comingSoonText}>{t('Soon')}</Text>
           </View>
         </TouchableOpacity>
 
@@ -1134,21 +1145,21 @@ export default function ProfileScreen() {
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             Alert.alert(
-              'About Soundscape Explorer',
-              'Version 1.0.0\n\nAn ISO 12913-aligned soundscape perception capture app for acoustic research.\n\nBuilt with Expo and React Native.',
-              [{ text: 'OK' }]
+              t('About Soundscape Explorer'),
+              t('Version 1.0.0\n\nAn ISO 12913-aligned soundscape perception capture app for acoustic research.\n\nBuilt with Expo and React Native.'),
+              [{ text: t('OK') }]
             );
           }}
           activeOpacity={0.7}
           accessibilityRole="button"
-          accessibilityLabel="About Soundscape Explorer"
-          accessibilityHint="Show app version and ISO 12913 information"
+          accessibilityLabel={t('About Soundscape Explorer')}
+          accessibilityHint={t('Show app version and ISO 12913 information')}
         >
           <MaterialIcons name="info" size={24} color={Colors.text} />
           <View style={styles.settingContent}>
-            <Text style={styles.settingLabel}>About</Text>
+            <Text style={styles.settingLabel}>{t('About')}</Text>
             <Text style={styles.settingDescription}>
-              App version and ISO 12913 info
+              {t('App version and ISO 12913 info')}
             </Text>
           </View>
           <MaterialIcons name="chevron-right" size={24} color={Colors.textMuted} />
@@ -1157,16 +1168,13 @@ export default function ProfileScreen() {
 
       {/* ISO 12913 info */}
       <View style={styles.infoBox}>
-        <Text style={styles.infoTitle}>About ISO 12913</Text>
+        <Text style={styles.infoTitle}>{t('About ISO 12913')}</Text>
         <Text style={styles.infoText}>
-          This app follows the ISO 12913 standard for soundscape research,
-          capturing the core pleasant and eventful perceptual dimensions
-          alongside recording, context, and location metadata for
-          standardized soundscape assessment.
+          {t('This app follows the ISO 12913 standard for soundscape research, capturing the core pleasant and eventful perceptual dimensions alongside recording, context, and location metadata for standardized soundscape assessment.')}
         </Text>
       </View>
 
-      <Text style={styles.versionText}>Version 1.0.0</Text>
+      <Text style={styles.versionText}>{t('Version 1.0.0')}</Text>
     </ScrollView>
   );
 }

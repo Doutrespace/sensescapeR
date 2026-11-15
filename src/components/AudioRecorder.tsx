@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, TouchableOpacity, Animated } from 'react-native
 import { Audio } from 'expo-av';
 import { Colors } from '../theme/colors';
 import { LoggingService } from '../services/logging';
+import { t } from '../i18n';
 
 const RECORDING_OPTIONS_WAV: Audio.RecordingOptions = {
     isMeteringEnabled: true,
@@ -104,11 +105,11 @@ export default function AudioRecorder({ onRecordingComplete }: Props) {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Soundscape Recorder</Text>
+            <Text style={styles.title}>{t('Soundscape Recorder')}</Text>
             <Text style={styles.subtitle}>
                 {isRecording
                     ? `Recording... ${(duration / 1000).toFixed(1)}s / 10.0s`
-                    : 'Ready to record exactly 10 seconds of environment audio'}
+                    : t('Ready to record exactly 10 seconds of environment audio')}
             </Text>
 
             <TouchableOpacity
@@ -116,7 +117,7 @@ export default function AudioRecorder({ onRecordingComplete }: Props) {
                 onPress={isRecording ? () => { } : startRecording}
                 disabled={isRecording}
             >
-                <Text style={styles.buttonText}>{isRecording ? 'Recording...' : 'Start Measurement'}</Text>
+                <Text style={styles.buttonText}>{isRecording ? t('Recording...') : t('Start Measurement')}</Text>
             </TouchableOpacity>
 
             {isRecording && (

@@ -5,6 +5,7 @@ import { Colors } from '../../theme/colors';
 import { RecordingFilters, ProtocolType, HabitatType, SyncStatus } from '../../types/recording';
 import { PROTOCOLS } from '../../constants/protocols';
 import { HABITATS } from '../../constants/habitats';
+import { t } from '../../i18n';
 
 interface Props {
   filters: RecordingFilters;
@@ -59,11 +60,11 @@ export default function FilterPanel({
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Filters</Text>
+        <Text style={styles.title}>{t('Filters')}</Text>
         <View style={styles.headerActions}>
           {hasActiveFilters && (
             <TouchableOpacity onPress={onClear}>
-              <Text style={styles.clearButton}>Clear All</Text>
+              <Text style={styles.clearButton}>{t('Clear All')}</Text>
             </TouchableOpacity>
           )}
           <TouchableOpacity onPress={onClose} style={styles.closeButton}>
@@ -75,7 +76,7 @@ export default function FilterPanel({
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
         {/* Protocol filters */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Protocol</Text>
+          <Text style={styles.sectionTitle}>{t('Protocol')}</Text>
           <View style={styles.chipRow}>
             {PROTOCOLS.map((protocol) => {
               const isSelected = filters.protocols?.includes(protocol.value);
@@ -86,7 +87,7 @@ export default function FilterPanel({
                   onPress={() => toggleProtocol(protocol.value)}
                 >
                   <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>
-                    {protocol.shortLabel}
+                    {t(protocol.shortLabel)}
                   </Text>
                 </TouchableOpacity>
               );
@@ -96,7 +97,7 @@ export default function FilterPanel({
 
         {/* Sync status filters */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Status</Text>
+          <Text style={styles.sectionTitle}>{t('Status')}</Text>
           <View style={styles.chipRow}>
             {SYNC_STATUSES.map((status) => {
               const isSelected = filters.syncStatus?.includes(status.value);
@@ -111,7 +112,7 @@ export default function FilterPanel({
                 >
                   <View style={[styles.statusDot, { backgroundColor: status.color }]} />
                   <Text style={[styles.chipText, isSelected && { color: status.color }]}>
-                    {status.label}
+                    {t(status.label)}
                   </Text>
                 </TouchableOpacity>
               );
@@ -121,7 +122,7 @@ export default function FilterPanel({
 
         {/* Habitat filters */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Location Type</Text>
+          <Text style={styles.sectionTitle}>{t('Location Type')}</Text>
           <View style={styles.chipRow}>
             {HABITATS.slice(0, 6).map((habitat) => {
               const isSelected = filters.habitats?.includes(habitat.value);
@@ -133,7 +134,7 @@ export default function FilterPanel({
                 >
                   <Text style={styles.chipIcon}>{habitat.icon}</Text>
                   <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>
-                    {habitat.label}
+                    {t(habitat.label)}
                   </Text>
                 </TouchableOpacity>
               );

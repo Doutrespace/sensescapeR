@@ -2,6 +2,7 @@ import React, { useMemo, useRef } from 'react';
 import { PanResponder, Platform, StyleSheet, Text, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { Colors, Radius } from '../../theme/colors';
+import { t } from '../../i18n';
 
 const MARKER_SIZE = 44;
 
@@ -34,10 +35,8 @@ interface Props {
   accentColor?: string;
   /** Background tint per quadrant. */
   quadrantColors?: Quadrants<string>;
-  /** Pictogram shown in each corner as an orientation aid. */
-  quadrantEmoji?: Quadrants<string>;
-  /** Shown on the marker itself, e.g. a face that follows the rating. */
-  markerEmoji?: string;
+  /** Word shown in each corner, as on the printed Affect Grid. */
+  quadrantLabels?: Quadrants<string>;
   accessibilityLabel: string;
 }
 
@@ -65,8 +64,7 @@ export function Grid2DInput({
   bottomLabel,
   accentColor = Colors.primary,
   quadrantColors,
-  quadrantEmoji,
-  markerEmoji,
+  quadrantLabels,
   accessibilityLabel,
 }: Props) {
   const latest = useRef({ size, steps, value, onChange });
@@ -135,7 +133,7 @@ export function Grid2DInput({
       accessible
       accessibilityRole="adjustable"
       accessibilityLabel={accessibilityLabel}
-      accessibilityHint="Tap or drag inside the square to place the marker"
+      accessibilityHint={t('Tap or drag inside the square to place the marker')}
     >
       {quadrantColors && (
         <View pointerEvents="none" style={styles.quadrants}>
@@ -153,12 +151,12 @@ export function Grid2DInput({
         </React.Fragment>
       ))}
 
-      {quadrantEmoji && (
+      {quadrantLabels && (
         <View pointerEvents="none" style={StyleSheet.absoluteFill}>
-          <Text style={[styles.cornerEmoji, styles.cornerTopLeft]}>{quadrantEmoji.topLeft}</Text>
-          <Text style={[styles.cornerEmoji, styles.cornerTopRight]}>{quadrantEmoji.topRight}</Text>
-          <Text style={[styles.cornerEmoji, styles.cornerBottomLeft]}>{quadrantEmoji.bottomLeft}</Text>
-          <Text style={[styles.cornerEmoji, styles.cornerBottomRight]}>{quadrantEmoji.bottomRight}</Text>
+          <Text style={[styles.cornerLabel, styles.cornerTopLeft]}>{quadrantLabels.topLeft}</Text>
+          <Text style={[styles.cornerLabel, styles.cornerTopRight]}>{quadrantLabels.topRight}</Text>
+          <Text style={[styles.cornerLabel, styles.cornerBottomLeft]}>{quadrantLabels.bottomLeft}</Text>
+          <Text style={[styles.cornerLabel, styles.cornerBottomRight]}>{quadrantLabels.bottomRight}</Text>
         </View>
       )}
 
@@ -188,16 +186,12 @@ export function Grid2DInput({
             },
           ]}
         >
-          {markerEmoji ? (
-            <Text style={styles.markerEmoji}>{markerEmoji}</Text>
-          ) : (
-            <View style={[styles.markerCore, { backgroundColor: accentColor }]} />
-          )}
+          <View style={[styles.markerCore, { backgroundColor: accentColor }]} />
         </View>
       ) : (
         <View style={styles.hint} pointerEvents="none">
           <View style={styles.hintPill}>
-            <Text style={styles.hintText}>Tap or drag to place</Text>
+            <Text style={styles.hintText}>{t('Tap or drag to place')}</Text>
           </View>
         </View>
       )}
@@ -241,25 +235,27 @@ const styles = StyleSheet.create({
     bottom: 0,
     width: 1,
   },
-  cornerEmoji: {
+  cornerLabel: {
     position: 'absolute',
-    fontSize: 26,
-    opacity: 0.85,
+    fontSize: 12,
+    fontWeight: '600',
+    fontStyle: 'italic',
+    color: 'rgba(23, 23, 23, 0.5)',
   },
   cornerTopLeft: {
-    top: 28,
+    top: 34,
     left: 14,
   },
   cornerTopRight: {
-    top: 28,
+    top: 34,
     right: 14,
   },
   cornerBottomLeft: {
-    bottom: 28,
+    bottom: 34,
     left: 14,
   },
   cornerBottomRight: {
-    bottom: 28,
+    bottom: 34,
     right: 14,
   },
   axisLabelRow: {
@@ -314,13 +310,9 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   markerCore: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-  },
-  markerEmoji: {
-    fontSize: 22,
-    lineHeight: 28,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
   },
   hint: {
     ...StyleSheet.absoluteFillObject,

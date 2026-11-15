@@ -22,8 +22,7 @@ import {
 import {
   getCircumplexQuadrantLabel,
   getIsoAxisLabel,
-  getIsoAxisPercent,
-} from '../database/perceptions';
+  getIsoAxisPercent, getRatedPaq } from '../database/perceptions';
 import {
   getIncludedDetectedSounds,
   parseDetectedSounds as parseStoredDetectedSounds,
@@ -144,6 +143,7 @@ export function formatRecordingForExport(
   const visualContext = assessVisualContext(photoClassification);
   const noteThemes = extractNoteThemes(recording.fieldNotes, recording.spokenDescription);
   const metrics = parseAcousticMetrics(recording.acousticMetrics);
+  const ratedPaq = getRatedPaq(recording.perception);
 
   return {
     id: recording.id,
@@ -209,14 +209,15 @@ export function formatRecordingForExport(
     isoQuadrant: typeof isoPleasant === 'number' && typeof isoEventful === 'number'
       ? getCircumplexQuadrantLabel(isoPleasant, isoEventful)
       : null,
-    paqPleasant: recording.perception?.paqPleasant ?? null,
-    paqVibrant: recording.perception?.paqVibrant ?? null,
-    paqEventful: recording.perception?.paqEventful ?? null,
-    paqChaotic: recording.perception?.paqChaotic ?? null,
-    paqAnnoying: recording.perception?.paqAnnoying ?? null,
-    paqMonotonous: recording.perception?.paqMonotonous ?? null,
-    paqUneventful: recording.perception?.paqUneventful ?? null,
-    paqCalm: recording.perception?.paqCalm ?? null,
+    // Rated PAQ only; scores derived from the circumplex point are left out.
+    paqPleasant: ratedPaq?.pleasant ?? null,
+    paqVibrant: ratedPaq?.vibrant ?? null,
+    paqEventful: ratedPaq?.eventful ?? null,
+    paqChaotic: ratedPaq?.chaotic ?? null,
+    paqAnnoying: ratedPaq?.annoying ?? null,
+    paqMonotonous: ratedPaq?.monotonous ?? null,
+    paqUneventful: ratedPaq?.uneventful ?? null,
+    paqCalm: ratedPaq?.calm ?? null,
 
     syncStatus: recording.syncStatus,
     remoteId: recording.remoteId || null,
@@ -483,12 +484,15 @@ export function formatRecordingSummary(recording: RecordingWithPerception): stri
   ];
 
   if (recording.perception) {
+    const summaryPaq = getRatedPaq(recording.perception);
     lines.push(
       '--- Perception Assessment ---',
       `ISO Pleasantness: ${getIsoAxisLabel(recording.perception.isoPleasant, 'Pleasant', 'Annoying')} ${getIsoAxisPercent(recording.perception.isoPleasant)}%`,
       `ISO Eventfulness: ${getIsoAxisLabel(recording.perception.isoEventful, 'Eventful', 'Uneventful')} ${getIsoAxisPercent(recording.perception.isoEventful)}%`,
       `Quadrant: ${getCircumplexQuadrantLabel(recording.perception.isoPleasant, recording.perception.isoEventful)}`,
-      `PAQ: pleasant ${recording.perception.paqPleasant ?? '-'}, vibrant ${recording.perception.paqVibrant ?? '-'}, eventful ${recording.perception.paqEventful ?? '-'}, chaotic ${recording.perception.paqChaotic ?? '-'}, annoying ${recording.perception.paqAnnoying ?? '-'}, monotonous ${recording.perception.paqMonotonous ?? '-'}, uneventful ${recording.perception.paqUneventful ?? '-'}, calm ${recording.perception.paqCalm ?? '-'}`,
+      ...(summaryPaq
+        ? [`PAQ (rated): pleasant ${summaryPaq.pleasant}, vibrant ${summaryPaq.vibrant}, eventful ${summaryPaq.eventful}, chaotic ${summaryPaq.chaotic}, annoying ${summaryPaq.annoying}, monotonous ${summaryPaq.monotonous}, uneventful ${summaryPaq.uneventful}, calm ${summaryPaq.calm}`]
+        : []),
       ''
     );
   }
@@ -517,7 +521,7 @@ export function formatRecordingSummary(recording: RecordingWithPerception): stri
     '',
     '---',
     'Recorded with Soundscape Explorer',
-    'ISO 12913 Compliant Recording',
+    'Soundscape assessment based on ISO 12913',
   );
 
   return lines.filter(Boolean).join('\n');

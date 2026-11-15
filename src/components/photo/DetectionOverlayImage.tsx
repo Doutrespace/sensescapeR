@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { Colors, Radius } from '../../theme/colors';
 import type { ImageClassification } from '../../utils/imageClassification';
+import { t } from '../../i18n';
 
 const DETECTION_COLORS = ['#8DA8A1', '#A7B88A', '#C9A27E', '#A593B7'];
 
@@ -124,7 +125,7 @@ export default function DetectionOverlayImage({
 
             return (
               <View
-                key={`${detection.label}-${index}`}
+                key={`${t(detection.label)}-${index}`}
                 style={[
                   styles.box,
                   {
@@ -140,7 +141,7 @@ export default function DetectionOverlayImage({
                   <View style={[styles.labelTag, { borderColor: color }]}>
                     <View style={[styles.labelDot, { backgroundColor: color }]} />
                     <Text numberOfLines={1} style={styles.labelTagText}>
-                      {detection.label} {Math.round(detection.confidence * 100)}%
+                      {t(detection.label)} {Math.round(detection.confidence * 100)}%
                     </Text>
                   </View>
                 )}

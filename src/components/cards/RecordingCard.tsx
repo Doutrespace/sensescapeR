@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, ScrollView } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { format } from 'date-fns';
+import { formatDate } from '../../i18n/dates';
 import { Colors } from '../../theme/colors';
 import { RecordingWithPerception, SyncStatus } from '../../types/recording';
 import { getProtocolLabel, formatDuration } from '../../constants/protocols';
@@ -9,6 +9,7 @@ import { getHabitatIcon, getHabitatLabel } from '../../constants/habitats';
 import { useAudioPlayer } from '../../hooks/useAudioPlayer';
 import PlaybackControls from '../review/PlaybackControls';
 import WaveformViewer from '../review/WaveformViewer';
+import { t } from '../../i18n';
 
 interface Props {
   recording: RecordingWithPerception;
@@ -59,7 +60,7 @@ export default function RecordingCard({
         <TouchableOpacity onPress={onClose} style={styles.closeButton}>
           <MaterialIcons name="close" size={24} color={Colors.text} />
         </TouchableOpacity>
-        <Text style={styles.title}>Recording Details</Text>
+        <Text style={styles.title}>{t('Recording Details')}</Text>
         <View style={styles.placeholder} />
       </View>
 
@@ -93,39 +94,39 @@ export default function RecordingCard({
               color={statusConfig.color}
             />
             <Text style={[styles.statusText, { color: statusConfig.color }]}>
-              {statusConfig.label}
+              {t(statusConfig.label)}
             </Text>
           </View>
 
           {recording.syncStatus === 'failed' && onRetryUpload && (
             <TouchableOpacity style={styles.retryButton} onPress={onRetryUpload}>
               <MaterialIcons name="refresh" size={18} color={Colors.primary} />
-              <Text style={styles.retryButtonText}>Retry Upload</Text>
+              <Text style={styles.retryButtonText}>{t('Retry Upload')}</Text>
             </TouchableOpacity>
           )}
         </View>
 
         {/* Date & time */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Recorded</Text>
+          <Text style={styles.sectionTitle}>{t('Recorded')}</Text>
           <Text style={styles.dateText}>
-            {format(recordedDate, 'EEEE, MMMM d, yyyy')}
+            {formatDate(recordedDate, 'long')}
           </Text>
-          <Text style={styles.timeText}>{format(recordedDate, 'h:mm a')}</Text>
+          <Text style={styles.timeText}>{formatDate(recordedDate, 'time')}</Text>
         </View>
 
         {/* Recording info */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Recording Info</Text>
+          <Text style={styles.sectionTitle}>{t('Recording Info')}</Text>
           <View style={styles.infoGrid}>
             <View style={styles.infoItem}>
               <MaterialIcons name="timer" size={18} color={Colors.textMuted} />
-              <Text style={styles.infoLabel}>Duration</Text>
+              <Text style={styles.infoLabel}>{t('Duration')}</Text>
               <Text style={styles.infoValue}>{formatDuration(recording.durationMs)}</Text>
             </View>
             <View style={styles.infoItem}>
               <MaterialIcons name="mic" size={18} color={Colors.textMuted} />
-              <Text style={styles.infoLabel}>Protocol</Text>
+              <Text style={styles.infoLabel}>{t('Protocol')}</Text>
               <Text style={styles.infoValue}>{getProtocolLabel(recording.protocolType)}</Text>
             </View>
             {recording.habitatType && (
@@ -135,7 +136,7 @@ export default function RecordingCard({
                   size={18}
                   color={Colors.textMuted}
                 />
-                <Text style={styles.infoLabel}>Location</Text>
+                <Text style={styles.infoLabel}>{t('Location')}</Text>
                 <Text style={styles.infoValue}>{getHabitatLabel(recording.habitatType)}</Text>
               </View>
             )}
@@ -145,10 +146,10 @@ export default function RecordingCard({
         {/* Perception */}
         {recording.perception && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Perception</Text>
+            <Text style={styles.sectionTitle}>{t('Perception')}</Text>
             <View style={styles.perceptionGrid}>
               <View style={styles.perceptionItem}>
-                <Text style={styles.perceptionLabel}>Pleasant</Text>
+                <Text style={styles.perceptionLabel}>{t('Pleasant')}</Text>
                 <View style={styles.perceptionBarContainer}>
                   <View style={styles.perceptionBar}>
                     <View
@@ -170,7 +171,7 @@ export default function RecordingCard({
                 </View>
               </View>
               <View style={styles.perceptionItem}>
-                <Text style={styles.perceptionLabel}>Eventful</Text>
+                <Text style={styles.perceptionLabel}>{t('Eventful')}</Text>
                 <View style={styles.perceptionBarContainer}>
                   <View style={styles.perceptionBar}>
                     <View
@@ -195,21 +196,21 @@ export default function RecordingCard({
         {/* Source dominance */}
         {sourceDominance && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Sound Sources</Text>
+            <Text style={styles.sectionTitle}>{t('Sound Sources')}</Text>
             <View style={styles.sourceGrid}>
               <View style={styles.sourceItem}>
                 <MaterialIcons name="eco" size={20} color="#22C55E" />
-                <Text style={styles.sourceLabel}>Biophony</Text>
+                <Text style={styles.sourceLabel}>{t('Biophony')}</Text>
                 <Text style={styles.sourceValue}>{sourceDominance.biophony}%</Text>
               </View>
               <View style={styles.sourceItem}>
                 <MaterialIcons name="air" size={20} color="#3B82F6" />
-                <Text style={styles.sourceLabel}>Geophony</Text>
+                <Text style={styles.sourceLabel}>{t('Geophony')}</Text>
                 <Text style={styles.sourceValue}>{sourceDominance.geophony}%</Text>
               </View>
               <View style={styles.sourceItem}>
                 <MaterialIcons name="directions-car" size={20} color="#F59E0B" />
-                <Text style={styles.sourceLabel}>Anthrophony</Text>
+                <Text style={styles.sourceLabel}>{t('Anthrophony')}</Text>
                 <Text style={styles.sourceValue}>{sourceDominance.anthrophony}%</Text>
               </View>
             </View>
@@ -219,21 +220,21 @@ export default function RecordingCard({
         {/* Quality flags */}
         {(recording.hasClipping || recording.hasWindHandling || recording.hasLowSNR) && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Quality Notes</Text>
+            <Text style={styles.sectionTitle}>{t('Quality Notes')}</Text>
             <View style={styles.warningsContainer}>
               {recording.hasClipping && (
                 <View style={styles.warningBadge}>
-                  <Text style={styles.warningText}>Audio clipping detected</Text>
+                  <Text style={styles.warningText}>{t('Audio clipping detected')}</Text>
                 </View>
               )}
               {recording.hasWindHandling && (
                 <View style={styles.warningBadge}>
-                  <Text style={styles.warningText}>Wind/handling noise</Text>
+                  <Text style={styles.warningText}>{t('Wind/handling noise')}</Text>
                 </View>
               )}
               {recording.hasLowSNR && (
                 <View style={styles.warningBadge}>
-                  <Text style={styles.warningText}>Low signal-to-noise ratio</Text>
+                  <Text style={styles.warningText}>{t('Low signal-to-noise ratio')}</Text>
                 </View>
               )}
             </View>
@@ -244,7 +245,7 @@ export default function RecordingCard({
         {onDelete && (
           <TouchableOpacity style={styles.deleteButton} onPress={onDelete}>
             <MaterialIcons name="delete" size={20} color={Colors.error} />
-            <Text style={styles.deleteButtonText}>Delete Recording</Text>
+            <Text style={styles.deleteButtonText}>{t('Delete Recording')}</Text>
           </TouchableOpacity>
         )}
       </ScrollView>

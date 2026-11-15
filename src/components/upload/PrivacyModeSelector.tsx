@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Colors } from '../../theme/colors';
 import { PrivacyMode } from '../../types/recording';
+import { t } from '../../i18n';
 
 type IconName = keyof typeof MaterialIcons.glyphMap;
 
@@ -46,9 +47,9 @@ const PRIVACY_OPTIONS: PrivacyOption[] = [
 export default function PrivacyModeSelector({ value, onChange }: Props) {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Location Privacy</Text>
+      <Text style={styles.title}>{t('Location Privacy')}</Text>
       <Text style={styles.subtitle}>
-        Control how your recording location is shared
+        {t('Control how your recording location is shared')}
       </Text>
 
       <View style={styles.options}>
@@ -71,11 +72,11 @@ export default function PrivacyModeSelector({ value, onChange }: Props) {
                 <View style={styles.optionContent}>
                   <View style={styles.optionHeader}>
                     <Text style={[styles.optionLabel, isSelected && styles.optionLabelSelected]}>
-                      {option.label}
+                      {t(option.label)}
                     </Text>
                     <Text style={styles.optionAccuracy}>{option.accuracy}</Text>
                   </View>
-                  <Text style={styles.optionDescription}>{option.description}</Text>
+                  <Text style={styles.optionDescription}>{t(option.description)}</Text>
                 </View>
                 <View style={[styles.radio, isSelected && styles.radioSelected]}>
                   {isSelected && <View style={styles.radioInner} />}
@@ -89,8 +90,7 @@ export default function PrivacyModeSelector({ value, onChange }: Props) {
       <View style={styles.infoBox}>
         <MaterialIcons name="info-outline" size={18} color={Colors.primary} />
         <Text style={styles.infoText}>
-          Your choice applies to the saved record as well as cloud sharing.
-          Choose "Approximate" for neighborhood-level context or "Hidden" to omit coordinates entirely.
+          {t('Your choice applies to the saved record as well as cloud sharing. Choose "Approximate" for neighborhood-level context or "Hidden" to omit coordinates entirely.')}
         </Text>
       </View>
     </View>

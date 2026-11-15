@@ -19,12 +19,6 @@ function toLikert(value: number): number {
   return clampLikert(((clampUnit(value) + 1) * 2) + 1);
 }
 
-function resolvePaq(
-  circumplex: CircumplexPerception,
-  paq?: PAQPerception
-): PAQPerception {
-  return paq ?? calculatePAQFromCircumplex(circumplex);
-}
 
 // Create a perception for a recording
 export async function createPerception(
@@ -35,21 +29,23 @@ export async function createPerception(
   const db = await getDatabase();
   const now = new Date().toISOString();
   const id = generateId();
-  const resolvedPaq = resolvePaq(circumplex, paq);
 
   const perception: Perception = {
     id,
     recordingId,
     isoPleasant: circumplex.pleasant,
     isoEventful: circumplex.eventful,
-    paqPleasant: resolvedPaq.pleasant,
-    paqVibrant: resolvedPaq.vibrant,
-    paqEventful: resolvedPaq.eventful,
-    paqChaotic: resolvedPaq.chaotic,
-    paqAnnoying: resolvedPaq.annoying,
-    paqMonotonous: resolvedPaq.monotonous,
-    paqUneventful: resolvedPaq.uneventful,
-    paqCalm: resolvedPaq.calm,
+    // PAQ columns hold participant ratings only. When the participant placed
+    // a point on the circumplex instead, they stay empty: scores computed
+    // from that point would look like ratings nobody gave.
+    paqPleasant: paq?.pleasant,
+    paqVibrant: paq?.vibrant,
+    paqEventful: paq?.eventful,
+    paqChaotic: paq?.chaotic,
+    paqAnnoying: paq?.annoying,
+    paqMonotonous: paq?.monotonous,
+    paqUneventful: paq?.uneventful,
+    paqCalm: paq?.calm,
     createdAt: now,
   };
 
@@ -121,7 +117,8 @@ export async function updatePerception(
     values.push(circumplex.pleasant, circumplex.eventful);
   }
 
-  const resolvedPaq = circumplex ? resolvePaq(circumplex, paq) : paq;
+  // Only rated PAQ values are written; see createPerception.
+  const resolvedPaq = paq;
 
   if (resolvedPaq) {
     fields.push(
@@ -223,7 +220,63 @@ export function calculatePAQFromCircumplex(
   };
 }
 
-// Calculate circumplex coordinates from PAQ values
+const PAQ_FIELDS = [
+  ['paqPleasant', 'pleasant'],
+  ['paqVibrant', 'vibrant'],
+  ['paqEventful', 'eventful'],
+  ['paqChaotic', 'chaotic'],
+  ['paqAnnoying', 'annoying'],
+  ['paqMonotonous', 'monotonous'],
+  ['paqUneventful', 'uneventful'],
+  ['paqCalm', 'calm'],
+] as const;
+
+type PaqColumns = Pick<
+  Perception,
+  | 'isoPleasant' | 'isoEventful'
+  | 'paqPleasant' | 'paqVibrant' | 'paqEventful' | 'paqChaotic'
+  | 'paqAnnoying' | 'paqMonotonous' | 'paqUneventful' | 'paqCalm'
+>;
+
+/**
+ * The PAQ ratings a participant actually gave, or null.
+ *
+ * Earlier versions filled the PAQ columns with scores computed from the
+ * circumplex point. Such rows are recognised because all eight values equal
+ * that computation exactly, and are treated as "no PAQ ratings" so they are
+ * never exported or uploaded as if they had been rated.
+ */
+export function getRatedPaq(perception: PaqColumns | null | undefined): PAQPerception | null {
+  if (!perception) {
+    return null;
+  }
+
+  const derived = calculatePAQFromCircumplex(perception.isoPleasant, perception.isoEventful);
+  const rated = {} as PAQPerception;
+  let matchesDerived = true;
+
+  for (const [column, attribute] of PAQ_FIELDS) {
+    const value = perception[column];
+    if (typeof value !== 'number') {
+      return null;
+    }
+    rated[attribute] = value;
+    if (value !== derived[attribute]) {
+      matchesDerived = false;
+    }
+  }
+
+  return matchesDerived ? null : rated;
+}
+
+// Calculate circumplex coordinates from PAQ values (ISO/TS 12913-3).
+//
+// The standard projects the eight 1-5 ratings onto the two axes and scales
+// the result by 1 / (4 + sqrt(32)) so both coordinates fall within -1..1.
+// With ratings normalised to -1..1 here, that scale factor becomes
+// 1 / (2 * (1 + 2 * cos 45deg)).
+const ISO_PROJECTION_SCALE = 2 * (1 + (2 * COS_45));
+
 export function calculateCircumplexFromPAQ(paq: PAQPerception): CircumplexPerception {
   // Normalize PAQ values from 1-5 to -1 to 1
   const normalize = (v: number) => (v - 3) / 2;
@@ -232,13 +285,13 @@ export function calculateCircumplexFromPAQ(paq: PAQPerception): CircumplexPercep
     (normalize(paq.pleasant) - normalize(paq.annoying)) +
     COS_45 * (normalize(paq.calm) - normalize(paq.chaotic)) +
     COS_45 * (normalize(paq.vibrant) - normalize(paq.monotonous))
-  ) / (1 + (2 * COS_45));
+  ) / ISO_PROJECTION_SCALE;
 
   const eventful = (
     (normalize(paq.eventful) - normalize(paq.uneventful)) +
     COS_45 * (normalize(paq.chaotic) - normalize(paq.calm)) +
     COS_45 * (normalize(paq.vibrant) - normalize(paq.monotonous))
-  ) / (1 + (2 * COS_45));
+  ) / ISO_PROJECTION_SCALE;
 
   // Clamp to -1 to 1 range
   return {

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { StyleSheet, Text, Animated } from 'react-native';
 import { Colors } from '../../theme/colors';
+import { t } from '../../i18n';
 
 interface Props {
   isClipping: boolean;
@@ -58,7 +59,7 @@ export default function ClipIndicator({ isClipping }: Props) {
         },
       ]}
     >
-      <Text style={styles.text}>CLIP</Text>
+      <Text style={styles.text}>{t('CLIP')}</Text>
     </Animated.View>
   );
 }

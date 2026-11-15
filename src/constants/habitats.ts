@@ -1,5 +1,6 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { HabitatType } from '../types/recording';
+import { t } from '../i18n';
 
 export type IconName = keyof typeof MaterialIcons.glyphMap;
 
@@ -74,7 +75,7 @@ export const HABITATS: HabitatOption[] = [
 ];
 
 export function getHabitatLabel(value: HabitatType): string {
-  return HABITATS.find((h) => h.value === value)?.label ?? value;
+  return t(HABITATS.find((h) => h.value === value)?.label ?? value);
 }
 
 export function getHabitatIcon(value: HabitatType): IconName {

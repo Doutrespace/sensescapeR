@@ -15,6 +15,8 @@ import * as Location from 'expo-location';
 import { Audio } from 'expo-av';
 import { Colors, Spacing, Radius, Shadows } from '../../theme/colors';
 import { LoggingService } from '../../services/logging';
+import { t } from '../../i18n';
+import { LanguageToggle } from '../ui/LanguageToggle';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -36,8 +38,8 @@ const SLIDES: OnboardingSlide[] = [
   {
     id: 'iso12913',
     icon: 'science',
-    title: 'ISO 12913 Compliant',
-    description: 'Record soundscapes following international standards for acoustic environment assessment used by researchers worldwide.',
+    title: 'Based on ISO 12913',
+    description: 'Rate soundscapes on the pleasantness and eventfulness dimensions of the international soundscape standard used by researchers worldwide.',
   },
   {
     id: 'perception',
@@ -110,8 +112,8 @@ export function OnboardingScreen({ onComplete }: Props) {
           <MaterialIcons name={item.icon} size={64} color={Colors.primary} />
         </View>
 
-        <Text style={styles.title}>{item.title}</Text>
-        <Text style={styles.description}>{item.description}</Text>
+        <Text style={styles.title}>{t(item.title)}</Text>
+        <Text style={styles.description}>{t(item.description)}</Text>
 
         {isLastSlide && item.action && !permissionsGranted && (
           <TouchableOpacity
@@ -127,7 +129,7 @@ export function OnboardingScreen({ onComplete }: Props) {
         {isLastSlide && permissionsGranted && (
           <View style={styles.successContainer}>
             <MaterialIcons name="check-circle" size={32} color={Colors.success} />
-            <Text style={styles.successText}>Permissions granted!</Text>
+            <Text style={styles.successText}>{t('Permissions granted!')}</Text>
           </View>
         )}
       </View>
@@ -176,8 +178,12 @@ export function OnboardingScreen({ onComplete }: Props) {
 
   return (
     <SafeAreaView style={styles.container}>
+      <View style={styles.languageToggle}>
+        <LanguageToggle />
+      </View>
+
       <TouchableOpacity style={styles.skipButton} onPress={handleComplete}>
-        <Text style={styles.skipText}>Skip</Text>
+        <Text style={styles.skipText}>{t('Skip')}</Text>
       </TouchableOpacity>
 
       <Animated.FlatList
@@ -210,7 +216,7 @@ export function OnboardingScreen({ onComplete }: Props) {
           activeOpacity={0.8}
         >
           <Text style={styles.nextButtonText}>
-            {isLastSlide ? 'Get Started' : 'Next'}
+            {isLastSlide ? t('Get Started') : t('Next')}
           </Text>
           <MaterialIcons
             name={isLastSlide ? 'check' : 'arrow-forward'}
@@ -227,6 +233,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
+  },
+  languageToggle: {
+    position: 'absolute',
+    top: 56,
+    left: 20,
+    zIndex: 10,
   },
   skipButton: {
     position: 'absolute',

@@ -29,6 +29,7 @@ import {
 import { queueForUpload } from '../../src/services/sync';
 import { isSupabaseConfigured } from '../../src/utils/supabase';
 import { getRecording, updateRecording } from '../../src/services/database/recordings';
+import { t, tPlural } from '../../src/i18n';
 
 type ViewMode = 'map' | 'list';
 type Basemap = 'light' | 'satellite';
@@ -134,7 +135,7 @@ export default function MyMapScreen() {
       if (recording.remoteId) {
         const remoteResult = await deleteRemoteRecording(recording);
         if (!remoteResult.success) {
-          remoteWarning = remoteResult.error ?? 'The uploaded copy could not be deleted.';
+          remoteWarning = remoteResult.error ?? t('The uploaded copy could not be deleted.');
         }
       }
 
@@ -145,14 +146,14 @@ export default function MyMapScreen() {
 
       if (remoteWarning) {
         Alert.alert(
-          'Deleted locally',
-          `The recording was removed from this device, but the uploaded copy may still exist.\n\n${remoteWarning}`
+          t('Deleted locally'),
+          `${t('The recording was removed from this device, but the uploaded copy may still exist.')}\n\n${remoteWarning}`
         );
       }
     } catch (error) {
       Alert.alert(
-        'Delete failed',
-        error instanceof Error ? error.message : 'Failed to delete the recording.'
+        t('Delete failed'),
+        error instanceof Error ? error.message : t('Failed to delete the recording.')
       );
     } finally {
       setIsDeletingRecording(false);
@@ -169,20 +170,20 @@ export default function MyMapScreen() {
     try {
       const result = await resyncRemoteRecordingMedia(recording);
       if (!result.success) {
-        throw new Error(result.error ?? 'Unable to resync media.');
+        throw new Error(result.error ?? t('Unable to resync media.'));
       }
 
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       Alert.alert(
-        'Media synced',
+        t('Media synced'),
         result.updated.length > 0
-          ? `${result.updated.join(' and ')} uploaded to the cloud record.`
-          : 'No media needed updating.'
+          ? t('Uploaded to the cloud record: {items}.', { items: result.updated.map((item) => t(item)).join(', ') })
+          : t('No media needed updating.')
       );
     } catch (error) {
       Alert.alert(
-        'Media resync failed',
-        error instanceof Error ? error.message : 'Unable to upload media assets right now.'
+        t('Media resync failed'),
+        error instanceof Error ? error.message : t('Unable to upload media assets right now.')
       );
     } finally {
       setIsResyncingMedia(false);
@@ -209,24 +210,24 @@ export default function MyMapScreen() {
       if (recording.remoteId) {
         const remoteResult = await updateRemoteRecordingVisibility(recording, communityVisibility);
         if (!remoteResult.success) {
-          throw new Error(remoteResult.error ?? 'Failed to update community visibility remotely.');
+          throw new Error(remoteResult.error ?? t('Failed to update community visibility remotely.'));
         }
       } else if (communityVisibility === 'community' && recording.syncStatus !== 'uploading') {
         await queueForUpload(recording.id);
       }
 
       Alert.alert(
-        communityVisibility === 'community' ? 'Published to community' : 'Saved as private',
+        communityVisibility === 'community' ? t('Published to community') : t('Saved as private'),
         communityVisibility === 'community'
           ? (recording.remoteId
-            ? 'This recording can now appear on the Explore map.'
-            : 'This recording was marked for community sharing and queued for upload.')
-          : 'This recording will stay in your private archive.'
+            ? t('This recording can now appear on the Explore map.')
+            : t('This recording was marked for community sharing and queued for upload.'))
+          : t('This recording will stay in your private archive.')
       );
     } catch (error) {
       Alert.alert(
-        'Sharing update failed',
-        error instanceof Error ? error.message : 'Unable to update community visibility.'
+        t('Sharing update failed'),
+        error instanceof Error ? error.message : t('Unable to update community visibility.')
       );
     } finally {
       setIsUpdatingVisibility(false);
@@ -250,10 +251,10 @@ export default function MyMapScreen() {
             style={[styles.headerTitle, isCompactHeader && styles.headerTitleCompact]}
             numberOfLines={1}
           >
-            My Recordings
+            {t('My Recordings')}
           </Text>
           <Text style={styles.headerStats}>
-            {totalCount} recording{totalCount === 1 ? '' : 's'}
+            {tPlural(totalCount, '{count} recording', '{count} recordings')}
           </Text>
         </View>
 
@@ -276,7 +277,7 @@ export default function MyMapScreen() {
             style={styles.basemapButton}
             onPress={cycleBasemap}
             accessibilityRole="button"
-            accessibilityLabel={`Current basemap ${currentBasemapMeta.label}. Tap to switch basemap`}
+            accessibilityLabel={t('Current basemap {name}. Tap to switch basemap', { name: t(currentBasemapMeta.label) })}
           >
             <MaterialIcons
               name={currentBasemapMeta.icon}
@@ -284,7 +285,7 @@ export default function MyMapScreen() {
               color={Colors.text}
             />
             {!isCompactHeader && (
-              <Text style={styles.basemapButtonText}>{currentBasemapMeta.label}</Text>
+              <Text style={styles.basemapButtonText}>{t(currentBasemapMeta.label)}</Text>
             )}
           </TouchableOpacity>
 
@@ -364,7 +365,7 @@ export default function MyMapScreen() {
             latitude: recording.latitude,
             longitude: recording.longitude,
             color: getMarkerColor(recording.syncStatus),
-            title: recording.habitatType ? recording.habitatType.replace(/_/g, ' ') : 'Recording',
+            title: recording.habitatType ? recording.habitatType.replace(/_/g, ' ') : t('Recording'),
             subtitle: `${Math.round(recording.durationMs / 1000)}s`,
           }))}
           onMarkerPress={(id) => {
@@ -392,26 +393,26 @@ export default function MyMapScreen() {
             isLoadingMore ? (
               <View style={styles.listFooter}>
                 <ActivityIndicator size="small" color={Colors.primary} />
-                <Text style={styles.listFooterText}>Loading more recordings...</Text>
+                <Text style={styles.listFooterText}>{t('Loading more recordings...')}</Text>
               </View>
             ) : hasMore ? (
               <View style={styles.listFooter}>
                 <Text style={styles.listFooterText}>
-                  Showing {recordings.length} of {totalCount}
+                  {t('Showing {shown} of {total}', { shown: recordings.length, total: totalCount })}
                 </Text>
               </View>
             ) : totalCount > 0 ? (
               <View style={styles.listFooter}>
-                <Text style={styles.listFooterText}>All recordings loaded</Text>
+                <Text style={styles.listFooterText}>{t('All recordings loaded')}</Text>
               </View>
             ) : null
           }
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <MaterialIcons name="mic-none" size={48} color={Colors.textMuted} />
-              <Text style={styles.emptyTitle}>No recordings yet</Text>
+              <Text style={styles.emptyTitle}>{t('No recordings yet')}</Text>
               <Text style={styles.emptyText}>
-                Start recording soundscapes to see them here
+                {t('Start recording soundscapes to see them here')}
               </Text>
             </View>
           }
@@ -422,9 +423,9 @@ export default function MyMapScreen() {
       {viewMode === 'map' && !isLoading && mappableRecordings.length === 0 && (
         <View style={styles.emptyOverlay}>
           <MaterialIcons name="mic-none" size={48} color={Colors.textMuted} />
-          <Text style={styles.emptyTitle}>No mapped recordings yet</Text>
+          <Text style={styles.emptyTitle}>{t('No mapped recordings yet')}</Text>
           <Text style={styles.emptyText}>
-            Recordings with saved coordinates will appear here
+            {t('Recordings with saved coordinates will appear here')}
           </Text>
         </View>
       )}

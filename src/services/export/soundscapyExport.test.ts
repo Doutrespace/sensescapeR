@@ -2,7 +2,7 @@ import { formatAsSoundscapyCSV } from './soundscapyExport';
 import { RecordingWithPerception } from '../../types/recording';
 
 describe('formatAsSoundscapyCSV', () => {
-  it('exports derived PAQ and ISO columns with Soundscapy-oriented headers', () => {
+  it('exports rated PAQ and ISO columns with Soundscapy-oriented headers', () => {
     const recording: RecordingWithPerception = {
       id: 'rec-1',
       audioUri: 'file:///tmp/audio.wav',

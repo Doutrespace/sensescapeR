@@ -4,6 +4,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { Colors, Radius, Spacing } from '../../theme/colors';
 import { ProtocolType } from '../../types/recording';
 import { PROTOCOLS, DURATION_OPTIONS, formatDuration } from '../../constants/protocols';
+import { t } from '../../i18n';
 
 interface Props {
   selectedProtocol: ProtocolType;
@@ -26,10 +27,10 @@ export default function ProtocolSelector({
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.eyebrow}>Choose Capture Mode</Text>
-      <Text style={styles.title}>Recording Protocol</Text>
+      <Text style={styles.eyebrow}>{t('Choose Capture Mode')}</Text>
+      <Text style={styles.title}>{t('Recording Protocol')}</Text>
       <Text style={styles.subtitle}>
-        Select a protocol that matches your recording context
+        {t('Select a protocol that matches your recording context')}
       </Text>
 
       <View style={styles.section}>
@@ -45,7 +46,7 @@ export default function ProtocolSelector({
                 isLast && styles.protocolRowLast,
               ]}
               accessibilityRole="button"
-              accessibilityLabel={`${protocol.label} protocol`}
+              accessibilityLabel={`${t(protocol.label)} protocol`}
               accessibilityHint={protocol.description}
               accessibilityState={{ selected: isSelected }}
               onPress={() => {
@@ -64,10 +65,10 @@ export default function ProtocolSelector({
                 </View>
                 <View style={styles.protocolTextWrap}>
                   <Text style={[styles.protocolLabel, isSelected && styles.protocolLabelSelected]}>
-                    {protocol.label}
+                    {t(protocol.label)}
                   </Text>
                   <Text style={[styles.protocolDesc, isSelected && styles.protocolDescSelected]}>
-                    {protocol.description}
+                    {t(protocol.description)}
                   </Text>
                 </View>
               </View>
@@ -83,9 +84,9 @@ export default function ProtocolSelector({
 
       <View style={styles.durationSection}>
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Duration</Text>
+          <Text style={styles.sectionTitle}>{t('Duration')}</Text>
           {isDurationLocked && (
-            <Text style={styles.sectionMeta}>Fixed by selected protocol</Text>
+            <Text style={styles.sectionMeta}>{t('Fixed by selected protocol')}</Text>
           )}
         </View>
         {isDurationLocked ? (
@@ -103,7 +104,7 @@ export default function ProtocolSelector({
                   key={duration.value}
                   style={[styles.durationChip, isSelected && styles.durationChipSelected]}
                   accessibilityRole="button"
-                  accessibilityLabel={`${duration.label} duration`}
+                  accessibilityLabel={`${t(duration.label)} duration`}
                   accessibilityState={{ selected: isSelected }}
                   onPress={() => onDurationChange(duration.value)}
                   activeOpacity={0.7}
@@ -114,7 +115,7 @@ export default function ProtocolSelector({
                       isSelected && styles.durationChipTextSelected,
                     ]}
                   >
-                    {duration.label}
+                    {t(duration.label)}
                   </Text>
                 </TouchableOpacity>
               );
@@ -128,10 +129,10 @@ export default function ProtocolSelector({
         onPress={onConfirm}
         activeOpacity={0.8}
         accessibilityRole="button"
-        accessibilityLabel="Continue to recording"
-        accessibilityHint="Moves to the next step with the selected protocol and duration"
+        accessibilityLabel={t('Continue to recording')}
+        accessibilityHint={t('Moves to the next step with the selected protocol and duration')}
       >
-        <Text style={styles.startButtonText}>Continue</Text>
+        <Text style={styles.startButtonText}>{t('Continue')}</Text>
         <MaterialIcons name="arrow-forward" size={20} color={Colors.background} />
       </TouchableOpacity>
     </ScrollView>

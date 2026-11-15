@@ -6,6 +6,7 @@ import { WebView, WebViewMessageEvent } from 'react-native-webview';
 import { LoggingService } from '../../services/logging';
 import { Colors, Radius, Shadows } from '../../theme/colors';
 import { LEAFLET_CSS, LEAFLET_JS } from './leafletBundle';
+import { t } from '../../i18n';
 
 export interface OpenStreetMapMarker {
   id: string;
@@ -563,7 +564,7 @@ export default function OpenStreetMapView({
             onPress={handleZoomIn}
             activeOpacity={0.85}
             accessibilityRole="button"
-            accessibilityLabel="Zoom in"
+            accessibilityLabel={t('Zoom in')}
           >
             <MaterialIcons name="add" size={24} color={Colors.text} />
           </TouchableOpacity>
@@ -572,7 +573,7 @@ export default function OpenStreetMapView({
             onPress={handleZoomOut}
             activeOpacity={0.85}
             accessibilityRole="button"
-            accessibilityLabel="Zoom out"
+            accessibilityLabel={t('Zoom out')}
           >
             <MaterialIcons name="remove" size={24} color={Colors.text} />
           </TouchableOpacity>
@@ -583,8 +584,8 @@ export default function OpenStreetMapView({
             onPress={handleRecenterToUser}
             activeOpacity={0.85}
             accessibilityRole="button"
-            accessibilityLabel="Center map on my location"
-            accessibilityHint="Move the map back to your current location"
+            accessibilityLabel={t('Center map on my location')}
+            accessibilityHint={t('Move the map back to your current location')}
           >
             <MaterialIcons name="my-location" size={18} color={Colors.text} />
           </TouchableOpacity>

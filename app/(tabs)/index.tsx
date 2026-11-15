@@ -32,6 +32,7 @@ import {
   stopSpokenDescriptionTranscription,
   transcribeSpokenDescription,
 } from '../../src/services/transcription/spokenDescriptionTranscriber';
+import { t } from '../../src/i18n';
 
 const FLOW_STEPS = [
   { key: 'RECORDING', label: 'Recording' },
@@ -121,7 +122,7 @@ export default function RecordScreen() {
 
         if (!message.includes('CANCELLED')) {
           LoggingService.warn('Spoken description transcription failed', { error: message });
-          Alert.alert('Transcription failed', message);
+          Alert.alert(t('Transcription failed'), message);
           void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         }
       })

@@ -1,14 +1,15 @@
 import React from 'react';
 import { StyleSheet, Text, View, ActivityIndicator } from 'react-native';
 import { Colors, Spacing, Radius, Shadows } from '../../theme/colors';
+import { t } from '../../i18n';
 
 export function SavingScreen() {
   return (
     <View style={styles.savingContainer}>
       <View style={styles.savingContent}>
         <ActivityIndicator size="large" color={Colors.primary} />
-        <Text style={styles.savingText}>Saving recording...</Text>
-        <Text style={styles.savingSubtext}>Please wait</Text>
+        <Text style={styles.savingText}>{t('Saving recording...')}</Text>
+        <Text style={styles.savingSubtext}>{t('Please wait')}</Text>
       </View>
     </View>
   );

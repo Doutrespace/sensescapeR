@@ -14,6 +14,7 @@ import {
 } from './uploadQueue';
 import { uploadRecording, UploadProgress } from './uploader';
 import { getRecordingsBySyncStatus } from '../database/recordings';
+import { t } from '../../i18n';
 
 let isProcessing = false;
 let unsubscribeNetInfo: (() => void) | null = null;
@@ -61,7 +62,7 @@ function handleNetworkChange(state: NetInfoState): void {
 
   if (wasOnline !== (state.isConnected ?? false)) {
     store.setLastSyncActivity(
-      state.isConnected ? 'Network restored. Queued recordings can sync again.' : 'Offline. New recordings stay local until the network returns.',
+      state.isConnected ? t('Network restored. Queued recordings can sync again.') : t('Offline. New recordings stay local until the network returns.'),
       state.isConnected ? 'info' : 'warning'
     );
   }
@@ -80,7 +81,7 @@ export async function queueForUpload(recordingId: string): Promise<void> {
     });
     useSyncStore
       .getState()
-      .setLastSyncActivity('Cloud sync is not configured in this build.', 'warning');
+      .setLastSyncActivity(t('Cloud sync is not configured in this build.'), 'warning');
     return;
   }
 
@@ -94,7 +95,7 @@ export async function queueForUpload(recordingId: string): Promise<void> {
   } catch (error) {
     useSyncStore
       .getState()
-      .setLastSyncActivity('The recording could not be added to the sync queue.', 'error');
+      .setLastSyncActivity(t('The recording could not be added to the sync queue.'), 'error');
     LoggingService.error('Failed to queue recording for upload', {
       recordingId,
       error: error instanceof Error ? error.message : String(error),
@@ -127,19 +128,19 @@ export async function processQueue(options?: { ignoreWifiPreference?: boolean })
 
   if (!isSupabaseConfigured) {
     LoggingService.debug('Sync queue processing skipped because Supabase is not configured');
-    syncStore.setLastSyncActivity('Cloud sync is not configured in this build.', 'warning');
+    syncStore.setLastSyncActivity(t('Cloud sync is not configured in this build.'), 'warning');
     return;
   }
 
   if (!syncStore.isOnline) {
     LoggingService.debug('Sync queue processing skipped because device is offline');
-    syncStore.setLastSyncActivity('Offline. Waiting for a network connection before syncing.', 'warning');
+    syncStore.setLastSyncActivity(t('Offline. Waiting for a network connection before syncing.'), 'warning');
     return;
   }
 
   if (!options?.ignoreWifiPreference && preferencesStore.autoUploadWifiOnly && !syncStore.isWifi) {
     LoggingService.debug('Sync queue processing skipped because Wi-Fi-only upload is enabled');
-    syncStore.setLastSyncActivity('Auto-upload is limited to Wi-Fi. Connect to Wi-Fi or start a manual sync later.', 'info');
+    syncStore.setLastSyncActivity(t('Auto-upload is limited to Wi-Fi. Connect to Wi-Fi or start a manual sync later.'), 'info');
     return;
   }
 
@@ -151,7 +152,7 @@ export async function processQueue(options?: { ignoreWifiPreference?: boolean })
 
     if (readyItems.length === 0) {
       LoggingService.debug('No queued items ready for upload');
-      syncStore.setLastSyncActivity('All queued recordings are up to date.', 'success');
+      syncStore.setLastSyncActivity(t('All queued recordings are up to date.'), 'success');
       return;
     }
 
@@ -176,7 +177,7 @@ export async function processQueue(options?: { ignoreWifiPreference?: boolean })
       if (result.success) {
         syncStore.incrementUploaded();
         syncStore.removeFromQueue(item.recordingId);
-        syncStore.setLastSyncActivity('A recording was uploaded successfully.', 'success');
+        syncStore.setLastSyncActivity(t('A recording was uploaded successfully.'), 'success');
 
         // Update library store
         useLibraryStore
@@ -196,7 +197,7 @@ export async function processQueue(options?: { ignoreWifiPreference?: boolean })
           error: result.error,
         });
         syncStore.setLastSyncActivity(
-          result.error ?? 'A queued upload failed. Review the queue details and retry.',
+          t(result.error ?? 'A queued upload failed. Review the queue details and retry.'),
           'error'
         );
         syncStore.incrementFailed();
@@ -205,7 +206,7 @@ export async function processQueue(options?: { ignoreWifiPreference?: boolean })
   } catch (error) {
     useSyncStore
       .getState()
-      .setLastSyncActivity('Sync processing failed before the queue finished.', 'error');
+      .setLastSyncActivity(t('Sync processing failed before the queue finished.'), 'error');
     LoggingService.error('Sync queue processing failed', {
       error: error instanceof Error ? error.message : String(error),
     });
@@ -276,7 +277,7 @@ export async function retryFailed(): Promise<number> {
 // Force sync now (user-initiated)
 export async function forceSyncNow(): Promise<void> {
   LoggingService.info('Manual sync requested');
-  useSyncStore.getState().setLastSyncActivity('Manual sync started.', 'info');
+  useSyncStore.getState().setLastSyncActivity(t('Manual sync started.'), 'info');
 
   // Queue any local recordings
   await queueAllLocal();

@@ -15,6 +15,7 @@ import * as Haptics from 'expo-haptics';
 import { Colors, Spacing, Radius } from '../../theme/colors';
 import { CircumplexPerception } from '../../types/recording';
 import { calculatePAQFromCircumplex } from '../../services/database/perceptions';
+import { t, getLanguage } from '../../i18n';
 
 const PIN_SIZE = 54;
 
@@ -149,16 +150,16 @@ export default function CircumplexInput({
   const derivedPaq = calculatePAQFromCircumplex(value);
 
   const axisStrength = (axisValue: number) => Math.round(Math.abs(axisValue) * 100);
-  const pleasantLabel = value.pleasant >= 0 ? 'Pleasant' : 'Annoying';
-  const eventfulLabel = value.eventful >= 0 ? 'Eventful' : 'Uneventful';
+  const pleasantLabel = value.pleasant >= 0 ? t('Pleasant') : t('Annoying');
+  const eventfulLabel = value.eventful >= 0 ? t('Eventful') : t('Uneventful');
   const intensity = Math.sqrt((value.pleasant ** 2) + (value.eventful ** 2));
   const intensityPrefix = intensity < 0.2
-    ? 'Neutral'
+    ? t('Neutral')
     : intensity < 0.45
-      ? 'Slightly'
+      ? t('Slightly')
       : intensity < 0.7
-        ? 'Moderately'
-        : 'Strongly';
+        ? t('Moderately')
+        : t('Strongly');
 
   // Calculate footer bottom padding for tab bar
   const footerBottomPadding = tabBarHeight + 16;
@@ -171,11 +172,11 @@ export default function CircumplexInput({
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
-          <Text style={styles.title}>Perceptual Assessment</Text>
+          <Text style={styles.title}>{t('Perceptual Assessment')}</Text>
           <Text style={styles.subtitle}>
             {hasSelection
-              ? 'Place the marker where the experience felt right'
-              : 'Tap once or drag to set the soundscape position'}
+              ? t('Place the marker where the experience felt right')
+              : t('Tap once or drag to set the soundscape position')}
           </Text>
         </View>
 
@@ -185,8 +186,8 @@ export default function CircumplexInput({
           {...panResponder.panHandlers}
           accessible
           accessibilityRole="adjustable"
-          accessibilityLabel="Perceptual circumplex plane"
-          accessibilityHint="Tap or drag within the plane to set pleasantness and eventfulness"
+          accessibilityLabel={t('Perceptual circumplex plane')}
+          accessibilityHint={t('Tap or drag within the plane to set pleasantness and eventfulness')}
           accessibilityValue={{
             text: `${pleasantLabel} ${axisStrength(value.pleasant)} percent, ${eventfulLabel} ${axisStrength(value.eventful)} percent`,
           }}
@@ -217,23 +218,23 @@ export default function CircumplexInput({
 
           {/* Axis labels */}
           <View style={[styles.axisLabelContainer, styles.labelTop]} pointerEvents="none">
-            <Text style={styles.axisLabel}>EVENTFUL</Text>
+            <Text style={styles.axisLabel}>{t('EVENTFUL')}</Text>
           </View>
           <View style={[styles.axisLabelContainer, styles.labelBottom]} pointerEvents="none">
-            <Text style={styles.axisLabel}>UNEVENTFUL</Text>
+            <Text style={styles.axisLabel}>{t('UNEVENTFUL')}</Text>
           </View>
           <View style={[styles.axisLabelContainer, styles.labelLeft]} pointerEvents="none">
-            <Text style={[styles.axisLabel, styles.axisLabelVertical]}>ANNOYING</Text>
+            <Text style={[styles.axisLabel, styles.axisLabelVertical]}>{t('ANNOYING')}</Text>
           </View>
           <View style={[styles.axisLabelContainer, styles.labelRight]} pointerEvents="none">
-            <Text style={[styles.axisLabel, styles.axisLabelVertical]}>PLEASANT</Text>
+            <Text style={[styles.axisLabel, styles.axisLabelVertical]}>{t('PLEASANT')}</Text>
           </View>
 
           {/* Quadrant labels - larger font */}
-          <Text style={[styles.quadrantLabel, styles.quadrantTopLeft]}>Chaotic</Text>
-          <Text style={[styles.quadrantLabel, styles.quadrantTopRight]}>Vibrant</Text>
-          <Text style={[styles.quadrantLabel, styles.quadrantBottomLeft]}>Monotonous</Text>
-          <Text style={[styles.quadrantLabel, styles.quadrantBottomRight]}>Calm</Text>
+          <Text style={[styles.quadrantLabel, styles.quadrantTopLeft]}>{t('Chaotic')}</Text>
+          <Text style={[styles.quadrantLabel, styles.quadrantTopRight]}>{t('Vibrant')}</Text>
+          <Text style={[styles.quadrantLabel, styles.quadrantBottomLeft]}>{t('Monotonous')}</Text>
+          <Text style={[styles.quadrantLabel, styles.quadrantBottomRight]}>{t('Calm')}</Text>
 
           {/* Guide lines */}
           <View
@@ -281,7 +282,7 @@ export default function CircumplexInput({
           {/* Touch hint overlay when not dragging */}
           {!isDragging && (
             <View style={styles.touchHint} pointerEvents="none">
-              <Text style={styles.touchHintText}>Tap or drag anywhere</Text>
+              <Text style={styles.touchHintText}>{t('Tap or drag anywhere')}</Text>
             </View>
           )}
         </View>
@@ -291,7 +292,7 @@ export default function CircumplexInput({
           <View style={[styles.quadrantBadge, { backgroundColor: quadrantInfo.bg }]}>
             <View style={[styles.quadrantDot, { backgroundColor: quadrantInfo.color }]} />
             <Text style={[styles.quadrantBadgeText, { color: quadrantInfo.color }]}>
-              {intensityPrefix === 'Neutral' ? 'Neutral' : `${intensityPrefix} ${quadrantInfo.label}`}
+              {intensity < 0.2 ? t('Neutral') : `${intensityPrefix} ${getLanguage() === 'de' ? t(quadrantInfo.label).toLowerCase() : t(quadrantInfo.label)}`}
             </Text>
           </View>
 
@@ -308,8 +309,8 @@ export default function CircumplexInput({
             <TouchableOpacity
               style={styles.resetButton}
               accessibilityRole="button"
-              accessibilityLabel="Reset perceptual marker"
-              accessibilityHint="Return the perceptual marker to the neutral center position"
+              accessibilityLabel={t('Reset perceptual marker')}
+              accessibilityHint={t('Return the perceptual marker to the neutral center position')}
               onPress={() => {
                 setPinPosition({ x: 0, y: 0 });
                 onChange({ pleasant: 0, eventful: 0 });
@@ -317,16 +318,16 @@ export default function CircumplexInput({
               }}
             >
               <MaterialIcons name="restart-alt" size={16} color={Colors.textMuted} />
-              <Text style={styles.resetButtonText}>Reset</Text>
+              <Text style={styles.resetButtonText}>{t('Reset')}</Text>
             </TouchableOpacity>
           </View>
 
           <View
             style={styles.paqSection}
             accessible
-            accessibilityLabel="Derived perceptual attribute questionnaire values"
+            accessibilityLabel={t('Derived perceptual attribute questionnaire values')}
           >
-            <Text style={styles.paqTitle}>Derived PAQ values</Text>
+            <Text style={styles.paqTitle}>{t('Derived PAQ values')}</Text>
             <View style={styles.paqGrid}>
               {[
                 ['Pleasant', derivedPaq.pleasant],
@@ -362,11 +363,11 @@ export default function CircumplexInput({
           disabled={!hasSelection}
           activeOpacity={0.8}
           accessibilityRole="button"
-          accessibilityLabel="Continue from perceptual assessment"
-          accessibilityHint="Save the current pleasantness and eventfulness position and continue"
+          accessibilityLabel={t('Continue from perceptual assessment')}
+          accessibilityHint={t('Save the current pleasantness and eventfulness position and continue')}
           accessibilityState={{ disabled: !hasSelection }}
         >
-          <Text style={styles.confirmButtonText}>Continue</Text>
+          <Text style={styles.confirmButtonText}>{t('Continue')}</Text>
         </TouchableOpacity>
       </View>
     </View>

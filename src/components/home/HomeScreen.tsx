@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, TouchableOpacity, Pressable, Animated } from 'r
 import { MaterialIcons } from '@expo/vector-icons';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { Colors, Spacing, Radius, Shadows } from '../../theme/colors';
+import { t } from '../../i18n';
 
 interface Props {
   onStartMeasurement: () => void;
@@ -76,8 +77,8 @@ export function HomeScreen({ onStartMeasurement, communityCount }: Props) {
             onStartMeasurement();
           }}
           accessibilityRole="button"
-          accessibilityLabel="Start recording from microphone button"
-          accessibilityHint="Starts a new recording immediately"
+          accessibilityLabel={t('Start recording from microphone button')}
+          accessibilityHint={t('Starts a new recording immediately')}
           style={styles.markerPressable}
         >
           <Animated.View
@@ -95,11 +96,11 @@ export function HomeScreen({ onStartMeasurement, communityCount }: Props) {
           </Animated.View>
         </Pressable>
         <Text style={styles.title}>Soundscape{'\n'}Explorer</Text>
-        <Text style={styles.subtitle}>Record the place as it sounds.</Text>
+        <Text style={styles.subtitle}>{t('Record the place as it sounds.')}</Text>
         {typeof communityCount === 'number' ? (
           <View style={styles.communityLine}>
             <Text style={styles.communityCount}>{communityCount}</Text>
-            <Text style={styles.communityText}>community contributions</Text>
+            <Text style={styles.communityText}>{t('community contributions')}</Text>
           </View>
         ) : null}
 
@@ -109,7 +110,7 @@ export function HomeScreen({ onStartMeasurement, communityCount }: Props) {
               <Text style={styles.factIndex}>0{index + 1}</Text>
               <View style={styles.factDivider} />
               <MaterialIcons name={item.icon} size={16} color={Colors.textMuted} />
-              <Text style={styles.factText}>{item.label}</Text>
+              <Text style={styles.factText}>{t(item.label)}</Text>
             </View>
           ))}
         </View>
@@ -121,7 +122,7 @@ export function HomeScreen({ onStartMeasurement, communityCount }: Props) {
           onPress={onStartMeasurement}
           activeOpacity={0.9}
         >
-          <Text style={styles.startButtonText}>Start Recording</Text>
+          <Text style={styles.startButtonText}>{t('Start Recording')}</Text>
           <View style={styles.startButtonIcon}>
             <MaterialIcons name="arrow-forward" size={18} color={Colors.surface} />
           </View>

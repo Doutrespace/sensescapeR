@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { Colors } from '../../theme/colors';
+import { t } from '../../i18n';
 
 const THUMB_SIZE = 38;
 const TRACK_HEIGHT = 10;
@@ -126,8 +127,8 @@ export function StepSlider({
   const fillWidth = Math.abs(thumbX - fillStartX);
 
   const valueText = hasValue
-    ? valueLabels?.[value] ?? `${value} of ${max}`
-    : 'Tap or slide to rate';
+    ? (valueLabels?.[value] ? t(valueLabels[value]) : t('{value} of {max}', { value, max }))
+    : t('Tap or slide to rate');
 
   const handleLayout = (event: LayoutChangeEvent) => {
     setTrackWidth(event.nativeEvent.layout.width);
@@ -142,7 +143,7 @@ export function StepSlider({
         accessible
         accessibilityRole="adjustable"
         accessibilityLabel={accessibilityLabel}
-        accessibilityHint={`Tap or drag to rate from ${minLabel} to ${maxLabel}`}
+        accessibilityHint={t('Tap or drag to rate from {min} to {max}', { min: minLabel, max: maxLabel })}
         accessibilityValue={{ min, max, now: hasValue ? value : undefined, text: valueText }}
         accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
         onAccessibilityAction={(event) => {

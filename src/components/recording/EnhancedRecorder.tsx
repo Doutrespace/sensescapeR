@@ -25,6 +25,7 @@ import { AudioAnalyzer } from '../../services/audio/audioAnalyzer';
 import { PcmWavRecorder } from '../../services/audio/pcmWavRecorder';
 import { LoggingService } from '../../services/logging/LoggingService';
 import type { AudioLevelingMode } from '../../stores/usePreferencesStore';
+import { t } from '../../i18n';
 
 interface Props {
   targetDuration: number;
@@ -147,18 +148,18 @@ export default function EnhancedRecorder({
     if (Platform.OS === 'web') {
       // A web page cannot open browser settings; explain where to allow access.
       Alert.alert(
-        'Microphone access needed',
-        'Allow microphone access for this site in your browser (tap the icon next to the address bar, or check the site settings), then start the recording again.'
+        t('Microphone access needed'),
+        t('Allow microphone access for this site in your browser (tap the icon next to the address bar, or check the site settings), then start the recording again.')
       );
       return;
     }
 
     Alert.alert(
-      'Microphone Permission Required',
-      'This app needs microphone access to record soundscapes. Please enable it in your device settings.',
+      t('Microphone Permission Required'),
+      t('This app needs microphone access to record soundscapes. Please enable it in your device settings.'),
       [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Open Settings', onPress: () => Linking.openSettings() },
+        { text: t('Cancel'), style: 'cancel' },
+        { text: t('Open Settings'), onPress: () => Linking.openSettings() },
       ]
     );
   };
@@ -233,7 +234,7 @@ export default function EnhancedRecorder({
       setIsRecording(false);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       Alert.alert(
-        'Recording unavailable',
+        t('Recording unavailable'),
         getRecordingStartErrorMessage(err instanceof Error ? err.message : undefined)
       );
     }
@@ -338,8 +339,8 @@ export default function EnhancedRecorder({
         error: err instanceof Error ? err.message : String(err),
       });
       Alert.alert(
-        'Recording could not finish',
-        'The recording stopped unexpectedly before it could be saved. Try one more time and keep the app in the foreground.'
+        t('Recording could not finish'),
+        t('The recording stopped unexpectedly before it could be saved. Try one more time and keep the app in the foreground.')
       );
     } finally {
       liveAnalyzerRef.current = null;
@@ -477,7 +478,7 @@ export default function EnhancedRecorder({
   // GPS coordinates for overlay
   const locationLabel = location
     ? `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`
-    : 'Locating...';
+    : t('Locating...');
 
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const spectrogramHeight = Math.max(228, Math.min(windowHeight * 0.34, 320));
@@ -486,7 +487,7 @@ export default function EnhancedRecorder({
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>
-          Soundscape
+          {t('Soundscape')}
         </Text>
       </View>
 
@@ -507,7 +508,7 @@ export default function EnhancedRecorder({
       {showLowLevelWarning && (
         <View style={styles.lowLevelWarning}>
           <Text style={styles.lowLevelWarningText}>
-            Very low input level detected. Move closer to the sound source or check the device microphone.
+            {t('Very low input level detected. Move closer to the sound source or check the device microphone.')}
           </Text>
         </View>
       )}

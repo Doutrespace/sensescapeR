@@ -13,6 +13,7 @@ import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import * as Haptics from 'expo-haptics';
 import { Colors, Spacing } from '../../theme/colors';
 import { PAQPerception } from '../../types/recording';
+import { t } from '../../i18n';
 
 const RING_COUNT = 5;
 
@@ -88,7 +89,7 @@ function AttributeControl({ attribute, value, onChange, wheelSize, center }: Att
       ]}
     >
       <Text style={[styles.attributeLabel, { color: attribute.color }]}>
-        {attribute.label}
+        {t(attribute.label)}
       </Text>
       <View style={styles.ratingDots}>
         {[1, 2, 3, 4, 5].map((rating) => {
@@ -154,9 +155,9 @@ export default function PAQWheel({ value, onChange, onConfirm, onSkip }: Props) 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Detailed PAQ</Text>
+        <Text style={styles.title}>{t('Detailed PAQ')}</Text>
         <Text style={styles.subtitle}>
-          Optional: rate the eight perceptual attributes in more detail
+          {t('Optional: rate the eight perceptual attributes in more detail')}
         </Text>
       </View>
 
@@ -263,11 +264,11 @@ export default function PAQWheel({ value, onChange, onConfirm, onSkip }: Props) 
       <View style={styles.legend}>
         <View style={styles.legendItem}>
           <View style={[styles.legendDot, styles.legendDotEmpty]} />
-          <Text style={styles.legendText}>1 = Not at all</Text>
+          <Text style={styles.legendText}>{t('1 = Not at all')}</Text>
         </View>
         <View style={styles.legendItem}>
           <View style={[styles.legendDot, styles.legendDotFilled]} />
-          <Text style={styles.legendText}>5 = Completely</Text>
+          <Text style={styles.legendText}>{t('5 = Completely')}</Text>
         </View>
       </View>
 
@@ -282,7 +283,7 @@ export default function PAQWheel({ value, onChange, onConfirm, onSkip }: Props) 
             }}
             activeOpacity={0.7}
           >
-            <Text style={styles.skipButtonText}>Skip and continue</Text>
+            <Text style={styles.skipButtonText}>{t('Skip and continue')}</Text>
           </TouchableOpacity>
         )}
 
@@ -298,7 +299,7 @@ export default function PAQWheel({ value, onChange, onConfirm, onSkip }: Props) 
           activeOpacity={0.8}
         >
           <Text style={styles.confirmButtonText}>
-            {isComplete ? 'Continue' : `Rate ${8 - ratedCount} more`}
+            {isComplete ? t('Continue') : `Rate ${8 - ratedCount} more`}
           </Text>
         </TouchableOpacity>
       </View>

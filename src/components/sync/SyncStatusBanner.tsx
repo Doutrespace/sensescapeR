@@ -2,6 +2,7 @@ import React from 'react';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Colors, Radius, Spacing } from '../../theme/colors';
+import { t, tPlural } from '../../i18n';
 
 interface Props {
   isOnline: boolean;
@@ -37,20 +38,20 @@ export function SyncStatusBanner({
         : 'schedule';
 
   const title = !isOnline
-    ? 'Offline mode'
+    ? t('Offline mode')
     : failedCount > 0
-      ? `${failedCount} upload${failedCount === 1 ? '' : 's'} failed`
+      ? tPlural(failedCount, '{count} upload failed', '{count} uploads failed')
       : isUploading
-        ? 'Uploading recordings'
-        : `${pendingCount} recording${pendingCount === 1 ? '' : 's'} waiting to sync`;
+        ? t('Uploading recordings')
+        : tPlural(pendingCount, '{count} recording waiting to sync', '{count} recordings waiting to sync');
 
   const detail = !isOnline
-    ? `${pendingCount} item${pendingCount === 1 ? '' : 's'} will sync when the network returns.`
+    ? tPlural(pendingCount, '{count} item will sync when the network returns.', '{count} items will sync when the network returns.')
     : failedCount > 0
-      ? failureDetail ?? 'Retry failed uploads or inspect the affected recordings.'
+      ? failureDetail ?? t('Retry failed uploads or inspect the affected recordings.')
       : isUploading
-        ? 'Your queued recordings are being synced in the background.'
-        : 'Cloud sync is available for queued local recordings.';
+        ? t('Your queued recordings are being synced in the background.')
+        : t('Cloud sync is available for queued local recordings.');
 
   return (
     <View style={styles.container}>
@@ -77,7 +78,7 @@ export function SyncStatusBanner({
           >
             <MaterialIcons name="refresh" size={16} color={Colors.background} />
             <Text style={styles.actionText}>
-              {failedCount > 0 ? 'Retry Sync' : 'Sync Now'}
+              {failedCount > 0 ? t('Retry Sync') : t('Sync Now')}
             </Text>
           </TouchableOpacity>
           {onViewDetails ? (
@@ -87,7 +88,7 @@ export function SyncStatusBanner({
               activeOpacity={0.8}
             >
               <MaterialIcons name="list-alt" size={16} color={Colors.primary} />
-              <Text style={styles.secondaryActionText}>Details</Text>
+              <Text style={styles.secondaryActionText}>{t('Details')}</Text>
             </TouchableOpacity>
           ) : null}
         </View>

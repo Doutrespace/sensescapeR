@@ -11,6 +11,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { Colors, Radius, Shadows, Spacing } from '../../theme/colors';
 import type { ExportActivity, ActivityStatus } from '../../stores/useActivityStore';
 import type { SyncActivity } from '../../stores/useSyncStore';
+import { t, getLocaleTag } from '../../i18n';
 
 interface Props {
   exportHistory: ExportActivity[];
@@ -66,8 +67,8 @@ function HistorySection({
                 </View>
                 <View style={styles.content}>
                   <Text style={styles.message}>{item.message}</Text>
-                  <Text style={styles.subtitle}>{item.subtitle}</Text>
-                  <Text style={styles.time}>{new Date(item.at).toLocaleString()}</Text>
+                  <Text style={styles.subtitle}>{t(item.subtitle)}</Text>
+                  <Text style={styles.time}>{new Date(item.at).toLocaleString(getLocaleTag())}</Text>
                 </View>
               </View>
             );
@@ -92,7 +93,7 @@ export function ActivityHistorySheet({
           <View style={styles.handle} />
 
           <View style={styles.header}>
-            <Text style={styles.title}>Activity History</Text>
+            <Text style={styles.title}>{t('Activity History')}</Text>
             <TouchableOpacity style={styles.closeButton} onPress={onClose}>
               <MaterialIcons name="close" size={24} color={Colors.textMuted} />
             </TouchableOpacity>

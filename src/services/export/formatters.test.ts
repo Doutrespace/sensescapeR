@@ -1,4 +1,6 @@
 jest.mock('../database/perceptions', () => ({
+  // No PAQ ratings in these fixtures.
+  getRatedPaq: () => null,
   getCircumplexQuadrantLabel: () => 'Vibrant',
   getIsoAxisLabel: (value: number, positive: string, negative: string) =>
     value >= 0 ? positive : negative,

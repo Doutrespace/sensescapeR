@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { StyleSheet, View, Text, Animated, TouchableOpacity } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Colors, Spacing } from '../../theme/colors';
+import { t } from '../../i18n';
 
 interface Step {
   key: string;
@@ -37,7 +38,7 @@ export default function StepProgress({ steps, currentStep, onHomePress }: Props)
       style={styles.container}
       accessible
       accessibilityRole="progressbar"
-      accessibilityLabel={`Step ${currentIndex + 1} of ${steps.length}: ${steps[currentIndex]?.label || 'Unknown step'}`}
+      accessibilityLabel={t('Step {current} of {total}: {name}', { current: currentIndex + 1, total: steps.length, name: t(steps[currentIndex]?.label || 'Unknown step') })}
       accessibilityValue={{ min: 1, max: steps.length, now: currentIndex + 1 }}
     >
       <View style={styles.progressTrack}>
@@ -51,14 +52,14 @@ export default function StepProgress({ steps, currentStep, onHomePress }: Props)
               onPress={onHomePress}
               activeOpacity={0.85}
               accessibilityRole="button"
-              accessibilityLabel="Return to start screen"
-              accessibilityHint="Discards this unsaved session and goes back to the home screen"
+              accessibilityLabel={t('Return to start screen')}
+              accessibilityHint={t('Discards this unsaved session and goes back to the home screen')}
             >
               <MaterialIcons name="home" size={16} color={Colors.text} />
             </TouchableOpacity>
           ) : null}
           <Text style={styles.stepLabel}>
-            {steps[currentIndex]?.label || ''}
+            {t(steps[currentIndex]?.label || '')}
           </Text>
         </View>
         <Text style={styles.stepCount}>

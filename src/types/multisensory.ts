@@ -7,9 +7,17 @@
  *
  *   visual           Kaplan & Kaplan preference matrix, 1-5
  *   smell            pleasantness (-1..1) x intensity (0..1) + smell sources
- *   thermal          ISO 10551 judgement scales
- *   restorativeness  Perceived Restorativeness (ART components), 0-6
- *   emotion          Self-Assessment Manikin (SAM), 1-9
+ *   thermal          sensation, comfort and preference scales built on the
+ *                    ISO 10551 principles (the standard gives construction
+ *                    rules and examples, not one fixed scale)
+ *   restorativeness  one statement per Attention Restoration Theory
+ *                    component, rated 0-6 as in the Perceived
+ *                    Restorativeness Scale (Hartig et al., 1997). These are
+ *                    single paraphrased items, not the validated PRS.
+ *   emotion          Affect Grid (Russell, Weiss & Mendelsohn, 1989):
+ *                    pleasure x arousal on a 9 x 9 grid; plus the dominance
+ *                    dimension of the Self-Assessment Manikin (Bradley &
+ *                    Lang, 1994), 1-9. No manikin pictograms are shown.
  *   environment      Perceived Sensory Dimensions (PSD), 1-5
  */
 
@@ -36,9 +44,9 @@ export interface SmellAssessment {
 }
 
 export interface EmotionAssessment {
-  /** SAM valence, 1 (unhappy) to 9 (happy) */
+  /** Affect Grid pleasure, 1 (unpleasant feelings) to 9 (pleasant feelings) */
   valence?: number;
-  /** SAM arousal, 1 (calm) to 9 (excited) */
+  /** Affect Grid arousal, 1 (sleepiness) to 9 (high arousal) */
   arousal?: number;
   /** SAM dominance, 1 (controlled) to 9 (in control); optional */
   dominance?: number;
@@ -58,8 +66,8 @@ export type MultisensoryModuleKey = keyof MultisensoryAssessment;
 export interface ScaleItem<K extends string = string> {
   key: K;
   label: string;
-  /** Small pictogram shown next to the label. */
-  emoji: string;
+  /** MaterialCommunityIcons glyph shown next to the label. */
+  icon: string;
   /** Statement or question the participant rates. */
   prompt: string;
   min: number;
@@ -79,7 +87,7 @@ const KAPLAN_SCALE = { min: 1, max: 5 } as const;
 export const VISUAL_ITEMS: ScaleItem<VisualKey>[] = [
   {
     key: 'coherence',
-    emoji: '🧩',
+    icon: 'puzzle-outline',
     label: 'Coherence',
     prompt: 'The scene hangs together and is easy to take in at a glance.',
     minLabel: 'Disordered',
@@ -88,7 +96,7 @@ export const VISUAL_ITEMS: ScaleItem<VisualKey>[] = [
   },
   {
     key: 'complexity',
-    emoji: '🎨',
+    icon: 'shape-outline',
     label: 'Complexity',
     prompt: 'There is a lot to look at; the scene is varied and rich in detail.',
     minLabel: 'Plain',
@@ -97,7 +105,7 @@ export const VISUAL_ITEMS: ScaleItem<VisualKey>[] = [
   },
   {
     key: 'legibility',
-    emoji: '🧭',
+    icon: 'compass-outline',
     label: 'Legibility',
     prompt: 'I could easily find my way around here and back again.',
     minLabel: 'Confusing',
@@ -106,7 +114,7 @@ export const VISUAL_ITEMS: ScaleItem<VisualKey>[] = [
   },
   {
     key: 'mystery',
-    emoji: '🗝️',
+    icon: 'door-open',
     label: 'Mystery',
     prompt: 'The scene promises more to discover if I went further in.',
     minLabel: 'Nothing hidden',
@@ -123,7 +131,7 @@ export const COMFORT_RAMP = ['#4B7A58', '#9AA85A', '#D3A64A', '#C97A45', '#B5483
 export const THERMAL_ITEMS: ScaleItem<ThermalKey>[] = [
   {
     key: 'sensation',
-    emoji: '🌡️',
+    icon: 'thermometer',
     label: 'Thermal sensation',
     prompt: 'How do you feel right now?',
     min: -3,
@@ -144,7 +152,7 @@ export const THERMAL_ITEMS: ScaleItem<ThermalKey>[] = [
   },
   {
     key: 'comfort',
-    emoji: '😌',
+    icon: 'sofa-outline',
     label: 'Thermal comfort',
     prompt: 'Do you find this…?',
     min: 0,
@@ -162,7 +170,7 @@ export const THERMAL_ITEMS: ScaleItem<ThermalKey>[] = [
   },
   {
     key: 'preference',
-    emoji: '🎚️',
+    icon: 'tune-variant',
     label: 'Thermal preference',
     prompt: 'How would you prefer to be right now?',
     min: -3,
@@ -188,28 +196,28 @@ const PRS_SCALE = { min: 0, max: 6, minLabel: 'Not at all', maxLabel: 'Completel
 export const RESTORATIVENESS_ITEMS: ScaleItem<RestorativenessKey>[] = [
   {
     key: 'beingAway',
-    emoji: '🏝️',
+    icon: 'island',
     label: 'Being away',
     prompt: 'Being here is an escape from my everyday demands.',
     ...PRS_SCALE,
   },
   {
     key: 'fascination',
-    emoji: '✨',
+    icon: 'creation',
     label: 'Fascination',
     prompt: 'This place holds my attention without effort.',
     ...PRS_SCALE,
   },
   {
     key: 'extent',
-    emoji: '🌍',
+    icon: 'earth',
     label: 'Extent',
     prompt: 'This place feels like a world of its own with plenty to explore.',
     ...PRS_SCALE,
   },
   {
     key: 'compatibility',
-    emoji: '🤝',
+    icon: 'handshake-outline',
     label: 'Compatibility',
     prompt: 'I can do the things I like here; the place suits me.',
     ...PRS_SCALE,
@@ -219,28 +227,28 @@ export const RESTORATIVENESS_ITEMS: ScaleItem<RestorativenessKey>[] = [
 const PSD_SCALE = { min: 1, max: 5, minLabel: 'Not at all', maxLabel: 'Very much' } as const;
 
 export const ENVIRONMENT_ITEMS: ScaleItem<EnvironmentKey>[] = [
-  { key: 'serene', emoji: '🤫', label: 'Serene', prompt: 'Quiet, calm and undisturbed.', ...PSD_SCALE },
-  { key: 'nature', emoji: '🌿', label: 'Nature', prompt: 'Wild and untouched, shaped by nature itself.', ...PSD_SCALE },
-  { key: 'richInSpecies', emoji: '🦋', label: 'Rich in species', prompt: 'Many different plants and animals.', ...PSD_SCALE },
-  { key: 'space', emoji: '🌌', label: 'Space', prompt: 'Spacious and connected, like entering another world.', ...PSD_SCALE },
-  { key: 'prospect', emoji: '🔭', label: 'Prospect', prompt: 'Open, with wide views over the surroundings.', ...PSD_SCALE },
-  { key: 'refuge', emoji: '🛖', label: 'Refuge', prompt: 'Enclosed and safe; a sheltered place to retreat to.', ...PSD_SCALE },
-  { key: 'social', emoji: '👥', label: 'Social', prompt: 'A place for meeting people and activities.', ...PSD_SCALE },
-  { key: 'culture', emoji: '🏛️', label: 'Culture', prompt: 'Marked by history, art or human craft.', ...PSD_SCALE },
+  { key: 'serene', icon: 'feather', label: 'Serene', prompt: 'Quiet, calm and undisturbed.', ...PSD_SCALE },
+  { key: 'nature', icon: 'leaf', label: 'Nature', prompt: 'Wild and untouched, shaped by nature itself.', ...PSD_SCALE },
+  { key: 'richInSpecies', icon: 'butterfly-outline', label: 'Rich in species', prompt: 'Many different plants and animals.', ...PSD_SCALE },
+  { key: 'space', icon: 'arrow-expand-all', label: 'Space', prompt: 'Spacious and connected, like entering another world.', ...PSD_SCALE },
+  { key: 'prospect', icon: 'binoculars', label: 'Prospect', prompt: 'Open, with wide views over the surroundings.', ...PSD_SCALE },
+  { key: 'refuge', icon: 'tent', label: 'Refuge', prompt: 'Enclosed and safe; a sheltered place to retreat to.', ...PSD_SCALE },
+  { key: 'social', icon: 'account-group-outline', label: 'Social', prompt: 'A place for meeting people and activities.', ...PSD_SCALE },
+  { key: 'culture', icon: 'bank-outline', label: 'Culture', prompt: 'Marked by history, art or human craft.', ...PSD_SCALE },
 ];
 
-export const SMELL_SOURCES: Array<{ key: string; label: string; emoji: string }> = [
-  { key: 'none', emoji: '🚫', label: 'No noticeable smell' },
-  { key: 'vegetation', emoji: '🌿', label: 'Plants / soil' },
-  { key: 'water', emoji: '💧', label: 'Water / damp' },
-  { key: 'food', emoji: '🍞', label: 'Food / drink' },
-  { key: 'traffic', emoji: '🚗', label: 'Traffic / exhaust' },
-  { key: 'smoke', emoji: '🚬', label: 'Smoke / tobacco' },
-  { key: 'waste', emoji: '🗑️', label: 'Waste / sewage' },
-  { key: 'industry', emoji: '🏭', label: 'Industry / chemicals' },
-  { key: 'cleaning', emoji: '🧴', label: 'Cleaning / perfume' },
-  { key: 'animals', emoji: '🐾', label: 'Animals' },
-  { key: 'other', emoji: '❔', label: 'Other' },
+export const SMELL_SOURCES: Array<{ key: string; label: string; icon: string }> = [
+  { key: 'none', icon: 'cancel', label: 'No noticeable smell' },
+  { key: 'vegetation', icon: 'sprout-outline', label: 'Plants / soil' },
+  { key: 'water', icon: 'water-outline', label: 'Water / damp' },
+  { key: 'food', icon: 'food-outline', label: 'Food / drink' },
+  { key: 'traffic', icon: 'car-outline', label: 'Traffic / exhaust' },
+  { key: 'smoke', icon: 'smoking', label: 'Smoke / tobacco' },
+  { key: 'waste', icon: 'trash-can-outline', label: 'Waste / sewage' },
+  { key: 'industry', icon: 'factory', label: 'Industry / chemicals' },
+  { key: 'cleaning', icon: 'spray-bottle', label: 'Cleaning / perfume' },
+  { key: 'animals', icon: 'paw-outline', label: 'Animals' },
+  { key: 'other', icon: 'dots-horizontal', label: 'Other' },
 ];
 
 export const SAM_SCALE = { min: 1, max: 9 } as const;
@@ -249,7 +257,8 @@ export interface MultisensoryModuleInfo {
   key: MultisensoryModuleKey;
   title: string;
   framework: string;
-  emoji: string;
+  /** MaterialCommunityIcons glyph for the section. */
+  icon: string;
   /** Accent colour (dark enough for white text) and its soft background. */
   color: string;
   softColor: string;
@@ -258,12 +267,12 @@ export interface MultisensoryModuleInfo {
 }
 
 export const MULTISENSORY_MODULES: MultisensoryModuleInfo[] = [
-  { key: 'visual', emoji: '👀', color: '#3B6E8C', softColor: '#D6E3EC', title: 'Visualscape', framework: 'Kaplan preference matrix', requiredItems: 4 },
-  { key: 'smell', emoji: '👃', color: '#7A5C9C', softColor: '#E4DBEE', title: 'Smellscape', framework: 'Smellscape assessment', requiredItems: 2 },
-  { key: 'thermal', emoji: '🌡️', color: '#B0602F', softColor: '#F3DFCF', title: 'Thermal perception', framework: 'ISO 10551', requiredItems: 3 },
-  { key: 'restorativeness', emoji: '🧘', color: '#4B7A58', softColor: '#D7E6DA', title: 'Restorativeness', framework: 'PRS / Attention Restoration Theory', requiredItems: 4 },
-  { key: 'emotion', emoji: '💭', color: '#B04A5C', softColor: '#F2D6DB', title: 'Emotional response', framework: 'Self-Assessment Manikin (SAM)', requiredItems: 2 },
-  { key: 'environment', emoji: '🌳', color: '#69782F', softColor: '#E4E8CD', title: 'Environmental qualities', framework: 'Perceived Sensory Dimensions', requiredItems: 8 },
+  { key: 'visual', icon: 'eye-outline', color: '#3B6E8C', softColor: '#D6E3EC', title: 'Visualscape', framework: 'Kaplan preference matrix', requiredItems: 4 },
+  { key: 'smell', icon: 'scent', color: '#7A5C9C', softColor: '#E4DBEE', title: 'Smellscape', framework: 'Pleasantness × intensity', requiredItems: 2 },
+  { key: 'thermal', icon: 'thermometer', color: '#B0602F', softColor: '#F3DFCF', title: 'Thermal perception', framework: 'Scales after ISO 10551', requiredItems: 3 },
+  { key: 'restorativeness', icon: 'meditation', color: '#4B7A58', softColor: '#D7E6DA', title: 'Restorativeness', framework: 'Attention Restoration Theory', requiredItems: 4 },
+  { key: 'emotion', icon: 'heart-pulse', color: '#B04A5C', softColor: '#F2D6DB', title: 'Emotional response', framework: 'Affect Grid · SAM dominance', requiredItems: 2 },
+  { key: 'environment', icon: 'tree-outline', color: '#69782F', softColor: '#E4E8CD', title: 'Environmental qualities', framework: 'Perceived Sensory Dimensions', requiredItems: 8 },
 ];
 
 function isNumber(value: unknown): value is number {

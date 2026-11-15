@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { StyleSheet, Text, View, Animated } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { Colors, Spacing } from '../../theme/colors';
+import { t } from '../../i18n';
 
 interface Props {
   seconds?: number;
@@ -70,8 +71,8 @@ export function CountdownOverlay({ seconds = 3, onComplete }: Props) {
           {count}
         </Animated.Text>
       </View>
-      <Text style={styles.hint}>Get ready to record...</Text>
-      <Text style={styles.subhint}>Find a quiet position</Text>
+      <Text style={styles.hint}>{t('Get ready to record...')}</Text>
+      <Text style={styles.subhint}>{t('Find a quiet position')}</Text>
     </View>
   );
 }

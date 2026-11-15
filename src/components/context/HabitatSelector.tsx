@@ -4,6 +4,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { Colors } from '../../theme/colors';
 import { HabitatType } from '../../types/recording';
 import { HABITATS } from '../../constants/habitats';
+import { t } from '../../i18n';
 
 interface Props {
   value: HabitatType | null;
@@ -13,9 +14,9 @@ interface Props {
 export default function HabitatSelector({ value, onChange }: Props) {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Location Type</Text>
+      <Text style={styles.title}>{t('Location Type')}</Text>
       <Text style={styles.subtitle}>
-        Select the habitat that best describes this recording location
+        {t('Select the habitat that best describes this recording location')}
       </Text>
 
       <View style={styles.grid}>
@@ -34,7 +35,7 @@ export default function HabitatSelector({ value, onChange }: Props) {
                 color={isSelected ? Colors.primary : Colors.textMuted}
               />
               <Text style={[styles.chipLabel, isSelected && styles.chipLabelSelected]}>
-                {habitat.label}
+                {t(habitat.label)}
               </Text>
             </TouchableOpacity>
           );

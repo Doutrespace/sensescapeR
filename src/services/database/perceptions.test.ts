@@ -2,6 +2,7 @@ import {
   calculateCircumplexFromPAQ,
   calculatePAQFromCircumplex,
   createPerception,
+  getRatedPaq,
 } from './perceptions';
 
 const mockRunAsync = jest.fn();
@@ -52,16 +53,54 @@ describe('perception derivation', () => {
     expect(Math.abs(roundTripped.eventful)).toBeGreaterThan(0.2);
   });
 
-  it('auto-populates PAQ fields when persisting circumplex-only perceptions', async () => {
+  it('leaves PAQ empty when only a circumplex point was given', async () => {
     const perception = await createPerception('rec-1', {
       pleasant: 0.7,
       eventful: 0.2,
     });
 
     expect(mockRunAsync).toHaveBeenCalledTimes(1);
-    expect(perception.paqPleasant).toBeGreaterThan(3);
-    expect(perception.paqAnnoying).toBeLessThan(3);
-    expect(perception.paqVibrant).toBeGreaterThan(3);
-    expect(perception.paqCalm).toBeGreaterThanOrEqual(3);
+    expect(perception.isoPleasant).toBe(0.7);
+    expect(perception.paqPleasant).toBeUndefined();
+    expect(perception.paqCalm).toBeUndefined();
+
+    const insertedValues = mockRunAsync.mock.calls[0][1] as unknown[];
+    // id, recording id, two ISO coordinates, eight PAQ columns, timestamp
+    expect(insertedValues.slice(4, 12)).toEqual(new Array(8).fill(null));
+  });
+
+  it('stores PAQ ratings that were actually given', async () => {
+    const rated = {
+      pleasant: 4, vibrant: 2, eventful: 2, chaotic: 1,
+      annoying: 2, monotonous: 3, uneventful: 4, calm: 5,
+    };
+    const perception = await createPerception('rec-1', { pleasant: 0.4, eventful: -0.3 }, rated);
+
+    expect(perception.paqCalm).toBe(5);
+    expect(getRatedPaq(perception)).toEqual(rated);
+  });
+
+  it('treats PAQ values computed from the circumplex point as not rated', () => {
+    const circumplex = { pleasant: 0.7, eventful: 0.2 };
+    const derived = calculatePAQFromCircumplex(circumplex);
+
+    // What older app versions stored for a circumplex-only rating.
+    const legacyRow = {
+      isoPleasant: circumplex.pleasant,
+      isoEventful: circumplex.eventful,
+      paqPleasant: derived.pleasant,
+      paqVibrant: derived.vibrant,
+      paqEventful: derived.eventful,
+      paqChaotic: derived.chaotic,
+      paqAnnoying: derived.annoying,
+      paqMonotonous: derived.monotonous,
+      paqUneventful: derived.uneventful,
+      paqCalm: derived.calm,
+    };
+
+    expect(getRatedPaq(legacyRow)).toBeNull();
+    expect(getRatedPaq({ ...legacyRow, paqCalm: derived.calm === 5 ? 4 : derived.calm + 1 })).not.toBeNull();
+    expect(getRatedPaq({ isoPleasant: 0.1, isoEventful: 0.1 })).toBeNull();
+    expect(getRatedPaq(undefined)).toBeNull();
   });
 });

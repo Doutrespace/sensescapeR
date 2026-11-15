@@ -3,6 +3,7 @@ import { BlurView } from 'expo-blur';
 import { StyleSheet, Platform, View } from 'react-native';
 import { Colors } from '../../src/theme/colors';
 import { MaterialIcons } from '@expo/vector-icons';
+import { t } from '../../src/i18n';
 
 // Fallback component for Android when BlurView fails
 function TabBarBackground() {
@@ -73,7 +74,7 @@ export default function TabLayout() {
             <Tabs.Screen
                 name="index"
                 options={{
-                    title: 'Record',
+                    title: t('Record'),
                     tabBarIcon: ({ color, size }) => (
                         <MaterialIcons name="mic" size={size} color={color} />
                     ),
@@ -82,7 +83,7 @@ export default function TabLayout() {
             <Tabs.Screen
                 name="explore"
                 options={{
-                    title: 'Explore',
+                    title: t('Explore'),
                     tabBarIcon: ({ color, size }) => (
                         <MaterialIcons name="public" size={size} color={color} />
                     ),
@@ -91,7 +92,7 @@ export default function TabLayout() {
             <Tabs.Screen
                 name="my-map"
                 options={{
-                    title: 'My Map',
+                    title: t('My Map'),
                     tabBarIcon: ({ color, size }) => (
                         <MaterialIcons name="place" size={size} color={color} />
                     ),
@@ -100,7 +101,7 @@ export default function TabLayout() {
             <Tabs.Screen
                 name="profile"
                 options={{
-                    title: 'Profile',
+                    title: t('Profile'),
                     tabBarIcon: ({ color, size }) => (
                         <MaterialIcons name="person" size={size} color={color} />
                     ),

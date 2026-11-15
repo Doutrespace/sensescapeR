@@ -16,6 +16,7 @@ import { useAuthStore } from '../src/stores/useAuthStore';
 import { useRecordingStore } from '../src/stores/useRecordingStore';
 import { useBadgeStore } from '../src/stores/useBadgeStore';
 import { Colors } from '../src/theme/colors';
+import { useLanguageStore } from '../src/i18n';
 
 export default function RootLayout() {
     const router = useRouter();
@@ -23,6 +24,8 @@ export default function RootLayout() {
     const { initialize: initializePreferences } = usePreferencesStore();
     const { initialize: initializeAuth } = useAuthStore();
     const { initialize: initializeBadges } = useBadgeStore();
+    const language = useLanguageStore((state) => state.language);
+    const initializeLanguage = useLanguageStore((state) => state.initialize);
 
     useEffect(() => {
         const handleIncomingUrl = (url?: string | null) => {
@@ -59,6 +62,9 @@ export default function RootLayout() {
 
     useEffect(() => {
         async function initialize() {
+            // Stored language choice must be known before the first screen renders.
+            await initializeLanguage();
+
             // Check onboarding status
             await checkOnboardingStatus();
             await initializePreferences();
@@ -105,7 +111,7 @@ export default function RootLayout() {
         return () => {
             cleanupSyncManager();
         };
-    }, [checkOnboardingStatus, initializeAuth, initializePreferences, initializeBadges]);
+    }, [checkOnboardingStatus, initializeAuth, initializeLanguage, initializePreferences, initializeBadges]);
 
     // On web the URL decides the first screen, so a first-time visitor opening
     // the site root would land on the tabs and never see onboarding.
@@ -125,7 +131,8 @@ export default function RootLayout() {
 
     return (
         <ErrorBoundary>
-            <Stack screenOptions={{ headerShown: false }}>
+            {/* Keyed by language: switching it re-renders every screen in the new language. */}
+            <Stack key={language} screenOptions={{ headerShown: false }}>
                 {!hasCompletedOnboarding ? (
                     <Stack.Screen name="onboarding" />
                 ) : (

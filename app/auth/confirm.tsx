@@ -3,6 +3,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors, Radius, Spacing } from '../../src/theme/colors';
+import { t } from '../../src/i18n';
 
 export default function AuthConfirmScreen() {
   const router = useRouter();
@@ -13,20 +14,19 @@ export default function AuthConfirmScreen() {
         <View style={styles.iconWrap}>
           <MaterialIcons name="mark-email-read" size={40} color={Colors.primary} />
         </View>
-        <Text style={styles.title}>Email Confirmed</Text>
+        <Text style={styles.title}>{t('Email Confirmed')}</Text>
         <Text style={styles.body}>
-          Your account confirmation link opened the app successfully. Return to Profile and sign in
-          if the session was not activated automatically.
+          {t('Your account confirmation link opened the app successfully. Return to Profile and sign in if the session was not activated automatically.')}
         </Text>
 
         <TouchableOpacity
           style={styles.button}
           onPress={() => router.replace('/(tabs)/profile')}
           accessibilityRole="button"
-          accessibilityLabel="Return to profile"
-          accessibilityHint="Open the profile screen to complete sign in"
+          accessibilityLabel={t('Return to profile')}
+          accessibilityHint={t('Open the profile screen to complete sign in')}
         >
-          <Text style={styles.buttonText}>Go to Profile</Text>
+          <Text style={styles.buttonText}>{t('Go to Profile')}</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

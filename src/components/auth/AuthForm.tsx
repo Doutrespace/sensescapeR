@@ -15,6 +15,7 @@ import { Colors, Spacing, Radius, Shadows } from '../../theme/colors';
 import { useAuthStore } from '../../stores/useAuthStore';
 import { ResearchProfileFields } from '../profile/ResearchProfileFields';
 import type { ResearchProfile } from '../../types/researchProfile';
+import { t } from '../../i18n';
 
 type AuthMode = 'signin' | 'signup';
 
@@ -67,9 +68,9 @@ export function AuthForm({ onSuccess }: Props) {
     return (
       <View style={styles.notConfigured}>
         <MaterialIcons name="cloud-off" size={48} color={Colors.textMuted} />
-        <Text style={styles.notConfiguredTitle}>Cloud Not Configured</Text>
+        <Text style={styles.notConfiguredTitle}>{t('Cloud Not Configured')}</Text>
         <Text style={styles.notConfiguredText}>
-          To enable sign in, configure Supabase credentials in your environment variables.
+          {t('To enable sign in, configure Supabase credentials in your environment variables.')}
         </Text>
       </View>
     );
@@ -89,12 +90,12 @@ export function AuthForm({ onSuccess }: Props) {
       </View>
 
       <Text style={styles.title}>
-        {mode === 'signin' ? 'Welcome Back' : 'Create Account'}
+        {mode === 'signin' ? t('Welcome Back') : t('Create Account')}
       </Text>
       <Text style={styles.subtitle}>
         {mode === 'signin'
-          ? 'Sign in to sync your recordings'
-          : 'Join the soundscape research community'}
+          ? t('Sign in to sync your recordings')
+          : t('Join the soundscape research community')}
       </Text>
 
       {error && (
@@ -115,7 +116,7 @@ export function AuthForm({ onSuccess }: Props) {
         <MaterialIcons name="email" size={20} color={Colors.textMuted} />
         <TextInput
           style={styles.input}
-          placeholder="Email"
+          placeholder={t('Email')}
           placeholderTextColor={Colors.textMuted}
           value={email}
           onChangeText={setEmail}
@@ -129,7 +130,7 @@ export function AuthForm({ onSuccess }: Props) {
         <MaterialIcons name="lock" size={20} color={Colors.textMuted} />
         <TextInput
           style={styles.input}
-          placeholder="Password"
+          placeholder={t('Password')}
           placeholderTextColor={Colors.textMuted}
           value={password}
           onChangeText={setPassword}
@@ -151,12 +152,12 @@ export function AuthForm({ onSuccess }: Props) {
             style={styles.researchHeader}
             onPress={() => setShowResearchProfile((current) => !current)}
             accessibilityRole="button"
-            accessibilityLabel="Optional research profile"
+            accessibilityLabel={t('Optional research profile')}
           >
             <View style={styles.researchHeaderText}>
-              <Text style={styles.researchTitle}>Optional research profile</Text>
+              <Text style={styles.researchTitle}>{t('Optional research profile')}</Text>
               <Text style={styles.researchSubtitle}>
-                Add a few demographic details for soundscape research context. This is optional and stored securely with your account.
+                {t('Add a few demographic details for soundscape research context. This is optional and stored securely with your account.')}
               </Text>
             </View>
             <MaterialIcons
@@ -189,7 +190,7 @@ export function AuthForm({ onSuccess }: Props) {
         ) : (
           <>
             <Text style={styles.submitButtonText}>
-              {mode === 'signin' ? 'Sign In' : 'Sign Up'}
+              {mode === 'signin' ? t('Sign In') : t('Sign Up')}
             </Text>
             <MaterialIcons name="arrow-forward" size={20} color={Colors.background} />
           </>
@@ -200,7 +201,7 @@ export function AuthForm({ onSuccess }: Props) {
         <Text style={styles.toggleText}>
           {mode === 'signin'
             ? "Don't have an account? Sign Up"
-            : 'Already have an account? Sign In'}
+            : t('Already have an account? Sign In')}
         </Text>
       </TouchableOpacity>
     </KeyboardAvoidingView>

@@ -2,6 +2,7 @@ import React, { useCallback, useState } from 'react';
 import { StyleSheet, View, Text, LayoutChangeEvent } from 'react-native';
 import { Colors, Radius } from '../../theme/colors';
 import { StaticSpectrogram } from '../recording/SpectrogramView';
+import { t } from '../../i18n';
 
 // Frequency labels for the Y-axis (matching SpectrogramView)
 const FREQUENCY_LABELS = [
@@ -51,7 +52,7 @@ export default function SpectrogramPlayer({
       <View style={[styles.container, { height }]} onLayout={onLayout}>
         <View style={styles.placeholderContainer}>
           <View style={styles.placeholder}>
-            <Text style={styles.placeholderText}>No spectrogram available</Text>
+            <Text style={styles.placeholderText}>{t('No spectrogram available')}</Text>
           </View>
         </View>
       </View>

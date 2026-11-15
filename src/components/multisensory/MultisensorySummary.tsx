@@ -13,6 +13,7 @@ import {
   THERMAL_ITEMS,
   VISUAL_ITEMS,
 } from '../../types/multisensory';
+import { t } from '../../i18n';
 
 interface Props {
   assessment: MultisensoryAssessment | null;
@@ -40,8 +41,8 @@ function scaleRows(items: ScaleItem[], values: Record<string, number | undefined
       const anchor = item.valueLabels?.[value];
       const number = item.bipolar && value > 0 ? `+${value}` : String(value);
       return {
-        label: item.label,
-        value: anchor ? `${anchor} (${number})` : `${number} / ${item.max}`,
+        label: t(item.label),
+        value: anchor ? `${t(anchor)} (${number})` : `${number} / ${item.max}`,
         ratio: (value - item.min) / (item.max - item.min),
       };
     });
@@ -53,23 +54,23 @@ function rowsForModule(assessment: MultisensoryAssessment, moduleKey: Multisenso
     const rows: Row[] = [];
     if (typeof smell.pleasantness === 'number') {
       rows.push({
-        label: 'Pleasantness',
+        label: t('Pleasantness'),
         value: `${smell.pleasantness > 0 ? '+' : ''}${Math.round(smell.pleasantness * 100)}%`,
         ratio: (smell.pleasantness + 1) / 2,
       });
     }
     if (typeof smell.intensity === 'number') {
       rows.push({
-        label: 'Intensity',
+        label: t('Intensity'),
         value: `${Math.round(smell.intensity * 100)}%`,
         ratio: smell.intensity,
       });
     }
     if (smell.sources && smell.sources.length > 0) {
       rows.push({
-        label: 'Sources',
+        label: t('Sources'),
         value: smell.sources
-          .map((key) => SMELL_SOURCES.find((source) => source.key === key)?.label ?? key)
+          .map((key) => t(SMELL_SOURCES.find((source) => source.key === key)?.label ?? key))
           .join(', '),
       });
     }
@@ -80,9 +81,9 @@ function rowsForModule(assessment: MultisensoryAssessment, moduleKey: Multisenso
     const emotion = assessment.emotion ?? {};
     const span = SAM_SCALE.max - SAM_SCALE.min;
     return ([
-      ['Valence', emotion.valence],
-      ['Arousal', emotion.arousal],
-      ['Dominance', emotion.dominance],
+      [t('Pleasure'), emotion.valence],
+      [t('Arousal'), emotion.arousal],
+      [t('Dominance'), emotion.dominance],
     ] as Array<[string, number | undefined]>)
       .filter(([, value]) => typeof value === 'number')
       .map(([label, value]) => ({
@@ -116,8 +117,8 @@ export function MultisensorySummary({ assessment }: Props) {
     <View style={styles.card}>
       {modules.map(({ module, rows }, index) => (
         <View key={module.key} style={[styles.module, index > 0 && styles.moduleDivider]}>
-          <Text style={styles.moduleTitle}>{module.title}</Text>
-          <Text style={styles.moduleFramework}>{module.framework}</Text>
+          <Text style={styles.moduleTitle}>{t(module.title)}</Text>
+          <Text style={styles.moduleFramework}>{t(module.framework)}</Text>
           {rows.map((row) => (
             <View key={row.label} style={styles.row}>
               <Text style={styles.rowLabel}>{row.label}</Text>

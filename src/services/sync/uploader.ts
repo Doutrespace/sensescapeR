@@ -2,7 +2,7 @@ import { File } from 'expo-file-system';
 import { supabase, isSupabaseConfigured } from '../../utils/supabase';
 import { CommunityVisibility, Recording, Perception } from '../../types/recording';
 import { getRecording, updateSyncStatus } from '../database/recordings';
-import { getPerceptionByRecordingId } from '../database/perceptions';
+import { getPerceptionByRecordingId, getRatedPaq } from '../database/perceptions';
 import { sanitizeFilePath, validateAudioUri, validateCoordinates } from '../../utils/validation';
 import { LoggingService } from '../logging';
 import { assessVisualContext } from '../../utils/visualContext';
@@ -594,19 +594,21 @@ async function uploadPerception(
   remoteRecordingId: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    const ratedPaq = getRatedPaq(perception);
     const { error } = await supabase.from('perceptions').insert([
       {
         recording_id: remoteRecordingId,
         iso_pleasant: perception.isoPleasant,
         iso_eventful: perception.isoEventful,
-        paq_pleasant: perception.paqPleasant,
-        paq_vibrant: perception.paqVibrant,
-        paq_eventful: perception.paqEventful,
-        paq_chaotic: perception.paqChaotic,
-        paq_annoying: perception.paqAnnoying,
-        paq_monotonous: perception.paqMonotonous,
-        paq_uneventful: perception.paqUneventful,
-        paq_calm: perception.paqCalm,
+        // Rated PAQ only; never scores derived from the circumplex point.
+        paq_pleasant: ratedPaq?.pleasant ?? null,
+        paq_vibrant: ratedPaq?.vibrant ?? null,
+        paq_eventful: ratedPaq?.eventful ?? null,
+        paq_chaotic: ratedPaq?.chaotic ?? null,
+        paq_annoying: ratedPaq?.annoying ?? null,
+        paq_monotonous: ratedPaq?.monotonous ?? null,
+        paq_uneventful: ratedPaq?.uneventful ?? null,
+        paq_calm: ratedPaq?.calm ?? null,
       },
     ]);
 

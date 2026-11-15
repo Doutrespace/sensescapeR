@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Colors, Radius, Shadows, Spacing } from '../../theme/colors';
+import { t, getLocaleTag } from '../../i18n';
 
 export interface SyncQueueDetailItem {
   id: string;
@@ -30,8 +31,8 @@ interface Props {
 function formatRetryTime(value: string): string {
   const date = new Date(value);
   return Number.isNaN(date.getTime())
-    ? 'Retry time unavailable'
-    : `Next retry ${date.toLocaleString()}`;
+    ? t('Retry time unavailable')
+    : t('Next retry {time}', { time: date.toLocaleString(getLocaleTag()) });
 }
 
 export function SyncQueueSheet({ visible, items, onClose, onRetry }: Props) {
@@ -49,9 +50,9 @@ export function SyncQueueSheet({ visible, items, onClose, onRetry }: Props) {
 
           <View style={styles.header}>
             <View style={styles.headerText}>
-              <Text style={styles.title}>Sync Queue</Text>
+              <Text style={styles.title}>{t('Sync Queue')}</Text>
               <Text style={styles.subtitle}>
-                Inspect queued recordings and the latest upload errors.
+                {t('Inspect queued recordings and the latest upload errors.')}
               </Text>
             </View>
             <TouchableOpacity style={styles.closeButton} onPress={onClose}>
@@ -67,9 +68,9 @@ export function SyncQueueSheet({ visible, items, onClose, onRetry }: Props) {
             {items.length === 0 ? (
               <View style={styles.emptyState}>
                 <MaterialIcons name="cloud-done" size={32} color={Colors.textMuted} />
-                <Text style={styles.emptyTitle}>No queued uploads</Text>
+                <Text style={styles.emptyTitle}>{t('No queued uploads')}</Text>
                 <Text style={styles.emptyText}>
-                  Local recordings will appear here when they are waiting to sync.
+                  {t('Local recordings will appear here when they are waiting to sync.')}
                 </Text>
               </View>
             ) : (
@@ -77,8 +78,8 @@ export function SyncQueueSheet({ visible, items, onClose, onRetry }: Props) {
                 <View key={item.id} style={styles.item}>
                   <View style={styles.itemHeader}>
                     <View style={styles.itemMeta}>
-                      <Text style={styles.itemTitle}>{item.title}</Text>
-                      <Text style={styles.itemSubtitle}>{item.subtitle}</Text>
+                      <Text style={styles.itemTitle}>{t(item.title)}</Text>
+                      <Text style={styles.itemSubtitle}>{t(item.subtitle)}</Text>
                     </View>
                     <View style={styles.attemptBadge}>
                       <Text style={styles.attemptText}>{item.attempts}x</Text>
@@ -101,7 +102,7 @@ export function SyncQueueSheet({ visible, items, onClose, onRetry }: Props) {
           {items.length > 0 ? (
             <TouchableOpacity style={styles.retryButton} onPress={onRetry} activeOpacity={0.8}>
               <MaterialIcons name="refresh" size={18} color={Colors.background} />
-              <Text style={styles.retryTextButton}>Retry queued uploads</Text>
+              <Text style={styles.retryTextButton}>{t('Retry queued uploads')}</Text>
             </TouchableOpacity>
           ) : null}
         </View>

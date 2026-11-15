@@ -1,11 +1,12 @@
 import React from 'react';
 import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { format } from 'date-fns';
+import { formatDate } from '../../i18n/dates';
 import { Colors } from '../../theme/colors';
 import { CommunityVisibility, RecordingWithPerception, SyncStatus } from '../../types/recording';
 import { getProtocolLabel, formatDuration } from '../../constants/protocols';
 import { getHabitatIcon, getHabitatLabel } from '../../constants/habitats';
+import { t } from '../../i18n';
 
 interface Props {
   recording: RecordingWithPerception;
@@ -34,8 +35,8 @@ export default function RecordingListItem({ recording, onPress }: Props) {
     <TouchableOpacity style={styles.container} onPress={onPress} activeOpacity={0.7}>
       <View style={styles.header}>
         <View style={styles.dateContainer}>
-          <Text style={styles.date}>{format(recordedDate, 'MMM d, yyyy')}</Text>
-          <Text style={styles.time}>{format(recordedDate, 'h:mm a')}</Text>
+          <Text style={styles.date}>{formatDate(recordedDate, 'short')}</Text>
+          <Text style={styles.time}>{formatDate(recordedDate, 'time')}</Text>
         </View>
 
         <View style={styles.badgeRow}>
@@ -46,7 +47,7 @@ export default function RecordingListItem({ recording, onPress }: Props) {
               color={statusConfig.color}
             />
             <Text style={[styles.statusText, { color: statusConfig.color }]}>
-              {statusConfig.label}
+              {t(statusConfig.label)}
             </Text>
           </View>
 
@@ -57,7 +58,7 @@ export default function RecordingListItem({ recording, onPress }: Props) {
               color={visibilityConfig.color}
             />
             <Text style={[styles.statusText, { color: visibilityConfig.color }]}>
-              {visibilityConfig.label}
+              {t(visibilityConfig.label)}
             </Text>
           </View>
         </View>
@@ -93,7 +94,7 @@ export default function RecordingListItem({ recording, onPress }: Props) {
         {recording.perception && (
           <View style={styles.perceptionRow}>
             <View style={styles.perceptionItem}>
-              <Text style={styles.perceptionLabel}>Pleasant</Text>
+              <Text style={styles.perceptionLabel}>{t('Pleasant')}</Text>
               <View style={styles.perceptionBar}>
                 <View
                   style={[
@@ -110,7 +111,7 @@ export default function RecordingListItem({ recording, onPress }: Props) {
             </View>
 
             <View style={styles.perceptionItem}>
-              <Text style={styles.perceptionLabel}>Eventful</Text>
+              <Text style={styles.perceptionLabel}>{t('Eventful')}</Text>
               <View style={styles.perceptionBar}>
                 <View
                   style={[
@@ -131,17 +132,17 @@ export default function RecordingListItem({ recording, onPress }: Props) {
           <View style={styles.warningRow}>
             {recording.hasClipping && (
               <View style={styles.warningBadge}>
-                <Text style={styles.warningText}>Clipping</Text>
+                <Text style={styles.warningText}>{t('Clipping')}</Text>
               </View>
             )}
             {recording.hasWindHandling && (
               <View style={styles.warningBadge}>
-                <Text style={styles.warningText}>Wind</Text>
+                <Text style={styles.warningText}>{t('Wind')}</Text>
               </View>
             )}
             {recording.hasLowSNR && (
               <View style={styles.warningBadge}>
-                <Text style={styles.warningText}>Low Signal</Text>
+                <Text style={styles.warningText}>{t('Low Signal')}</Text>
               </View>
             )}
           </View>

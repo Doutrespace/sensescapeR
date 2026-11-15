@@ -9,9 +9,10 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
-import { MaterialIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { Colors, Radius, Spacing } from '../../theme/colors';
+import { t } from '../../i18n';
 import {
   ENVIRONMENT_ITEMS,
   MULTISENSORY_MODULES,
@@ -36,6 +37,8 @@ interface Props {
   onConfirm: () => void;
 }
 
+type IconName = keyof typeof MaterialCommunityIcons.glyphMap;
+
 const MODULE_INTROS: Record<MultisensoryModuleKey, string> = {
   visual: 'Look around. How does the scene in front of you appear?',
   smell: 'Take a breath. How does the air smell here?',
@@ -51,32 +54,27 @@ const SLIDER_ITEMS: Partial<Record<MultisensoryModuleKey, ScaleItem[]>> = {
   restorativeness: RESTORATIVENESS_ITEMS,
 };
 
+// Quiet tints: the pads should read as one surface, not four coloured tiles.
 const SMELL_QUADRANT_COLORS: Quadrants<string> = {
-  topLeft: '#EBCFCB',
-  topRight: '#D5E6CC',
-  bottomLeft: '#F1E6E0',
-  bottomRight: '#E7F0E1',
-};
-
-const SMELL_QUADRANT_EMOJI: Quadrants<string> = {
-  topLeft: '🤢',
-  topRight: '🌸',
-  bottomLeft: '😕',
-  bottomRight: '🍃',
+  topLeft: '#F1E7EA',
+  topRight: '#ECE6F3',
+  bottomLeft: '#F7F3F1',
+  bottomRight: '#F3F0F7',
 };
 
 const EMOTION_QUADRANT_COLORS: Quadrants<string> = {
-  topLeft: '#EBCBC6',
-  topRight: '#F4E4B5',
-  bottomLeft: '#D6DDE8',
-  bottomRight: '#D5E6D8',
+  topLeft: '#F5E6E8',
+  topRight: '#F7ECE4',
+  bottomLeft: '#EEEDF0',
+  bottomRight: '#EDF1EC',
 };
 
-const EMOTION_QUADRANT_EMOJI: Quadrants<string> = {
-  topLeft: '😠',
-  topRight: '😄',
-  bottomLeft: '😔',
-  bottomRight: '😌',
+// Corner words of the Affect Grid (Russell, Weiss & Mendelsohn, 1989).
+const EMOTION_QUADRANT_LABELS: Quadrants<string> = {
+  topLeft: 'Stress',
+  topRight: 'Excitement',
+  bottomLeft: 'Depression',
+  bottomRight: 'Relaxation',
 };
 
 const SAM_SPAN = SAM_SCALE.max - SAM_SCALE.min;
@@ -89,52 +87,17 @@ function round2(value: number): number {
   return Math.round(value * 100) / 100;
 }
 
-function samToAxis(value: number): number {
+function gridToAxis(value: number): number {
   return ((value - SAM_SCALE.min) / SAM_SPAN) * 2 - 1;
 }
 
-function axisToSam(value: number): number {
+function axisToGrid(value: number): number {
   return SAM_SCALE.min + Math.round(((value + 1) / 2) * SAM_SPAN);
 }
 
-/** Face and word for a SAM valence/arousal rating (1-9 each). */
-function describeEmotion(valence: number, arousal: number): { emoji: string; label: string } {
-  const high = (score: number) => score >= 6;
-  const low = (score: number) => score <= 4;
-
-  if (high(valence)) {
-    if (high(arousal)) return { emoji: '😄', label: 'Excited, delighted' };
-    if (low(arousal)) return { emoji: '😌', label: 'Relaxed, content' };
-    return { emoji: '🙂', label: 'Pleased' };
-  }
-  if (low(valence)) {
-    if (high(arousal)) return { emoji: '😠', label: 'Tense, stressed' };
-    if (low(arousal)) return { emoji: '😔', label: 'Gloomy, bored' };
-    return { emoji: '🙁', label: 'Displeased' };
-  }
-  if (high(arousal)) return { emoji: '😮', label: 'Alert, activated' };
-  if (low(arousal)) return { emoji: '😴', label: 'Sleepy, still' };
-  return { emoji: '😐', label: 'Neutral' };
-}
-
-function describeSmell(pleasantness: number, intensity: number): string {
-  const strength = intensity < 0.25
-    ? 'Faint'
-    : intensity < 0.5
-      ? 'Mild'
-      : intensity < 0.75
-        ? 'Noticeable'
-        : 'Strong';
-  const quality = pleasantness < -0.5
-    ? 'very unpleasant'
-    : pleasantness < -0.15
-      ? 'unpleasant'
-      : pleasantness <= 0.15
-        ? 'neutral'
-        : pleasantness <= 0.5
-          ? 'pleasant'
-          : 'very pleasant';
-  return `${strength}, ${quality}`;
+function signedPercent(value: number): string {
+  const percent = Math.round(value * 100);
+  return `${percent > 0 ? '+' : ''}${percent}%`;
 }
 
 /**
@@ -167,18 +130,6 @@ export default function MultisensoryScreen({ value, onChange, onConfirm }: Props
     240,
     Math.min(380, screenWidth - 2 * SCREEN_PADDING, screenHeight - PAD_PAGE_CHROME_HEIGHT)
   );
-
-  // On the emotion page the header itself shows the face for the current rating.
-  const emotion = value.emotion ?? {};
-  const mood = section.key === 'emotion'
-    && typeof emotion.valence === 'number'
-    && typeof emotion.arousal === 'number'
-    ? describeEmotion(emotion.valence, emotion.arousal)
-    : null;
-  const heroEmoji = mood?.emoji ?? section.emoji;
-  const heroIntro = mood
-    ? `${mood.label}  ·  Valence ${emotion.valence}/9, Arousal ${emotion.arousal}/9`
-    : MODULE_INTROS[section.key];
 
   const goToPage = (nextIndex: number) => {
     if (nextIndex === pageIndex || nextIndex < 0 || nextIndex >= MULTISENSORY_MODULES.length) {
@@ -222,14 +173,14 @@ export default function MultisensoryScreen({ value, onChange, onConfirm }: Props
     void Haptics.selectionAsync();
   };
 
-  const renderItemHeader = (emoji: string, label: string, prompt: string, info: MultisensoryModuleInfo) => (
+  const renderItemHeader = (icon: string, label: string, prompt: string, info: MultisensoryModuleInfo) => (
     <View style={styles.itemHeader}>
-      <View style={[styles.itemEmojiWrap, { backgroundColor: info.softColor }]}>
-        <Text style={styles.itemEmoji}>{emoji}</Text>
+      <View style={[styles.itemIconWrap, { backgroundColor: info.softColor }]}>
+        <MaterialCommunityIcons name={icon as IconName} size={22} color={info.color} />
       </View>
       <View style={styles.itemHeaderText}>
-        <Text style={styles.itemLabel}>{label}</Text>
-        <Text style={styles.itemPrompt}>{prompt}</Text>
+        <Text style={styles.itemLabel}>{t(label)}</Text>
+        <Text style={styles.itemPrompt}>{t(prompt)}</Text>
       </View>
     </View>
   );
@@ -239,19 +190,19 @@ export default function MultisensoryScreen({ value, onChange, onConfirm }: Props
 
     return items.map((item) => (
       <View key={item.key} style={styles.card}>
-        {renderItemHeader(item.emoji, item.label, item.prompt, info)}
+        {renderItemHeader(item.icon, item.label, item.prompt, info)}
         <StepSlider
           min={item.min}
           max={item.max}
           value={moduleValue[item.key] ?? null}
           onChange={(next) => updateModule(info.key, { [item.key]: next })}
-          minLabel={item.minLabel}
-          maxLabel={item.maxLabel}
+          minLabel={t(item.minLabel)}
+          maxLabel={t(item.maxLabel)}
           valueLabels={item.valueLabels}
           bipolar={item.bipolar}
           accentColor={info.color}
           stepColors={item.stepColors}
-          accessibilityLabel={`${item.label}: ${item.prompt}`}
+          accessibilityLabel={`${t(item.label)}: ${t(item.prompt)}`}
         />
       </View>
     ));
@@ -262,22 +213,22 @@ export default function MultisensoryScreen({ value, onChange, onConfirm }: Props
 
     return (
       <>
-        <View style={[styles.legend, { backgroundColor: info.softColor }]}>
-          <Text style={[styles.legendText, { color: info.color }]}>1 = Not at all</Text>
-          <MaterialIcons name="arrow-forward" size={16} color={info.color} />
-          <Text style={[styles.legendText, { color: info.color }]}>5 = Very much</Text>
+        <View style={[styles.legend, { borderColor: info.softColor }]}>
+          <Text style={[styles.legendText, { color: info.color }]}>{t('1 = Not at all')}</Text>
+          <View style={[styles.legendLine, { backgroundColor: info.softColor }]} />
+          <Text style={[styles.legendText, { color: info.color }]}>{t('5 = Very much')}</Text>
         </View>
 
         {ENVIRONMENT_ITEMS.map((item) => (
           <View key={item.key} style={styles.card}>
-            {renderItemHeader(item.emoji, item.label, item.prompt, info)}
+            {renderItemHeader(item.icon, item.label, item.prompt, info)}
             <DotScale
               min={item.min}
               max={item.max}
               value={environment[item.key] ?? null}
               onChange={(next) => updateModule('environment', { [item.key]: next })}
               accentColor={info.color}
-              accessibilityLabel={`${item.label}: ${item.prompt}`}
+              accessibilityLabel={`${t(item.label)}: ${t(item.prompt)}`}
             />
           </View>
         ))}
@@ -316,25 +267,34 @@ export default function MultisensoryScreen({ value, onChange, onConfirm }: Props
             pleasantness: round2(next.x),
             intensity: round2((next.y + 1) / 2),
           })}
-          leftLabel="Unpleasant"
-          rightLabel="Pleasant"
-          topLabel="Strong"
-          bottomLabel="Weak"
+          leftLabel={t('Unpleasant')}
+          rightLabel={t('Pleasant')}
+          topLabel={t('Strong')}
+          bottomLabel={t('Weak')}
           accentColor={info.color}
           quadrantColors={SMELL_QUADRANT_COLORS}
-          quadrantEmoji={SMELL_QUADRANT_EMOJI}
-          accessibilityLabel="Smell pleasantness and intensity"
+          accessibilityLabel={t('Smell pleasantness and intensity')}
         />
 
-        <View style={[styles.readout, hasPoint && { backgroundColor: info.color }]}>
-          <Text style={[styles.readoutText, hasPoint && styles.readoutTextActive]}>
-            {hasPoint ? describeSmell(smell.pleasantness!, smell.intensity!) : 'Place the marker to rate the smell'}
-          </Text>
+        <View style={styles.readoutRow}>
+          <View style={styles.readoutCell}>
+            <Text style={styles.readoutLabel}>{t('Pleasantness')}</Text>
+            <Text style={[styles.readoutValue, hasPoint && { color: info.color }]}>
+              {hasPoint ? signedPercent(smell.pleasantness!) : '–'}
+            </Text>
+          </View>
+          <View style={styles.readoutDivider} />
+          <View style={styles.readoutCell}>
+            <Text style={styles.readoutLabel}>{t('Intensity')}</Text>
+            <Text style={[styles.readoutValue, hasPoint && { color: info.color }]}>
+              {hasPoint ? `${Math.round(smell.intensity! * 100)}%` : '–'}
+            </Text>
+          </View>
         </View>
 
         <View style={styles.card}>
-          <Text style={styles.itemLabel}>What can you smell?</Text>
-          <Text style={styles.itemPrompt}>Tap everything that applies (optional).</Text>
+          <Text style={styles.itemLabel}>{t('What can you smell?')}</Text>
+          <Text style={styles.itemPrompt}>{t('Tap everything that applies (optional).')}</Text>
           <View style={styles.chipWrap}>
             {SMELL_SOURCES.map((source) => {
               const selected = sources.includes(source.key);
@@ -348,12 +308,16 @@ export default function MultisensoryScreen({ value, onChange, onConfirm }: Props
                   onPress={() => toggleSource(source.key)}
                   activeOpacity={0.8}
                   accessibilityRole="checkbox"
-                  accessibilityLabel={source.label}
+                  accessibilityLabel={t(source.label)}
                   accessibilityState={{ checked: selected }}
                 >
-                  <Text style={styles.chipEmoji}>{source.emoji}</Text>
+                  <MaterialCommunityIcons
+                    name={source.icon as IconName}
+                    size={18}
+                    color={selected ? '#FFFFFF' : info.color}
+                  />
                   <Text style={[styles.chipText, selected && styles.chipTextSelected]}>
-                    {source.label}
+                    {t(source.label)}
                   </Text>
                 </TouchableOpacity>
               );
@@ -368,9 +332,8 @@ export default function MultisensoryScreen({ value, onChange, onConfirm }: Props
     const emotion = value.emotion ?? {};
     const hasPoint = typeof emotion.valence === 'number' && typeof emotion.arousal === 'number';
     const point: GridPoint | null = hasPoint
-      ? { x: samToAxis(emotion.valence!), y: samToAxis(emotion.arousal!) }
+      ? { x: gridToAxis(emotion.valence!), y: gridToAxis(emotion.arousal!) }
       : null;
-    const mood = hasPoint ? describeEmotion(emotion.valence!, emotion.arousal!) : null;
 
     return (
       <>
@@ -379,31 +342,56 @@ export default function MultisensoryScreen({ value, onChange, onConfirm }: Props
           steps={SAM_SPAN + 1}
           value={point}
           onChange={(next) => updateModule('emotion', {
-            valence: axisToSam(next.x),
-            arousal: axisToSam(next.y),
+            valence: axisToGrid(next.x),
+            arousal: axisToGrid(next.y),
           })}
-          leftLabel="Unhappy"
-          rightLabel="Happy"
-          topLabel="Excited"
-          bottomLabel="Calm"
+          leftLabel={t('Unpleasant')}
+          rightLabel={t('Pleasant')}
+          topLabel={t('High arousal')}
+          bottomLabel={t('Sleepiness')}
           accentColor={info.color}
           quadrantColors={EMOTION_QUADRANT_COLORS}
-          quadrantEmoji={EMOTION_QUADRANT_EMOJI}
-          markerEmoji={mood?.emoji}
-          accessibilityLabel="Affect grid: valence and arousal"
+          quadrantLabels={{
+            topLeft: t(EMOTION_QUADRANT_LABELS.topLeft),
+            topRight: t(EMOTION_QUADRANT_LABELS.topRight),
+            bottomLeft: t(EMOTION_QUADRANT_LABELS.bottomLeft),
+            bottomRight: t(EMOTION_QUADRANT_LABELS.bottomRight),
+          }}
+          accessibilityLabel={t('Affect grid: pleasure and arousal')}
         />
 
+        <View style={styles.readoutRow}>
+          <View style={styles.readoutCell}>
+            <Text style={styles.readoutLabel}>{t('Pleasure')}</Text>
+            <Text style={[styles.readoutValue, hasPoint && { color: info.color }]}>
+              {hasPoint ? `${emotion.valence} / 9` : '–'}
+            </Text>
+          </View>
+          <View style={styles.readoutDivider} />
+          <View style={styles.readoutCell}>
+            <Text style={styles.readoutLabel}>{t('Arousal')}</Text>
+            <Text style={[styles.readoutValue, hasPoint && { color: info.color }]}>
+              {hasPoint ? `${emotion.arousal} / 9` : '–'}
+            </Text>
+          </View>
+        </View>
+
         <View style={styles.card}>
-          {renderItemHeader('💪', 'Dominance (optional)', 'How much do you feel in control of the situation?', info)}
+          {renderItemHeader(
+            'arm-flex-outline',
+            'Dominance (optional)',
+            'How much do you feel in control of the situation?',
+            info
+          )}
           <StepSlider
             min={SAM_SCALE.min}
             max={SAM_SCALE.max}
             value={emotion.dominance ?? null}
             onChange={(next) => updateModule('emotion', { dominance: next })}
-            minLabel="Controlled"
-            maxLabel="In control"
+            minLabel={t('Controlled')}
+            maxLabel={t('In control')}
             accentColor={info.color}
-            accessibilityLabel="Dominance: how much do you feel in control of the situation?"
+            accessibilityLabel={t('Dominance: how much do you feel in control of the situation?')}
           />
         </View>
       </>
@@ -424,8 +412,8 @@ export default function MultisensoryScreen({ value, onChange, onConfirm }: Props
   };
 
   const primaryLabel = isLastPage
-    ? (answeredHere > 0 ? 'Finish' : 'Skip & finish')
-    : (answeredHere > 0 ? 'Next' : 'Skip');
+    ? (answeredHere > 0 ? t('Finish') : t('Skip & finish'))
+    : (answeredHere > 0 ? t('Next') : t('Skip'));
 
   return (
     <View style={styles.container}>
@@ -440,7 +428,7 @@ export default function MultisensoryScreen({ value, onChange, onConfirm }: Props
               style={styles.segmentTouch}
               onPress={() => goToPage(index)}
               accessibilityRole="tab"
-              accessibilityLabel={`${info.title}${isAnswered ? ', rated' : ''}`}
+              accessibilityLabel={isAnswered ? t('{section}, rated', { section: t(info.title) }) : t(info.title)}
               accessibilityState={{ selected: isCurrent }}
             >
               <View
@@ -478,18 +466,25 @@ export default function MultisensoryScreen({ value, onChange, onConfirm }: Props
           keyboardShouldPersistTaps="handled"
         >
           <View style={[styles.hero, { backgroundColor: section.softColor }]}>
+            {/* Oversized, faint icon as a backdrop gives each page its own face. */}
+            <View pointerEvents="none" style={styles.heroBackdrop}>
+              <MaterialCommunityIcons name={section.icon as IconName} size={150} color={section.color} />
+            </View>
+
             <View style={styles.heroTop}>
-              <View style={styles.heroEmojiWrap}>
-                <Text style={styles.heroEmoji}>{heroEmoji}</Text>
+              <View style={[styles.heroIconWrap, { backgroundColor: section.color }]}>
+                <MaterialCommunityIcons name={section.icon as IconName} size={28} color="#FFFFFF" />
               </View>
               <View style={styles.heroTitles}>
                 <Text style={[styles.heroCount, { color: section.color }]}>
-                  {pageIndex + 1} of {MULTISENSORY_MODULES.length}  ·  {section.framework}
+                  {t('{current} of {total}', { current: pageIndex + 1, total: MULTISENSORY_MODULES.length })}
+                  {'  ·  '}
+                  {t(section.framework)}
                 </Text>
-                <Text style={styles.heroTitle}>{section.title}</Text>
+                <Text style={styles.heroTitle}>{t(section.title)}</Text>
               </View>
             </View>
-            <Text style={[styles.heroIntro, mood && styles.heroIntroStrong]}>{heroIntro}</Text>
+            <Text style={styles.heroIntro}>{t(MODULE_INTROS[section.key])}</Text>
           </View>
 
           {renderModuleBody(section)}
@@ -499,10 +494,10 @@ export default function MultisensoryScreen({ value, onChange, onConfirm }: Props
               style={styles.clearButton}
               onPress={() => clearModule(section.key)}
               accessibilityRole="button"
-              accessibilityLabel={`Clear ${section.title} ratings`}
+              accessibilityLabel={t('Clear the ratings on this page')}
             >
               <MaterialIcons name="restart-alt" size={18} color={Colors.textMuted} />
-              <Text style={styles.clearButtonText}>Clear this page</Text>
+              <Text style={styles.clearButtonText}>{t('Clear this page')}</Text>
             </TouchableOpacity>
           )}
         </ScrollView>
@@ -515,7 +510,7 @@ export default function MultisensoryScreen({ value, onChange, onConfirm }: Props
             onPress={() => goToPage(pageIndex - 1)}
             activeOpacity={0.8}
             accessibilityRole="button"
-            accessibilityLabel="Back to previous section"
+            accessibilityLabel={t('Back to previous section')}
           >
             <MaterialIcons name="arrow-back" size={22} color={Colors.text} />
           </TouchableOpacity>
@@ -525,7 +520,7 @@ export default function MultisensoryScreen({ value, onChange, onConfirm }: Props
           onPress={handleNext}
           activeOpacity={0.85}
           accessibilityRole="button"
-          accessibilityLabel={isLastPage ? 'Finish multisensory ratings' : `${primaryLabel}: go to next section`}
+          accessibilityLabel={isLastPage ? t('Finish multisensory ratings') : t('Go to next section')}
         >
           <Text style={styles.nextButtonText}>{primaryLabel}</Text>
           <MaterialIcons name={isLastPage ? 'check' : 'arrow-forward'} size={22} color="#FFFFFF" />
@@ -571,23 +566,25 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     padding: Spacing.md,
     gap: 12,
+    overflow: 'hidden',
+  },
+  heroBackdrop: {
+    position: 'absolute',
+    right: -28,
+    bottom: -36,
+    opacity: 0.1,
   },
   heroTop: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
   },
-  heroEmojiWrap: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+  heroIconWrap: {
+    width: 56,
+    height: 56,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
-  },
-  heroEmoji: {
-    fontSize: 32,
-    lineHeight: 40,
   },
   heroTitles: {
     flex: 1,
@@ -595,9 +592,9 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   heroCount: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '800',
-    letterSpacing: 0.3,
+    letterSpacing: 0.6,
     textTransform: 'uppercase',
   },
   heroTitle: {
@@ -612,10 +609,6 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     color: Colors.text,
   },
-  heroIntroStrong: {
-    fontWeight: '700',
-    fontVariant: ['tabular-nums'],
-  },
   card: {
     backgroundColor: Colors.surface,
     borderRadius: 20,
@@ -629,16 +622,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
   },
-  itemEmojiWrap: {
+  itemIconWrap: {
     width: 44,
     height: 44,
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  itemEmoji: {
-    fontSize: 22,
-    lineHeight: 28,
   },
   itemHeaderText: {
     flex: 1,
@@ -658,30 +647,53 @@ const styles = StyleSheet.create({
   legend: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
+    gap: 12,
     paddingVertical: 10,
+    paddingHorizontal: 14,
     borderRadius: 14,
+    borderWidth: 1.5,
+    backgroundColor: Colors.surface,
+  },
+  legendLine: {
+    flex: 1,
+    height: 2,
+    borderRadius: 1,
   },
   legendText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '700',
   },
-  readout: {
-    alignSelf: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 100,
-    backgroundColor: 'rgba(23, 23, 23, 0.06)',
+  readoutRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.surface,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: Colors.surfaceHighlight,
+    paddingVertical: 12,
   },
-  readoutText: {
-    fontSize: 14,
-    fontWeight: '600',
+  readoutCell: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 2,
+  },
+  readoutDivider: {
+    width: 1,
+    alignSelf: 'stretch',
+    backgroundColor: Colors.surfaceHighlight,
+  },
+  readoutLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
     color: Colors.textMuted,
   },
-  readoutTextActive: {
-    color: '#FFFFFF',
-    fontWeight: '700',
+  readoutValue: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: Colors.textDisabled,
+    fontVariant: ['tabular-nums'],
   },
   chipWrap: {
     flexDirection: 'row',
@@ -699,9 +711,6 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: Colors.surfaceHighlight,
     backgroundColor: Colors.background,
-  },
-  chipEmoji: {
-    fontSize: 16,
   },
   chipText: {
     fontSize: 14,

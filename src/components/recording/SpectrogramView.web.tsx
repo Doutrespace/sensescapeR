@@ -6,6 +6,7 @@ import React, { forwardRef, useEffect, useRef } from 'react';
 import { StyleSheet, View, Text } from 'react-native';
 import { Colors } from '../../theme/colors';
 import { SpectrogramData } from '../../hooks/useSpectrogramData';
+import { t } from '../../i18n';
 
 const FREQUENCY_LABELS = [
   { freq: 8000, label: '8k', position: 0 },
@@ -82,7 +83,7 @@ function SpectrogramViewInner(
 
           {!hasData && (
             <View style={[styles.noDataOverlay, StyleSheet.absoluteFill]}>
-              <Text style={styles.noDataText}>Waiting for audio...</Text>
+              <Text style={styles.noDataText}>{t('Waiting for audio...')}</Text>
             </View>
           )}
 
@@ -135,7 +136,7 @@ export function StaticSpectrogram({
   if (!imageUri) {
     return (
       <View style={[styles.placeholder, { height: propHeight, width: propWidth }]}>
-        <Text style={styles.placeholderText}>No spectrogram available</Text>
+        <Text style={styles.placeholderText}>{t('No spectrogram available')}</Text>
       </View>
     );
   }

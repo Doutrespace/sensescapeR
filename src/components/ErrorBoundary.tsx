@@ -1,6 +1,7 @@
 import React, { Component, ReactNode } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView } from 'react-native';
 import { LoggingService } from '../services/logging';
+import { t } from '../i18n';
 
 interface Props {
   children: ReactNode;
@@ -43,7 +44,7 @@ export class ErrorBoundary extends Component<Props, State> {
       return (
         <SafeAreaView style={styles.container}>
           <View style={styles.content}>
-            <Text style={styles.title}>Something went wrong</Text>
+            <Text style={styles.title}>{t('Something went wrong')}</Text>
             <Text style={styles.message}>
               {this.state.error?.message || 'An unexpected error occurred'}
             </Text>
@@ -51,10 +52,10 @@ export class ErrorBoundary extends Component<Props, State> {
               style={styles.button}
               onPress={this.handleRetry}
               accessibilityRole="button"
-              accessibilityLabel="Try recovering the app"
-              accessibilityHint="Reset the current screen after the application error"
+              accessibilityLabel={t('Try recovering the app')}
+              accessibilityHint={t('Reset the current screen after the application error')}
             >
-              <Text style={styles.buttonText}>Try Again</Text>
+              <Text style={styles.buttonText}>{t('Try Again')}</Text>
             </TouchableOpacity>
           </View>
         </SafeAreaView>

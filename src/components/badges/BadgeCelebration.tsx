@@ -20,6 +20,7 @@ import { BadgeDefinition } from '../../badges/types';
 import { BadgeIcon } from './BadgeIcon';
 import { Colors, Typography, Spacing } from '../../theme/colors';
 import { ConfettiAnimation } from './ConfettiAnimation';
+import { t } from '../../i18n';
 
 interface BadgeCelebrationProps {
   badge: BadgeDefinition;
@@ -119,15 +120,15 @@ export function BadgeCelebration({ badge, onDismiss }: BadgeCelebrationProps) {
 
         {/* Badge info */}
         <Animated.View style={[styles.textContainer, textAnimatedStyle]}>
-          <Text style={styles.congratsText}>Achievement Unlocked!</Text>
-          <Text style={styles.badgeName}>{badge.name}</Text>
-          <Text style={styles.badgeDescription}>{badge.description}</Text>
+          <Text style={styles.congratsText}>{t('Achievement Unlocked!')}</Text>
+          <Text style={styles.badgeName}>{t(badge.name)}</Text>
+          <Text style={styles.badgeDescription}>{t(badge.description)}</Text>
         </Animated.View>
 
         {/* Dismiss button */}
         <Animated.View style={[styles.buttonContainer, buttonAnimatedStyle]}>
           <Pressable style={styles.button} onPress={handleDismiss}>
-            <Text style={styles.buttonText}>Awesome!</Text>
+            <Text style={styles.buttonText}>{t('Awesome!')}</Text>
           </Pressable>
         </Animated.View>
       </View>

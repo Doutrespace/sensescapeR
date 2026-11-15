@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Colors } from '../../theme/colors';
 import { SettingContext } from '../../types/recording';
+import { t } from '../../i18n';
 
 type IconName = keyof typeof MaterialIcons.glyphMap;
 
@@ -49,14 +50,14 @@ export default function SettingChips({ value, onChange }: Props) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Recording Context</Text>
+      <Text style={styles.title}>{t('Recording Context')}</Text>
       <Text style={styles.subtitle}>
-        Help us understand the situation during this recording
+        {t('Help us understand the situation during this recording')}
       </Text>
 
       {/* Location context */}
       <View style={styles.section}>
-        <Text style={styles.sectionLabel}>Location</Text>
+        <Text style={styles.sectionLabel}>{t('Location')}</Text>
         <View style={styles.chipRow}>
           {LOCATION_OPTIONS.map((option) => {
             const isSelected = value[option.key];
@@ -73,7 +74,7 @@ export default function SettingChips({ value, onChange }: Props) {
                   color={isSelected ? Colors.primary : Colors.textMuted}
                 />
                 <Text style={[styles.chipLabel, isSelected && styles.chipLabelSelected]}>
-                  {option.label}
+                  {t(option.label)}
                 </Text>
               </TouchableOpacity>
             );
@@ -83,7 +84,7 @@ export default function SettingChips({ value, onChange }: Props) {
 
       {/* Social context */}
       <View style={styles.section}>
-        <Text style={styles.sectionLabel}>Social Setting</Text>
+        <Text style={styles.sectionLabel}>{t('Social Setting')}</Text>
         <View style={styles.chipRow}>
           {SOCIAL_OPTIONS.map((option) => {
             const isSelected = value[option.key];
@@ -100,7 +101,7 @@ export default function SettingChips({ value, onChange }: Props) {
                   color={isSelected ? Colors.primary : Colors.textMuted}
                 />
                 <Text style={[styles.chipLabel, isSelected && styles.chipLabelSelected]}>
-                  {option.label}
+                  {t(option.label)}
                 </Text>
               </TouchableOpacity>
             );

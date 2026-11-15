@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Colors } from '../../theme/colors';
 import { LicenseType } from '../../types/recording';
+import { t } from '../../i18n';
 
 type IconName = keyof typeof MaterialIcons.glyphMap;
 
@@ -46,9 +47,9 @@ const LICENSES: LicenseOption[] = [
 export default function LicenseSelector({ value, onChange }: Props) {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>License</Text>
+      <Text style={styles.title}>{t('License')}</Text>
       <Text style={styles.subtitle}>
-        Choose how others can use your recording
+        {t('Choose how others can use your recording')}
       </Text>
 
       <View style={styles.options}>
@@ -70,17 +71,17 @@ export default function LicenseSelector({ value, onChange }: Props) {
                 />
                 <View style={styles.optionLabels}>
                   <Text style={[styles.optionLabel, isSelected && styles.optionLabelSelected]}>
-                    {license.label}
+                    {t(license.label)}
                   </Text>
                   <Text style={[styles.optionShort, isSelected && styles.optionShortSelected]}>
-                    {license.shortLabel}
+                    {t(license.shortLabel)}
                   </Text>
                 </View>
                 <View style={[styles.radio, isSelected && styles.radioSelected]}>
                   {isSelected && <View style={styles.radioInner} />}
                 </View>
               </View>
-              <Text style={styles.optionDescription}>{license.description}</Text>
+              <Text style={styles.optionDescription}>{t(license.description)}</Text>
             </TouchableOpacity>
           );
         })}

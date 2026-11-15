@@ -9,7 +9,7 @@ import {
   Alert,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { format } from 'date-fns';
+import { formatDate } from '../../i18n/dates';
 import * as Haptics from 'expo-haptics';
 import { Colors, Spacing, Radius, Shadows } from '../../theme/colors';
 import { CommunityVisibility, RecordingWithPerception, SyncStatus } from '../../types/recording';
@@ -34,6 +34,7 @@ import DetectionOverlayImage, { getDetectionAccent } from '../photo/DetectionOve
 import { parseDetectedSounds, getIncludedDetectedSounds } from '../../utils/detectedSounds';
 import { MultisensorySummary } from '../multisensory/MultisensorySummary';
 import { parseMultisensory } from '../../types/multisensory';
+import { t } from '../../i18n';
 
 interface Props {
   recording: RecordingWithPerception | null;
@@ -99,14 +100,14 @@ export function RecordingDetailModal({
     if (!onDelete) return;
 
     Alert.alert(
-      'Delete recording?',
+      t('Delete recording?'),
       recording.remoteId
-        ? 'This will remove the recording from this device and also try to delete the uploaded copy from Supabase.'
-        : 'This will permanently remove the recording from this device.',
+        ? t('This will remove the recording from this device and also try to delete the uploaded copy from Supabase.')
+        : t('This will permanently remove the recording from this device.'),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('Cancel'), style: 'cancel' },
         {
-          text: 'Delete',
+          text: t('Delete'),
           style: 'destructive',
           onPress: () => {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
@@ -156,18 +157,18 @@ export function RecordingDetailModal({
               onClose();
             }}
             accessibilityRole="button"
-            accessibilityLabel="Close recording details"
+            accessibilityLabel={t('Close recording details')}
           >
             <MaterialIcons name="close" size={24} color={Colors.text} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Recording Details</Text>
+          <Text style={styles.headerTitle}>{t('Recording Details')}</Text>
           {showExportButton ? (
             <TouchableOpacity
               style={styles.exportButton}
               onPress={handleExport}
               accessibilityRole="button"
-              accessibilityLabel="Export recording"
-              accessibilityHint="Open export options for this recording"
+              accessibilityLabel={t('Export recording')}
+              accessibilityHint={t('Open export options for this recording')}
             >
               <MaterialIcons name="ios-share" size={24} color={Colors.primary} />
             </TouchableOpacity>
@@ -184,12 +185,12 @@ export function RecordingDetailModal({
           <View style={styles.audioHero}>
             <View style={styles.audioHeroMetaRow}>
               <View style={styles.audioHeroDateWrap}>
-                <Text style={styles.audioHeroEyebrow}>Captured</Text>
+                <Text style={styles.audioHeroEyebrow}>{t('Captured')}</Text>
                 <Text style={styles.audioHeroDate}>
-                  {format(recordedDate, 'EEEE, MMMM d, yyyy')}
+                  {formatDate(recordedDate, 'long')}
                 </Text>
                 <Text style={styles.audioHeroTime}>
-                  {format(recordedDate, 'h:mm a')} ({recording.timezone || 'Local'})
+                  {formatDate(recordedDate, 'time')} ({recording.timezone || 'Local'})
                 </Text>
               </View>
               <View
@@ -200,7 +201,7 @@ export function RecordingDetailModal({
               >
                 <MaterialIcons name={statusConfig.icon as any} size={15} color={statusConfig.color} />
                 <Text style={[styles.audioHeroStatusText, { color: statusConfig.color }]}>
-                  {statusConfig.label}
+                  {t(statusConfig.label)}
                 </Text>
               </View>
             </View>
@@ -222,9 +223,9 @@ export function RecordingDetailModal({
             {detectedSounds.length > 0 && (
               <View style={styles.audioHeroSubsection}>
                 <View style={styles.audioHeroSectionHeader}>
-                  <Text style={styles.audioHeroSectionTitle}>Verified sound classes</Text>
+                  <Text style={styles.audioHeroSectionTitle}>{t('Verified sound classes')}</Text>
                   <Text style={styles.audioHeroSectionMeta}>
-                    {detectedSounds.length} kept
+                    {t('{count} kept', { count: detectedSounds.length })}
                   </Text>
                 </View>
                 <View style={styles.classificationList}>
@@ -238,7 +239,7 @@ export function RecordingDetailModal({
 
                     return (
                       <View
-                        key={`${sound.label}-${index}`}
+                        key={`${t(sound.label)}-${index}`}
                         style={[
                           styles.classificationRow,
                           index === detectedSounds.length - 1 && styles.classificationRowLast,
@@ -261,10 +262,10 @@ export function RecordingDetailModal({
                                 {index + 1}
                               </Text>
                             </View>
-                            <Text style={styles.classificationLabel}>{sound.label}</Text>
+                            <Text style={styles.classificationLabel}>{t(sound.label)}</Text>
                             <View style={styles.classificationCountBadge}>
                               <Text style={styles.classificationCountText}>
-                                {sound.hierarchy === 'broad' ? 'Broad' : 'Specific'}
+                                {sound.hierarchy === 'broad' ? t('Broad') : t('Specific')}
                               </Text>
                             </View>
                             {sound.occurrenceCount && sound.occurrenceCount > 1 ? (
@@ -314,7 +315,7 @@ export function RecordingDetailModal({
 
           {(recording.photoUri || photoClassification.length) && (
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Photo Analysis</Text>
+              <Text style={styles.sectionTitle}>{t('Photo Analysis')}</Text>
               <View style={styles.card}>
                 {recording.photoUri && (
                   <DetectionOverlayImage
@@ -329,14 +330,14 @@ export function RecordingDetailModal({
 
                 {objectDetections.length > 0 && (
                   <View style={styles.classificationSection}>
-                    <Text style={styles.infoLabel}>Saved object detections</Text>
+                    <Text style={styles.infoLabel}>{t('Saved object detections')}</Text>
                     <View style={styles.classificationList}>
                       {groupedObjectDetections.map((classification, index) => {
                         const accentColor = getDetectionAccent(index);
                         const confidencePercent = Math.round(classification.confidence * 100);
                         return (
                           <View
-                            key={`object-${classification.label}-${index}`}
+                            key={`object-${t(classification.label)}-${index}`}
                             style={[
                               styles.classificationRow,
                               index === objectDetections.length - 1 && styles.classificationRowLast,
@@ -360,7 +361,7 @@ export function RecordingDetailModal({
                                 </Text>
                               </View>
                               <Text style={styles.classificationLabel}>
-                                {classification.label}
+                                {t(classification.label)}
                               </Text>
                               {classification.count > 1 && (
                                 <View style={styles.classificationCountBadge}>
@@ -399,14 +400,14 @@ export function RecordingDetailModal({
 
                 {environmentSegments.length > 0 && (
                   <View style={styles.classificationSection}>
-                    <Text style={styles.infoLabel}>Saved environmental context</Text>
+                    <Text style={styles.infoLabel}>{t('Saved environmental context')}</Text>
                     <View style={styles.classificationList}>
                       {groupedEnvironmentSegments.map((classification, index) => {
                         const accentColor = getDetectionAccent(index + groupedObjectDetections.length);
                         const coveragePercent = Math.round((classification.coverage ?? classification.confidence) * 100);
                         return (
                           <View
-                            key={`environment-${classification.label}-${index}`}
+                            key={`environment-${t(classification.label)}-${index}`}
                             style={[
                               styles.classificationRow,
                               index === environmentSegments.length - 1 && styles.classificationRowLast,
@@ -430,7 +431,7 @@ export function RecordingDetailModal({
                                   </Text>
                                 </View>
                                 <Text style={styles.classificationLabel}>
-                                  {classification.label}
+                                  {t(classification.label)}
                                 </Text>
                               </View>
                               <Text
@@ -462,7 +463,7 @@ export function RecordingDetailModal({
 
                 {photoClassification.length > 0 && (
                   <View style={styles.classificationSection}>
-                    <Text style={styles.infoLabel}>Visual soundscape context</Text>
+                    <Text style={styles.infoLabel}>{t('Visual soundscape context')}</Text>
                     <View style={styles.visualContextCard}>
                       <Text style={styles.visualContextHeadline}>{visualContext.dominantContext}</Text>
                       <Text style={styles.visualContextSummary}>
@@ -475,7 +476,7 @@ export function RecordingDetailModal({
                           .map((item) => (
                             <View key={item.key} style={styles.visualContextTag}>
                               <Text style={styles.visualContextTagText}>
-                                {item.label} {item.level}
+                                {t(item.label)} {item.level}
                               </Text>
                             </View>
                           ))}
@@ -489,28 +490,28 @@ export function RecordingDetailModal({
 
           {/* Recording info */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Recording Info</Text>
+            <Text style={styles.sectionTitle}>{t('Recording Info')}</Text>
             <View style={styles.infoGridCard}>
               <View style={styles.infoGrid}>
                 <View style={styles.infoGridItem}>
-                  <Text style={styles.infoGridLabel}>Duration</Text>
+                  <Text style={styles.infoGridLabel}>{t('Duration')}</Text>
                   <Text style={styles.infoGridValue}>{formatDuration(recording.durationMs)}</Text>
                 </View>
                 <View style={styles.infoGridItem}>
-                  <Text style={styles.infoGridLabel}>Protocol</Text>
+                  <Text style={styles.infoGridLabel}>{t('Protocol')}</Text>
                   <Text style={styles.infoGridValue}>{getProtocolLabel(recording.protocolType)}</Text>
                 </View>
                 <View style={styles.infoGridItem}>
-                  <Text style={styles.infoGridLabel}>Sample Rate</Text>
+                  <Text style={styles.infoGridLabel}>{t('Sample Rate')}</Text>
                   <Text style={styles.infoGridValue}>{recording.sampleRate / 1000} kHz</Text>
                 </View>
                 <View style={styles.infoGridItem}>
-                  <Text style={styles.infoGridLabel}>Bit Depth</Text>
+                  <Text style={styles.infoGridLabel}>{t('Bit Depth')}</Text>
                   <Text style={styles.infoGridValue}>{recording.bitDepth}-bit</Text>
                 </View>
                 {recording.habitatType ? (
                   <View style={styles.infoGridItemFull}>
-                    <Text style={styles.infoGridLabel}>Habitat</Text>
+                    <Text style={styles.infoGridLabel}>{t('Habitat')}</Text>
                     <Text style={styles.infoGridValue}>
                       {getHabitatLabel(recording.habitatType)}
                     </Text>
@@ -522,29 +523,29 @@ export function RecordingDetailModal({
 
           {(recording.fieldNotes || recording.spokenDescription) && (
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Observation Notes</Text>
+              <Text style={styles.sectionTitle}>{t('Observation Notes')}</Text>
               <View style={styles.card}>
                 {recording.fieldNotes ? (
                   <View style={styles.notesBlock}>
-                    <Text style={styles.notesLabel}>Field notes</Text>
+                    <Text style={styles.notesLabel}>{t('Field notes')}</Text>
                     <Text style={styles.notesText}>{recording.fieldNotes}</Text>
                   </View>
                 ) : null}
 
                 {recording.spokenDescription ? (
                   <View style={styles.notesBlock}>
-                    <Text style={styles.notesLabel}>Spoken description transcript</Text>
+                    <Text style={styles.notesLabel}>{t('Spoken description transcript')}</Text>
                     <Text style={styles.notesText}>{recording.spokenDescription}</Text>
                   </View>
                 ) : null}
 
                 {noteThemes.length > 0 ? (
                   <View style={styles.notesBlock}>
-                    <Text style={styles.notesLabel}>Detected note themes</Text>
+                    <Text style={styles.notesLabel}>{t('Detected note themes')}</Text>
                     <View style={styles.notesThemeList}>
                       {noteThemes.map((theme) => (
                         <View key={theme.key} style={styles.notesThemeChip}>
-                          <Text style={styles.notesThemeChipText}>{theme.label}</Text>
+                          <Text style={styles.notesThemeChipText}>{t(theme.label)}</Text>
                         </View>
                       ))}
                     </View>
@@ -557,7 +558,7 @@ export function RecordingDetailModal({
           {/* Perception data */}
           {recording.perception && (
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Perception Assessment</Text>
+              <Text style={styles.sectionTitle}>{t('Perception Assessment')}</Text>
               <View style={styles.card}>
                 <View style={styles.perceptionGrid}>
                   <View style={styles.perceptionItem}>
@@ -622,7 +623,7 @@ export function RecordingDetailModal({
           {/* Multisensory ratings */}
           {parseMultisensory(recording.multisensory) && (
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Multisensory Assessment</Text>
+              <Text style={styles.sectionTitle}>{t('Multisensory Assessment')}</Text>
               <MultisensorySummary assessment={parseMultisensory(recording.multisensory)} />
             </View>
           )}
@@ -630,15 +631,15 @@ export function RecordingDetailModal({
           {/* Quality flags */}
           {(recording.hasClipping || recording.hasWindHandling || recording.hasLowSNR) && (
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Quality Warnings</Text>
+              <Text style={styles.sectionTitle}>{t('Quality Warnings')}</Text>
               <View style={styles.warningCard}>
                 {recording.hasClipping && (
                   <View style={styles.warningItem}>
                     <MaterialIcons name="warning" size={20} color={Colors.warning} />
                     <View style={styles.warningContent}>
-                      <Text style={styles.warningTitle}>Audio Clipping Detected</Text>
+                      <Text style={styles.warningTitle}>{t('Audio Clipping Detected')}</Text>
                       <Text style={styles.warningText}>
-                        Parts of the recording may have distortion from high volume levels.
+                        {t('Parts of the recording may have distortion from high volume levels.')}
                       </Text>
                     </View>
                   </View>
@@ -647,9 +648,9 @@ export function RecordingDetailModal({
                   <View style={styles.warningItem}>
                     <MaterialIcons name="air" size={20} color={Colors.warning} />
                     <View style={styles.warningContent}>
-                      <Text style={styles.warningTitle}>Wind Noise Detected</Text>
+                      <Text style={styles.warningTitle}>{t('Wind Noise Detected')}</Text>
                       <Text style={styles.warningText}>
-                        Wind handling noise may affect the recording quality.
+                        {t('Wind handling noise may affect the recording quality.')}
                       </Text>
                     </View>
                   </View>
@@ -658,9 +659,9 @@ export function RecordingDetailModal({
                   <View style={styles.warningItem}>
                     <MaterialIcons name="hearing-disabled" size={20} color={Colors.warning} />
                     <View style={styles.warningContent}>
-                      <Text style={styles.warningTitle}>Low Signal-to-Noise</Text>
+                      <Text style={styles.warningTitle}>{t('Low Signal-to-Noise')}</Text>
                       <Text style={styles.warningText}>
-                        The recording has a low signal level relative to background noise.
+                        {t('The recording has a low signal level relative to background noise.')}
                       </Text>
                     </View>
                   </View>
@@ -672,7 +673,7 @@ export function RecordingDetailModal({
           {/* Sync status */}
           {showSyncStatusSection && (
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Sync Status</Text>
+              <Text style={styles.sectionTitle}>{t('Sync Status')}</Text>
               <View style={[styles.statusCard, { borderLeftColor: statusConfig.color }]}>
                 <MaterialIcons
                   name={statusConfig.icon as any}
@@ -681,7 +682,7 @@ export function RecordingDetailModal({
                 />
                 <View style={styles.statusContent}>
                   <Text style={[styles.statusLabel, { color: statusConfig.color }]}>
-                    {statusConfig.label}
+                    {t(statusConfig.label)}
                   </Text>
                   {recording.remoteId && (
                     <Text style={styles.remoteIdText}>ID: {recording.remoteId}</Text>
@@ -693,15 +694,15 @@ export function RecordingDetailModal({
 
           {showSharingSection && (
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Community Sharing</Text>
+              <Text style={styles.sectionTitle}>{t('Community Sharing')}</Text>
               <View style={styles.card}>
                 <Text style={styles.publishHeading}>
-                  {recording.communityVisibility === 'community' ? 'Published to community' : 'Private recording'}
+                  {recording.communityVisibility === 'community' ? t('Published to community') : t('Private recording')}
                 </Text>
                 <Text style={styles.publishDescription}>
                   {recording.communityVisibility === 'community'
-                    ? 'This recording can appear on the Explore map for the community.'
-                    : 'This recording stays in your private archive unless you publish it.'}
+                    ? t('This recording can appear on the Explore map for the community.')
+                    : t('This recording stays in your private archive unless you publish it.')}
                 </Text>
                 <View style={styles.publishToggleRow}>
                   <TouchableOpacity
@@ -712,7 +713,7 @@ export function RecordingDetailModal({
                     onPress={() => handleVisibilityChange('private')}
                     disabled={isUpdatingVisibility}
                     accessibilityRole="button"
-                    accessibilityLabel="Keep this recording private"
+                    accessibilityLabel={t('Keep this recording private')}
                     accessibilityState={{
                       selected: recording.communityVisibility === 'private',
                       disabled: isUpdatingVisibility,
@@ -729,7 +730,7 @@ export function RecordingDetailModal({
                         recording.communityVisibility === 'private' && styles.publishToggleTextActive,
                       ]}
                     >
-                      Private
+                      {t('Private')}
                     </Text>
                   </TouchableOpacity>
                   <TouchableOpacity
@@ -740,7 +741,7 @@ export function RecordingDetailModal({
                     onPress={() => handleVisibilityChange('community')}
                     disabled={isUpdatingVisibility}
                     accessibilityRole="button"
-                    accessibilityLabel="Publish this recording to the community"
+                    accessibilityLabel={t('Publish this recording to the community')}
                     accessibilityState={{
                       selected: recording.communityVisibility === 'community',
                       disabled: isUpdatingVisibility,
@@ -757,14 +758,14 @@ export function RecordingDetailModal({
                         recording.communityVisibility === 'community' && styles.publishToggleTextActive,
                       ]}
                     >
-                      Community
+                      {t('Community')}
                     </Text>
                   </TouchableOpacity>
                 </View>
                 <Text style={styles.publishFootnote}>
                   {recording.remoteId
-                    ? 'Changes update the uploaded copy immediately.'
-                    : 'If you publish a local-only recording, it will be queued for upload.'}
+                    ? t('Changes update the uploaded copy immediately.')
+                    : t('If you publish a local-only recording, it will be queued for upload.')}
                 </Text>
               </View>
             </View>
@@ -772,7 +773,7 @@ export function RecordingDetailModal({
 
           {/* Device info */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Device Info</Text>
+            <Text style={styles.sectionTitle}>{t('Device Info')}</Text>
             <View style={styles.card}>
               <Text style={styles.deviceText}>{recording.deviceModel}</Text>
               <Text style={styles.deviceSubtext}>
@@ -783,14 +784,14 @@ export function RecordingDetailModal({
 
           {/* Location */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Location</Text>
+            <Text style={styles.sectionTitle}>{t('Location')}</Text>
             <View style={styles.card}>
               <View style={styles.locationRow}>
                 <MaterialIcons name="location-on" size={20} color={Colors.textMuted} />
                 <Text style={styles.locationText}>
                   {typeof recording.latitude === 'number' && typeof recording.longitude === 'number'
                     ? `${recording.latitude.toFixed(6)}, ${recording.longitude.toFixed(6)}`
-                    : 'Location not stored'}
+                    : t('Location not stored')}
                 </Text>
               </View>
               <Text style={styles.locationSubtext}>
@@ -801,7 +802,7 @@ export function RecordingDetailModal({
 
           {onDelete && (
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Recording Actions</Text>
+              <Text style={styles.sectionTitle}>{t('Recording Actions')}</Text>
               {onResyncMedia && recording.remoteId && (recording.photoUri || recording.spectrogramUri) && (
                 <TouchableOpacity
                   style={[styles.resyncButton, isResyncingMedia && styles.deleteButtonDisabled]}
@@ -812,10 +813,10 @@ export function RecordingDetailModal({
                   <MaterialIcons name="cloud-sync" size={20} color={Colors.primary} />
                   <View style={styles.deleteContent}>
                     <Text style={styles.resyncTitle}>
-                      {isResyncingMedia ? 'Resyncing media...' : 'Resync Photo & Spectrogram'}
+                      {isResyncingMedia ? t('Resyncing media...') : t('Resync Photo & Spectrogram')}
                     </Text>
                     <Text style={styles.deleteDescription}>
-                      Upload missing photo and spectrogram assets to the existing cloud record.
+                      {t('Upload missing photo and spectrogram assets to the existing cloud record.')}
                     </Text>
                   </View>
                 </TouchableOpacity>
@@ -829,7 +830,7 @@ export function RecordingDetailModal({
                 <MaterialIcons name="delete-outline" size={20} color={Colors.error} />
                 <View style={styles.deleteContent}>
                   <Text style={styles.deleteTitle}>
-                    {isDeleting ? 'Deleting recording...' : 'Delete Recording'}
+                    {isDeleting ? t('Deleting recording...') : t('Delete Recording')}
                   </Text>
                   <Text style={styles.deleteDescription}>
                     Remove this recording from the device

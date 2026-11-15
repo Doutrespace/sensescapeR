@@ -2,6 +2,7 @@ import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Colors, Radius, Spacing } from '../../theme/colors';
+import { t, tPlural } from '../../i18n';
 
 interface Props {
   isOnline: boolean;
@@ -29,12 +30,12 @@ export function InlineSyncStatus({
         : 'schedule';
 
   const message = !isOnline
-    ? 'Offline. New recordings stay on this device until the network returns.'
+    ? t('Offline. New recordings stay on this device until the network returns.')
     : failedCount > 0
-      ? `${failedCount} upload${failedCount === 1 ? '' : 's'} need attention in My Recordings.`
+      ? tPlural(failedCount, '{count} upload needs attention in My Recordings.', '{count} uploads need attention in My Recordings.')
       : isUploading
-        ? 'Queued recordings are syncing in the background.'
-        : `${queuedCount} recording${queuedCount === 1 ? '' : 's'} waiting to sync.`;
+        ? t('Queued recordings are syncing in the background.')
+        : tPlural(queuedCount, '{count} recording waiting to sync.', '{count} recordings waiting to sync.');
 
   return (
     <View style={styles.container}>
