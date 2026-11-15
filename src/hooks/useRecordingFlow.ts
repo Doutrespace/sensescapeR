@@ -13,6 +13,7 @@ import { createPerception, calculateCircumplexFromPAQ } from '../services/databa
 import { LoggingService } from '../services/logging/LoggingService';
 import { queueForUpload } from '../services/sync/syncManager';
 import { QualityFlags } from '../types/recording';
+import { serializeMultisensory } from '../types/multisensory';
 import type { ImageClassification } from '../utils/imageClassification';
 
 function getLocationErrorMessage(error?: string): string {
@@ -195,6 +196,10 @@ export function useRecordingFlow() {
 
   const handleCircumplexConfirm = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    animateTransition(() => store.setState('SENSES'));
+  }, [animateTransition, store]);
+
+  const handleSensesConfirm = useCallback(() => {
     animateTransition(() => store.setState('CONTEXT'));
   }, [animateTransition, store]);
 
@@ -284,6 +289,7 @@ export function useRecordingFlow() {
         normalizationApplied: current.normalizationApplied,
         normalizationGain: current.normalizationGain,
         acousticMetrics: current.acousticMetrics ?? undefined,
+        multisensory: serializeMultisensory(current.multisensory),
         habitatType: current.habitatType ?? undefined,
         settingChips: current.settingContext ? JSON.stringify(current.settingContext) : undefined,
         sourceDominance: current.sourceDominance ? JSON.stringify(current.sourceDominance) : undefined,
@@ -385,6 +391,7 @@ export function useRecordingFlow() {
     handlePhotoSkip,
     handleNotesConfirm,
     handleCircumplexConfirm,
+    handleSensesConfirm,
     handleContextConfirm,
     handleContextSkip,
     handleReturnHome,

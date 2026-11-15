@@ -24,7 +24,10 @@ alter table public.recordings
   add column if not exists normalization_applied boolean default false,
   add column if not exists normalization_gain double precision,
   add column if not exists visual_context jsonb,
-  add column if not exists note_themes jsonb;
+  add column if not exists note_themes jsonb,
+  -- Multisensory assessment (visual, smell, thermal, restorativeness,
+  -- emotion, environmental qualities); see src/types/multisensory.ts
+  add column if not exists multisensory jsonb;
 
 update public.recordings
 set

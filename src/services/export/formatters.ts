@@ -9,6 +9,12 @@ import {
 import { extractNoteThemes, type NoteTheme } from '../../utils/noteAnalysis';
 import type { ResearchProfile } from '../../types/researchProfile';
 import {
+  MULTISENSORY_EXPORT_COLUMNS,
+  parseMultisensory,
+  toMultisensoryExportRow,
+  type MultisensoryExportRow,
+} from '../../types/multisensory';
+import {
   assessVisualContext,
   formatVisualIndicatorSummary,
   type VisualContextAssessment,
@@ -23,7 +29,9 @@ import {
   parseDetectedSounds as parseStoredDetectedSounds,
 } from '../../utils/detectedSounds';
 
-export interface RecordingExportData {
+// Multisensory ratings are exported as flat columns (visual_*, smell_*,
+// thermal_*, restor_*, emotion_*, psd_*); see types/multisensory.
+export interface RecordingExportData extends MultisensoryExportRow {
   id: string;
   recordedAt: string;
   timezone: string;
@@ -227,6 +235,8 @@ export function formatRecordingForExport(
     levelReference: metrics?.reference ?? null,
     acousticCalibrated: metrics ? metrics.calibrated : null,
     calibrationOffsetDb: metrics?.calibrationOffsetDb ?? null,
+
+    ...toMultisensoryExportRow(parseMultisensory(recording.multisensory)),
   };
 }
 
@@ -353,6 +363,7 @@ export function formatAsCSV(
     'level_reference',
     'acoustic_calibrated',
     'calibration_offset_db',
+    ...MULTISENSORY_EXPORT_COLUMNS,
   ];
 
   const rows = recordings.map(recording => {
@@ -429,6 +440,10 @@ export function formatAsCSV(
       data.levelReference ?? '',
       data.acousticCalibrated ?? '',
       data.calibrationOffsetDb ?? '',
+      ...MULTISENSORY_EXPORT_COLUMNS.map((column) => {
+        const value = data[column];
+        return typeof value === 'string' ? escapeCSV(value) : value ?? '';
+      }),
     ].join(',');
   });
 
@@ -476,6 +491,14 @@ export function formatRecordingSummary(recording: RecordingWithPerception): stri
       `PAQ: pleasant ${recording.perception.paqPleasant ?? '-'}, vibrant ${recording.perception.paqVibrant ?? '-'}, eventful ${recording.perception.paqEventful ?? '-'}, chaotic ${recording.perception.paqChaotic ?? '-'}, annoying ${recording.perception.paqAnnoying ?? '-'}, monotonous ${recording.perception.paqMonotonous ?? '-'}, uneventful ${recording.perception.paqUneventful ?? '-'}, calm ${recording.perception.paqCalm ?? '-'}`,
       ''
     );
+  }
+
+  const multisensoryRow = toMultisensoryExportRow(parseMultisensory(recording.multisensory));
+  const multisensoryLines = MULTISENSORY_EXPORT_COLUMNS
+    .filter((column) => multisensoryRow[column] !== null)
+    .map((column) => `${column}: ${multisensoryRow[column]}`);
+  if (multisensoryLines.length > 0) {
+    lines.push('--- Multisensory Assessment ---', ...multisensoryLines, '');
   }
 
   if (recording.hasClipping || recording.hasWindHandling || recording.hasLowSNR) {

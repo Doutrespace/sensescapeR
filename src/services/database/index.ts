@@ -7,7 +7,7 @@ import { LoggingService } from '../logging';
 
 const DATABASE_NAME = 'soundscape.db';
 const DATABASE_MIGRATION_NAME = 'soundscape.migration.db';
-const CURRENT_VERSION = 9;
+const CURRENT_VERSION = 10;
 const DATABASE_KEY_ALIAS = 'soundscape.db.key.v1';
 const DATABASE_ENCRYPTION_STATE_ALIAS = 'soundscape.db.encryption.v1';
 const DATABASE_ENCRYPTION_ENABLED = 'enabled';
@@ -90,6 +90,10 @@ async function runMigrations(database: SQLite.SQLiteDatabase): Promise<void> {
 
   if (currentVersion < 9) {
     await migrateV9(database);
+  }
+
+  if (currentVersion < 10) {
+    await migrateV10(database);
   }
 }
 
@@ -330,6 +334,18 @@ async function migrateV9(database: SQLite.SQLiteDatabase): Promise<void> {
 
   LoggingService.info('Database migration v9 completed', {
     change: 'added IEC-weighted acoustic_metrics column (LAeq, percentiles)',
+  });
+}
+
+async function migrateV10(database: SQLite.SQLiteDatabase): Promise<void> {
+  await database.execAsync(`
+    ALTER TABLE recordings ADD COLUMN multisensory TEXT;
+
+    PRAGMA user_version = 10;
+  `);
+
+  LoggingService.info('Database migration v10 completed', {
+    change: 'added multisensory assessment column (JSON)',
   });
 }
 

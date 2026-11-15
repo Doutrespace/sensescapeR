@@ -13,6 +13,7 @@ import {
   QualityFlags,
   LocationData,
 } from '../types/recording';
+import type { MultisensoryAssessment } from '../types/multisensory';
 
 // Recording session states
 export type RecordingState =
@@ -24,6 +25,7 @@ export type RecordingState =
   | 'PHOTO_CAPTURE'
   | 'NOTES'
   | 'CIRCUMPLEX'
+  | 'SENSES'
   | 'CONTEXT'
   | 'UPLOAD'
   | 'SAVING';
@@ -67,6 +69,9 @@ interface RecordingSession {
   circumplex: CircumplexPerception | null;
   paq: PAQPerception | null;
 
+  // Multisensory ratings (visual, smell, thermal, ...); empty until answered
+  multisensory: MultisensoryAssessment;
+
   // Context
   habitatType: HabitatType | null;
   settingContext: SettingContext | null;
@@ -105,6 +110,7 @@ interface RecordingStoreState extends RecordingSession {
   setLocationError: (error: string | null) => void;
   setCircumplex: (perception: CircumplexPerception) => void;
   setPAQ: (perception: PAQPerception) => void;
+  setMultisensory: (assessment: MultisensoryAssessment) => void;
   setHabitatType: (habitat: HabitatType) => void;
   setSettingContext: (context: SettingContext) => void;
   setSourceDominance: (dominance: SourceDominance) => void;
@@ -145,6 +151,7 @@ const initialState: RecordingSession = {
   locationError: null,
   circumplex: null,
   paq: null,
+  multisensory: {},
   habitatType: null,
   settingContext: null,
   sourceDominance: null,
@@ -215,6 +222,9 @@ export const useRecordingStore = create<RecordingStoreState>((set) => ({
 
   setPAQ: (paq) =>
     set({ paq }),
+
+  setMultisensory: (multisensory) =>
+    set({ multisensory }),
 
   setHabitatType: (habitatType) =>
     set({ habitatType }),

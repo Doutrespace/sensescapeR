@@ -7,6 +7,7 @@ import { sanitizeFilePath, validateAudioUri, validateCoordinates } from '../../u
 import { LoggingService } from '../logging';
 import { assessVisualContext } from '../../utils/visualContext';
 import { extractNoteThemes } from '../../utils/noteAnalysis';
+import { parseMultisensory } from '../../types/multisensory';
 import {
   getQueueItem,
   updateQueueItem,
@@ -513,6 +514,7 @@ async function uploadMetadata(
     }
 
     noteThemes = extractNoteThemes(recording.fieldNotes, recording.spokenDescription);
+    const multisensory = parseMultisensory(recording.multisensory);
 
     // Coordinates are already privacy-adjusted when saved locally.
     let location = null;
@@ -566,6 +568,9 @@ async function uploadMetadata(
           community_visibility: recording.communityVisibility,
           local_id: recording.id,
           user_id: userId,
+          // Only sent when rated, so recordings without it still upload to a
+          // database that has not added the `multisensory` column yet.
+          ...(multisensory ? { multisensory } : {}),
         },
       ])
       .select('id')

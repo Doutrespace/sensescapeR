@@ -107,6 +107,11 @@ export interface Recording {
   // JSON string of AcousticMetrics from services/audio/acousticMetrics.
   acousticMetrics?: string;
 
+  // Multisensory assessment (visual, smell, thermal, restorativeness,
+  // emotion, environmental qualities). JSON string of MultisensoryAssessment
+  // from types/multisensory.
+  multisensory?: string;
+
   // Spectrogram
   spectrogramUri?: string;
 

@@ -32,6 +32,8 @@ import { ExportOptionsSheet } from '../export/ExportOptionsSheet';
 import { StaticSpectrogram } from '../recording/SpectrogramView';
 import DetectionOverlayImage, { getDetectionAccent } from '../photo/DetectionOverlayImage';
 import { parseDetectedSounds, getIncludedDetectedSounds } from '../../utils/detectedSounds';
+import { MultisensorySummary } from '../multisensory/MultisensorySummary';
+import { parseMultisensory } from '../../types/multisensory';
 
 interface Props {
   recording: RecordingWithPerception | null;
@@ -614,6 +616,14 @@ export function RecordingDetailModal({
                   </Text>
                 </View>
               </View>
+            </View>
+          )}
+
+          {/* Multisensory ratings */}
+          {parseMultisensory(recording.multisensory) && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Multisensory Assessment</Text>
+              <MultisensorySummary assessment={parseMultisensory(recording.multisensory)} />
             </View>
           )}
 

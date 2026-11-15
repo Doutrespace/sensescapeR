@@ -15,6 +15,7 @@ import ReviewScreen from '../../src/components/review/ReviewScreen';
 import PhotoCaptureScreen from '../../src/components/photo/PhotoCaptureScreen';
 import FieldNotesScreen from '../../src/components/notes/FieldNotesScreen';
 import CircumplexInput from '../../src/components/perception/CircumplexInput';
+import MultisensoryScreen from '../../src/components/multisensory/MultisensoryScreen';
 import ContextScreen from '../../src/components/context/ContextScreen';
 import { HomeScreen, SavingScreen } from '../../src/components/home';
 import { useSyncStore } from '../../src/stores/useSyncStore';
@@ -38,6 +39,7 @@ const FLOW_STEPS = [
   { key: 'PHOTO_CAPTURE', label: 'Photo' },
   { key: 'NOTES', label: 'Notes' },
   { key: 'CIRCUMPLEX', label: 'Perception' },
+  { key: 'SENSES', label: 'Senses' },
   { key: 'CONTEXT', label: 'Context' },
 ];
 
@@ -49,7 +51,7 @@ export default function RecordScreen() {
   const dismissCelebration = useBadgeStore((state) => state.dismissCelebration);
   const [communityCount, setCommunityCount] = useState<number | null>(null);
   const [isTranscribingSpokenDescription, setIsTranscribingSpokenDescription] = useState(false);
-  const showStepProgress = ['REVIEW', 'PHOTO_CAPTURE', 'NOTES', 'CIRCUMPLEX', 'CONTEXT'].includes(flow.state);
+  const showStepProgress = ['REVIEW', 'PHOTO_CAPTURE', 'NOTES', 'CIRCUMPLEX', 'SENSES', 'CONTEXT'].includes(flow.state);
   const queuedCount = queue.length;
   const failedCount = queue.filter((item) => !!item.lastError || item.attempts >= 5).length;
   const showSyncStatus = flow.state !== 'RECORDING'
@@ -207,6 +209,15 @@ export default function RecordScreen() {
             hasSelection={flow.store.circumplex !== null}
             onChange={flow.store.setCircumplex}
             onConfirm={flow.handleCircumplexConfirm}
+          />
+        );
+
+      case 'SENSES':
+        return (
+          <MultisensoryScreen
+            value={flow.store.multisensory}
+            onChange={flow.store.setMultisensory}
+            onConfirm={flow.handleSensesConfirm}
           />
         );
 
