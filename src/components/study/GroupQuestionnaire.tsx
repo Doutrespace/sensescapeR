@@ -3,6 +3,7 @@ import { Alert, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors } from '../../theme/colors';
+import { groupColor } from '../../theme/topicColors';
 import { t, tPlural } from '../../i18n';
 import { personSections, runSections } from '../../study/groups';
 import { allItems, openClosedItems, tx, type Answers, type StudyGroup } from '../../study/types';
@@ -34,6 +35,7 @@ export default function GroupQuestionnaire({
   onSave,
 }: Props) {
   const tabBarHeight = useBottomTabBarHeight();
+  const topic = groupColor(group.id);
   const hasPersonSections = personSections(group).length > 0;
   const [showPerson, setShowPerson] = useState(!personAlreadyAnswered);
 
@@ -87,8 +89,8 @@ export default function GroupQuestionnaire({
       answers={answers}
       onChange={onChange}
       icon={group.icon}
-      color={Colors.accent}
-      softColor={Colors.accentSoft}
+      color={topic.color}
+      softColor={topic.soft}
       eyebrow={tx(group.topic)}
       bottomInset={tabBarHeight + 16}
       completeLabel={t('Save measurement')}

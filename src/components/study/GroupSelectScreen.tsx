@@ -4,6 +4,7 @@ import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { Colors, Spacing } from '../../theme/colors';
+import { groupColor } from '../../theme/topicColors';
 import { t, tPlural } from '../../i18n';
 import { runSections } from '../../study/groups';
 import { allItems, tx, type StudyGroup } from '../../study/types';
@@ -60,10 +61,11 @@ export default function GroupSelectScreen({
         {ordered.map((group) => {
           const questionCount = allItems(runSections(group)).length;
           const isLast = group.id === lastGroupId;
+          const topic = groupColor(group.id);
           return (
             <TouchableOpacity
               key={group.id}
-              style={[styles.card, isLast && { borderColor: Colors.accent, borderWidth: 2 }]}
+              style={[styles.card, isLast && { borderColor: topic.color, borderWidth: 2 }]}
               onPress={() => {
                 void Haptics.selectionAsync();
                 onSelect(group);
@@ -73,12 +75,12 @@ export default function GroupSelectScreen({
               accessibilityLabel={tx(group.topic)}
               accessibilityHint={t('Continues with the questions of this group')}
             >
-              <View style={[styles.cardIcon, { backgroundColor: Colors.accentSoft }]}>
-                <MaterialCommunityIcons name={group.icon as IconName} size={26} color={Colors.accent} />
+              <View style={[styles.cardIcon, { backgroundColor: topic.soft }]}>
+                <MaterialCommunityIcons name={group.icon as IconName} size={26} color={topic.color} />
               </View>
               <View style={styles.cardText}>
                 {isLast ? (
-                  <Text style={[styles.cardEyebrow, { color: Colors.accent }]}>{t('Last chosen')}</Text>
+                  <Text style={[styles.cardEyebrow, { color: topic.color }]}>{t('Last chosen')}</Text>
                 ) : null}
                 <Text style={styles.cardTitle}>{tx(group.topic)}</Text>
                 <Text style={styles.cardMeta}>

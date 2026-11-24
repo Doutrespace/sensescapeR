@@ -2,7 +2,9 @@
  * One calm colour system for the whole app:
  * - neutrals for backgrounds, cards and lines,
  * - ink for text and the main buttons,
- * - a single accent (petrol) for selections, progress, scales and icons,
+ * - one accent (petrol) for app-wide selections, progress, scales and icons,
+ * - TopicColors: one cool pastel per questionnaire topic (senses pages,
+ *   project groups),
  * - muted data colours (DataColors) only where colour carries meaning.
  * Avoid introducing new hues in components; use these tokens.
  */
@@ -45,6 +47,28 @@ export const Colors = {
   statusUploading: '#4F6F86',
   statusUploaded: '#2F7556',
   statusFailed: '#B0463A',
+};
+
+export interface TopicColor {
+  /** Icons, text and selected states; carries white text (about 6:1). */
+  color: string;
+  /** Pastel fill for hero areas and icon tiles. */
+  soft: string;
+}
+
+/**
+ * Cool pastels, one per questionnaire topic. All share one lightness and a
+ * low chroma (OKLCH: soft L 0.95 / C 0.021, color L 0.50 / C 0.068), so the
+ * topics differ in hue only and none of them shouts.
+ */
+export const TopicColors = {
+  sage: { color: '#446F50', soft: '#E5F3E8' },
+  seafoam: { color: '#2C706C', soft: '#E0F4F2' },
+  glacier: { color: '#316C7F', soft: '#E1F3F9' },
+  mist: { color: '#486589', soft: '#E6F0FD' },
+  periwinkle: { color: '#5E5E89', soft: '#EDEEFD' },
+  lavender: { color: '#705880', soft: '#F4EBFA' },
+  heather: { color: '#815369', soft: '#FBEAF1' },
 };
 
 /** Muted colours for data (categories, map markers, charts); not for UI chrome. */
