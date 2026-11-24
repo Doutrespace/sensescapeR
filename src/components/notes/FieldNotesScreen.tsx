@@ -299,7 +299,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#F7F3EA',
     paddingHorizontal: 14,
     paddingVertical: 14,
-    fontSize: 15,
+    // 16px keeps iOS Safari from zooming into the field on focus.
+    fontSize: 16,
     lineHeight: 22,
     color: Colors.text,
   },

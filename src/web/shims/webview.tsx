@@ -50,7 +50,13 @@ export const WebView = forwardRef<any, WebViewProps>(function WebView(
 
   useImperativeHandle(ref, () => ({
     injectJavaScript: (script: string) => {
-      iframeRef.current?.contentWindow?.postMessage({ __rnInject: script }, '*');
+      const target = iframeRef.current?.contentWindow;
+      if (target) {
+        // Called through this window's own postMessage: a page may define a
+        // global function called "postMessage" and so hide the real one.
+        (window.postMessage as (message: unknown, targetOrigin: string) => void)
+          .call(target, { __rnInject: script }, '*');
+      }
     },
     reload: () => {
       const iframe = iframeRef.current;

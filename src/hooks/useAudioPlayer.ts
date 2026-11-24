@@ -26,6 +26,8 @@ export function useAudioPlayer(uri: string | null): UseAudioPlayerReturn {
   useEffect(() => {
     let isMounted = true;
 
+    let loadedSound: Audio.Sound | null = null;
+
     async function loadSound() {
       if (!uri) return;
 
@@ -49,6 +51,7 @@ export function useAudioPlayer(uri: string | null): UseAudioPlayerReturn {
           setDuration(status.durationMillis ?? 0);
         }
 
+        loadedSound = newSound;
         setSound(newSound);
         setIsLoaded(true);
 
@@ -75,9 +78,9 @@ export function useAudioPlayer(uri: string | null): UseAudioPlayerReturn {
 
     return () => {
       isMounted = false;
-      if (sound) {
-        sound.unloadAsync();
-      }
+      // Unloading also stops playback, so the old take cannot play into a
+      // new recording.
+      void loadedSound?.unloadAsync().catch(() => undefined);
     };
   }, [uri]);
 

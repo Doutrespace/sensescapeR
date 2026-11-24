@@ -1,72 +1,136 @@
-import React, { useEffect, useState } from 'react';
-import { Modal, Pressable, StyleSheet, Text, View, ScrollView, TouchableOpacity } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import React, { useRef, useState } from 'react';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity } from 'react-native';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
-import { MaterialIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { Colors, Spacing, Radius } from '../../theme/colors';
-import { HabitatType, SettingContext, PrivacyMode, CommunityVisibility } from '../../types/recording';
-import { usePreferencesStore } from '../../stores/usePreferencesStore';
+import { HabitatType, SettingContext } from '../../types/recording';
+import {
+  PERSON_ITEMS,
+  RESPONDENT_ITEM,
+  SITE_CODE_ITEM,
+  VISIT_MODE_ITEM,
+  type VisitMode,
+} from '../../study/core';
+import type { RespondentType } from '../../study/runData';
+import {
+  applyAnswerPatch,
+  missingRequiredItems,
+  type AnswerPatchInput,
+  type Answers,
+} from '../../study/types';
+import { QuestionItem } from '../study/QuestionItem';
 import HabitatSelector from './HabitatSelector';
 import SettingChips from './SettingChips';
 import { t } from '../../i18n';
 
+const ACCENT = Colors.primary;
+const SOFT = '#E7E1D4';
+
 interface Props {
   habitatType: HabitatType | null;
-  settingContext: SettingContext;
-  privacyMode: PrivacyMode;
-  communityVisibility: CommunityVisibility;
+  settingContext: SettingContext | null;
+  visitMode: VisitMode | null;
+  siteCode: string;
+  respondent: RespondentType;
+  /** Teil 1 answers of an interviewed person. */
+  respondentPerson: Answers;
+  respondentConsent: boolean;
   locationError?: string | null;
   onHabitatChange: (value: HabitatType) => void;
   onSettingContextChange: (value: SettingContext) => void;
-  onCommunityVisibilityChange: (value: CommunityVisibility) => void;
+  onVisitModeChange: (value: VisitMode | null) => void;
+  onSiteCodeChange: (value: string) => void;
+  onRespondentChange: (value: RespondentType) => void;
+  onRespondentPersonChange: (value: Answers) => void;
+  onRespondentConsentChange: (value: boolean) => void;
   onConfirm: () => void;
+  onBack?: () => void;
 }
 
+/**
+ * Last page of the main questionnaire: whether the person is passing by or
+ * staying, who answered, and optional details about place and situation.
+ */
 export default function ContextScreen({
   habitatType,
   settingContext,
-  privacyMode,
-  communityVisibility,
+  visitMode,
+  siteCode,
+  respondent,
+  respondentPerson,
+  respondentConsent,
   locationError,
   onHabitatChange,
   onSettingContextChange,
-  onCommunityVisibilityChange,
+  onVisitModeChange,
+  onSiteCodeChange,
+  onRespondentChange,
+  onRespondentPersonChange,
+  onRespondentConsentChange,
   onConfirm,
+  onBack,
 }: Props) {
-  const { defaultCommunityVisibility, setDefaultCommunityVisibility } = usePreferencesStore();
-  const [showVisibilitySheet, setShowVisibilitySheet] = useState(false);
-  const [pendingVisibility, setPendingVisibility] = useState<CommunityVisibility>(communityVisibility);
-  const [applyAsDefault, setApplyAsDefault] = useState(false);
-  const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight();
+  const [showMissing, setShowMissing] = useState(false);
+  const scrollRef = useRef<ScrollView>(null);
+  const latestPerson = useRef(respondentPerson);
+  latestPerson.current = respondentPerson;
 
-  useEffect(() => {
-    setPendingVisibility(communityVisibility);
-  }, [communityVisibility]);
-
-  const footerBottomPadding = tabBarHeight + 16;
-
-  const handleSavePress = () => {
-    setPendingVisibility(communityVisibility);
-    setApplyAsDefault(false);
-    setShowVisibilitySheet(true);
+  const answers: Answers = {
+    respondent,
+    site_code: siteCode,
+    ...(visitMode ? { visit_mode: visitMode } : {}),
   };
 
-  const handleConfirmVisibility = () => {
-    onCommunityVisibilityChange(pendingVisibility);
-    if (applyAsDefault) {
-      void setDefaultCommunityVisibility(pendingVisibility);
+  const patchContext = (input: AnswerPatchInput) => {
+    const change = typeof input === 'function' ? input(answers) : input;
+    if ('visit_mode' in change) {
+      const next = change.visit_mode;
+      onVisitModeChange(next === 'passing' || next === 'staying' ? next : null);
     }
-    setShowVisibilitySheet(false);
+    if ('respondent' in change) {
+      onRespondentChange(change.respondent === 'other' ? 'other' : 'self');
+    }
+    if ('site_code' in change) {
+      onSiteCodeChange(typeof change.site_code === 'string' ? change.site_code : '');
+    }
+  };
+
+  const patchPerson = (change: AnswerPatchInput) => {
+    const next = applyAnswerPatch(latestPerson.current, change);
+    latestPerson.current = next;
+    onRespondentPersonChange(next);
+  };
+
+  const isInterview = respondent === 'other';
+  const personMissing = isInterview
+    && (missingRequiredItems(PERSON_ITEMS, respondentPerson).length > 0 || !respondentConsent);
+  const isComplete = visitMode !== null && !personMissing;
+
+  const handleContinue = () => {
+    if (!isComplete) {
+      setShowMissing(true);
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      scrollRef.current?.scrollTo({ y: 0, animated: true });
+      return;
+    }
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     onConfirm();
   };
 
   return (
     <View style={styles.container}>
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
+      <ScrollView
+        ref={scrollRef}
+        style={styles.scrollView}
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
         <Text style={styles.title}>{t('Measurement Context')}</Text>
         <Text style={styles.subtitle}>
-          {t('Optional metadata about place and situation before you save the recording')}
+          {t('A few details about the situation of this measurement.')}
         </Text>
 
         {locationError && (
@@ -79,169 +143,119 @@ export default function ContextScreen({
           </View>
         )}
 
-        <View style={styles.profileDefaultsNote}>
-          <MaterialIcons name="manage-accounts" size={18} color={Colors.textMuted} />
-          <Text style={styles.profileDefaultsNoteText}>
-            {t('License and location privacy use your current Profile defaults.')}
-          </Text>
-        </View>
+        <QuestionItem
+          item={VISIT_MODE_ITEM}
+          answers={answers}
+          onPatch={patchContext}
+          accentColor={ACCENT}
+          softColor={SOFT}
+          showMissing={showMissing}
+        />
 
-        <View style={styles.sectionContent}>
+        <QuestionItem
+          item={RESPONDENT_ITEM}
+          answers={answers}
+          onPatch={patchContext}
+          accentColor={ACCENT}
+          softColor={SOFT}
+        />
+
+        {isInterview ? (
+          <View style={styles.interviewBlock}>
+            <View style={styles.interviewHeader}>
+              <MaterialCommunityIcons name="account-question-outline" size={20} color={Colors.text} />
+              <Text style={styles.interviewTitle}>{t('About the person you interviewed')}</Text>
+            </View>
+            <Text style={styles.interviewText}>
+              {t('Their details are stored with this measurement only, instead of your own.')}
+            </Text>
+
+            {PERSON_ITEMS.map((item) => (
+              <QuestionItem
+                key={item.key}
+                item={item}
+                answers={respondentPerson}
+                onPatch={patchPerson}
+                accentColor={ACCENT}
+                softColor={SOFT}
+                showMissing={showMissing}
+              />
+            ))}
+
+            <TouchableOpacity
+              style={[
+                styles.consentToggle,
+                respondentConsent && styles.consentToggleChecked,
+                showMissing && !respondentConsent && styles.consentToggleMissing,
+              ]}
+              onPress={() => {
+                void Haptics.selectionAsync();
+                onRespondentConsentChange(!respondentConsent);
+              }}
+              activeOpacity={0.85}
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: respondentConsent }}
+              accessibilityLabel={t('The person agreed to take part and to their answers being stored.')}
+            >
+              <MaterialCommunityIcons
+                name={respondentConsent ? 'checkbox-marked' : 'checkbox-blank-outline'}
+                size={26}
+                color={respondentConsent ? Colors.text : Colors.textDisabled}
+              />
+              <Text style={styles.consentToggleText}>
+                {t('The person agreed to take part and to their answers being stored.')}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        ) : null}
+
+        <QuestionItem
+          item={SITE_CODE_ITEM}
+          answers={answers}
+          onPatch={patchContext}
+          accentColor={ACCENT}
+          softColor={SOFT}
+        />
+
+        <View style={styles.optionalBlock}>
           <HabitatSelector value={habitatType} onChange={onHabitatChange} />
           <View style={styles.sectionDivider} />
           <SettingChips value={settingContext} onChange={onSettingContextChange} />
         </View>
       </ScrollView>
 
-      {/* Actions - Fixed at bottom */}
-      <View style={[styles.actions, { paddingBottom: footerBottomPadding }]}>
-        <TouchableOpacity
-          style={styles.saveButton}
-          onPress={handleSavePress}
-          accessibilityRole="button"
-          accessibilityLabel={t('Save recording')}
-          accessibilityHint={t('Choose whether to keep the recording private or share it with the community before saving')}
-        >
-          <Text style={styles.saveButtonText}>
-            {t('Save Recording')}
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      <Modal
-        visible={showVisibilitySheet}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowVisibilitySheet(false)}
-      >
-        <Pressable
-          style={styles.sheetBackdrop}
-          onPress={() => setShowVisibilitySheet(false)}
-          accessibilityRole="button"
-          accessibilityLabel={t('Close sharing options')}
-        />
-        <View style={[styles.sheetContainer, { paddingBottom: Math.max(insets.bottom, 16) + 8 }]}>
-          <View style={styles.sheetHandle} />
-          <Text style={styles.sheetEyebrow}>{t('Sharing')}</Text>
-          <Text style={styles.sheetTitle}>{t('How should this recording be saved?')}</Text>
-          <Text style={styles.sheetText}>
-            {t('Choose whether this recording stays in your private cloud archive or appears on the Explore map for the community.')}
-          </Text>
-
-          <View style={styles.currentDefaultRow}>
-            <MaterialIcons name="history-toggle-off" size={16} color={Colors.textMuted} />
-            <Text style={styles.currentDefaultText}>
-              {t('Current default: {value}', { value: defaultCommunityVisibility === 'community' ? t('Community') : t('Private') })}
-            </Text>
-          </View>
-
-          <View style={styles.sheetOptions}>
+      <View style={[styles.actions, { paddingBottom: tabBarHeight + 16 }]}>
+        {showMissing && !isComplete ? (
+          <Text style={styles.actionsHint}>{t('Please answer the marked questions.')}</Text>
+        ) : null}
+        <View style={styles.actionsRow}>
+          {onBack ? (
             <TouchableOpacity
-              style={[
-                styles.sheetOption,
-                pendingVisibility === 'private' && styles.sheetOptionActive,
-              ]}
-              onPress={() => setPendingVisibility('private')}
+              style={styles.backButton}
+              onPress={() => {
+                void Haptics.selectionAsync();
+                onBack();
+              }}
+              activeOpacity={0.8}
               accessibilityRole="button"
-              accessibilityState={{ selected: pendingVisibility === 'private' }}
-              accessibilityLabel={t('Save as private recording')}
+              accessibilityLabel={t('Back')}
             >
-              <MaterialIcons
-                name="lock"
-                size={20}
-                color={pendingVisibility === 'private' ? Colors.primary : Colors.textMuted}
-              />
-              <View style={styles.sheetOptionContent}>
-                <Text style={[
-                  styles.sheetOptionTitle,
-                  pendingVisibility === 'private' && styles.sheetOptionTitleActive,
-                ]}>
-                  {t('Private')}
-                </Text>
-                <Text style={styles.sheetOptionText}>
-                  {t('Syncs to your own account archive, but stays off the Explore map unless you publish it later.')}
-                </Text>
-              </View>
+              <MaterialIcons name="arrow-back" size={22} color={Colors.text} />
             </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.sheetOption,
-                pendingVisibility === 'community' && styles.sheetOptionActive,
-              ]}
-              onPress={() => setPendingVisibility('community')}
-              accessibilityRole="button"
-              accessibilityState={{ selected: pendingVisibility === 'community' }}
-              accessibilityLabel={t('Publish to the community')}
-            >
-              <MaterialIcons
-                name="public"
-                size={20}
-                color={pendingVisibility === 'community' ? Colors.primary : Colors.textMuted}
-              />
-              <View style={styles.sheetOptionContent}>
-                <Text style={[
-                  styles.sheetOptionTitle,
-                  pendingVisibility === 'community' && styles.sheetOptionTitleActive,
-                ]}>
-                  {t('Community')}
-                </Text>
-                <Text style={styles.sheetOptionText}>
-                  {t('Shared to Explore after sync so others can discover it on the map.')}
-                </Text>
-              </View>
-            </TouchableOpacity>
-          </View>
-
-          {pendingVisibility === 'community' && privacyMode === 'hidden' && (
-            <View style={styles.sheetWarning}>
-              <MaterialIcons name="info-outline" size={18} color={Colors.warning} />
-              <Text style={styles.sheetWarningText}>
-                {t('Hidden location keeps this recording off the Explore map. Use exact or approximate coordinates if you want it to appear publicly.')}
-              </Text>
-            </View>
-          )}
-
+          ) : null}
           <TouchableOpacity
-            style={styles.defaultToggle}
-            onPress={() => setApplyAsDefault((current) => !current)}
-            accessibilityRole="checkbox"
-            accessibilityState={{ checked: applyAsDefault }}
-            accessibilityLabel={t('Use this visibility for future recordings')}
+            style={styles.continueButton}
+            onPress={handleContinue}
+            activeOpacity={0.85}
+            accessibilityRole="button"
+            accessibilityLabel={t('Continue')}
+            accessibilityHint={t('Finishes the main questionnaire')}
           >
-            <MaterialIcons
-              name={applyAsDefault ? 'check-box' : 'check-box-outline-blank'}
-              size={20}
-              color={applyAsDefault ? Colors.primary : Colors.textMuted}
-            />
-            <Text style={styles.defaultToggleText}>
-              {t('Use this as the default for future recordings')}
-            </Text>
+            <Text style={styles.continueButtonText}>{t('Continue')}</Text>
+            <MaterialIcons name="arrow-forward" size={22} color={Colors.background} />
           </TouchableOpacity>
-
-          <View style={styles.sheetActions}>
-            <TouchableOpacity
-              style={styles.sheetSecondaryButton}
-              onPress={() => setShowVisibilitySheet(false)}
-              accessibilityRole="button"
-              accessibilityLabel={t('Cancel saving')}
-            >
-              <Text style={styles.sheetSecondaryButtonText}>{t('Back')}</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.sheetPrimaryButton}
-              onPress={handleConfirmVisibility}
-              accessibilityRole="button"
-              accessibilityLabel={pendingVisibility === 'community' ? t('Share recording with community') : t('Save private recording')}
-            >
-              <Text style={styles.sheetPrimaryButtonText}>
-                {pendingVisibility === 'community' ? t('Share & Save') : t('Save Private')}
-              </Text>
-            </TouchableOpacity>
-          </View>
         </View>
-      </Modal>
+      </View>
     </View>
   );
 }
@@ -255,52 +269,30 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.md,
+    paddingHorizontal: Spacing.md,
+    paddingTop: Spacing.sm,
     paddingBottom: Spacing.md,
+    gap: 12,
   },
   title: {
     fontSize: 26,
-    fontWeight: '700',
+    fontWeight: '800',
+    letterSpacing: -0.5,
     color: Colors.text,
-    marginBottom: 6,
     textAlign: 'center',
   },
   subtitle: {
     fontSize: 15,
     color: Colors.textMuted,
-    marginBottom: Spacing.lg,
     textAlign: 'center',
-  },
-  sectionContent: {
-    paddingBottom: Spacing.md,
-  },
-  sectionDivider: {
-    height: Spacing.lg,
-  },
-  profileDefaultsNote: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    padding: Spacing.md,
-    marginBottom: Spacing.lg,
-    backgroundColor: Colors.surface,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    borderColor: Colors.surfaceHighlight,
-  },
-  profileDefaultsNoteText: {
-    flex: 1,
-    fontSize: 13,
-    lineHeight: 18,
-    color: Colors.textMuted,
+    marginTop: -6,
+    marginBottom: 4,
   },
   locationWarning: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 12,
     padding: 14,
-    marginBottom: Spacing.md,
     backgroundColor: `${Colors.warning}15`,
     borderRadius: Radius.md,
     borderWidth: 1,
@@ -320,163 +312,104 @@ const styles = StyleSheet.create({
     color: Colors.textMuted,
     lineHeight: 18,
   },
+  interviewBlock: {
+    gap: 12,
+    padding: 12,
+    borderRadius: 24,
+    backgroundColor: '#ECE6DA',
+  },
+  interviewHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 4,
+    paddingTop: 4,
+  },
+  interviewTitle: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '800',
+    color: Colors.text,
+  },
+  interviewText: {
+    fontSize: 13,
+    lineHeight: 18,
+    color: Colors.textMuted,
+    paddingHorizontal: 4,
+    marginTop: -6,
+  },
+  consentToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    minHeight: 56,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: Colors.surfaceHighlight,
+    backgroundColor: Colors.surface,
+  },
+  consentToggleChecked: {
+    borderColor: Colors.text,
+  },
+  consentToggleMissing: {
+    borderColor: Colors.error,
+  },
+  consentToggleText: {
+    flex: 1,
+    fontSize: 15,
+    lineHeight: 20,
+    fontWeight: '700',
+    color: Colors.text,
+  },
+  optionalBlock: {
+    paddingTop: Spacing.sm,
+  },
+  sectionDivider: {
+    height: Spacing.md,
+  },
   actions: {
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.md,
+    paddingHorizontal: Spacing.md,
+    paddingTop: 12,
+    gap: 8,
     backgroundColor: Colors.background,
     borderTopWidth: 1,
     borderTopColor: Colors.surfaceHighlight,
   },
-  saveButton: {
-    backgroundColor: Colors.success,
-    paddingVertical: 18,
-    borderRadius: Radius.full,
-    alignItems: 'center',
-  },
-  saveButtonText: {
-    color: Colors.background,
-    fontSize: 17,
-    fontWeight: '700',
-  },
-  sheetBackdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(17, 17, 17, 0.28)',
-  },
-  sheetContainer: {
-    backgroundColor: Colors.background,
-    borderTopLeftRadius: Radius.xl,
-    borderTopRightRadius: Radius.xl,
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.md,
-    gap: Spacing.md,
-    borderTopWidth: 1,
-    borderColor: Colors.surfaceHighlight,
-  },
-  sheetHandle: {
-    width: 40,
-    height: 4,
-    borderRadius: Radius.full,
-    backgroundColor: Colors.surfaceHighlight,
-    alignSelf: 'center',
-  },
-  sheetEyebrow: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: Colors.textMuted,
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-  },
-  sheetTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: Colors.text,
-  },
-  sheetText: {
-    fontSize: 15,
-    lineHeight: 22,
-    color: Colors.textMuted,
-  },
-  currentDefaultRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
-  },
-  currentDefaultText: {
+  actionsHint: {
     fontSize: 13,
-    color: Colors.textMuted,
-  },
-  sheetOptions: {
-    gap: Spacing.sm,
-  },
-  sheetOption: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: Spacing.md,
-    padding: Spacing.md,
-    backgroundColor: Colors.surface,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    borderColor: Colors.surfaceHighlight,
-  },
-  sheetOptionActive: {
-    borderColor: Colors.primary,
-    backgroundColor: Colors.primaryMuted,
-  },
-  sheetOptionContent: {
-    flex: 1,
-    gap: 4,
-  },
-  sheetOptionTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: Colors.text,
-  },
-  sheetOptionTitleActive: {
-    color: Colors.primary,
-  },
-  sheetOptionText: {
-    fontSize: 14,
-    lineHeight: 20,
-    color: Colors.textMuted,
-  },
-  sheetWarning: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: Spacing.sm,
-    padding: Spacing.md,
-    backgroundColor: Colors.warningMuted,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    borderColor: `${Colors.warning}30`,
-  },
-  sheetWarningText: {
-    flex: 1,
-    fontSize: 13,
-    lineHeight: 18,
-    color: Colors.text,
-  },
-  defaultToggle: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    paddingVertical: Spacing.xs,
-  },
-  defaultToggleText: {
-    flex: 1,
-    fontSize: 14,
-    color: Colors.text,
-  },
-  sheetActions: {
-    flexDirection: 'row',
-    gap: Spacing.sm,
-    paddingTop: Spacing.xs,
-  },
-  sheetSecondaryButton: {
-    flex: 1,
-    minHeight: 52,
-    borderRadius: Radius.full,
-    borderWidth: 1,
-    borderColor: Colors.surfaceHighlight,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.surface,
-  },
-  sheetSecondaryButtonText: {
-    fontSize: 16,
     fontWeight: '600',
-    color: Colors.textMuted,
+    color: Colors.error,
+    textAlign: 'center',
   },
-  sheetPrimaryButton: {
-    flex: 1,
-    minHeight: 52,
-    borderRadius: Radius.full,
+  actionsRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  backButton: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.surfaceHighlight,
+  },
+  continueButton: {
+    flex: 1,
+    height: 58,
+    borderRadius: 29,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
     backgroundColor: Colors.text,
   },
-  sheetPrimaryButtonText: {
-    fontSize: 16,
-    fontWeight: '700',
+  continueButtonText: {
     color: Colors.background,
+    fontSize: 18,
+    fontWeight: '800',
   },
 });

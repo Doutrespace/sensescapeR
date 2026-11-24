@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Colors } from '../../theme/colors';
@@ -8,7 +8,8 @@ import { t } from '../../i18n';
 type IconName = keyof typeof MaterialIcons.glyphMap;
 
 interface Props {
-  value: SettingContext;
+  /** null = nothing chosen yet; nothing is stored until the user picks something. */
+  value: SettingContext | null;
   onChange: (value: SettingContext) => void;
 }
 
@@ -29,19 +30,28 @@ const SOCIAL_OPTIONS: ChipOption[] = [
 ];
 
 export default function SettingChips({ value, onChange }: Props) {
+  const current: SettingContext = value ?? { indoor: false, outdoor: false, alone: false, inGroup: false };
+  // Latest choice, so two quick taps (place, then company) both count.
+  const latest = useRef(current);
+  latest.current = current;
+  const commit = (next: SettingContext) => {
+    latest.current = next;
+    onChange(next);
+  };
+
   const toggleOption = (key: keyof Omit<SettingContext, 'purpose'>) => {
     // For location (indoor/outdoor), toggle the pair
     if (key === 'indoor' || key === 'outdoor') {
-      onChange({
-        ...value,
+      commit({
+        ...latest.current,
         indoor: key === 'indoor',
         outdoor: key === 'outdoor',
       });
     }
     // For social context (alone/inGroup), toggle the pair
     else if (key === 'alone' || key === 'inGroup') {
-      onChange({
-        ...value,
+      commit({
+        ...latest.current,
         alone: key === 'alone',
         inGroup: key === 'inGroup',
       });
@@ -50,7 +60,7 @@ export default function SettingChips({ value, onChange }: Props) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>{t('Recording Context')}</Text>
+      <Text style={styles.title}>{t('Recording Context (optional)')}</Text>
       <Text style={styles.subtitle}>
         {t('Help us understand the situation during this recording')}
       </Text>
@@ -60,13 +70,16 @@ export default function SettingChips({ value, onChange }: Props) {
         <Text style={styles.sectionLabel}>{t('Location')}</Text>
         <View style={styles.chipRow}>
           {LOCATION_OPTIONS.map((option) => {
-            const isSelected = value[option.key];
+            const isSelected = current[option.key];
             return (
               <TouchableOpacity
                 key={option.key}
                 style={[styles.chip, isSelected && styles.chipSelected]}
                 onPress={() => toggleOption(option.key)}
                 activeOpacity={0.7}
+                accessibilityRole="radio"
+                accessibilityLabel={t(option.label)}
+                accessibilityState={{ selected: isSelected }}
               >
                 <MaterialIcons
                   name={option.icon}
@@ -87,13 +100,16 @@ export default function SettingChips({ value, onChange }: Props) {
         <Text style={styles.sectionLabel}>{t('Social Setting')}</Text>
         <View style={styles.chipRow}>
           {SOCIAL_OPTIONS.map((option) => {
-            const isSelected = value[option.key];
+            const isSelected = current[option.key];
             return (
               <TouchableOpacity
                 key={option.key}
                 style={[styles.chip, isSelected && styles.chipSelected]}
                 onPress={() => toggleOption(option.key)}
                 activeOpacity={0.7}
+                accessibilityRole="radio"
+                accessibilityLabel={t(option.label)}
+                accessibilityState={{ selected: isSelected }}
               >
                 <MaterialIcons
                   name={option.icon}

@@ -24,8 +24,17 @@ function getRecognitionConstructor(): (new () => SpeechRecognitionLike) | null {
   return (window as any).SpeechRecognition ?? (window as any).webkitSpeechRecognition ?? null;
 }
 
+/**
+ * Off by default. The Web Speech API does not work on the device: Chrome
+ * and Safari send the audio to Google or Apple for recognition. For a study
+ * that must be covered by the information given to participants, so the
+ * notes step offers a text field instead. Set to true only after adding
+ * this to the consent text.
+ */
+const VOICE_TRANSCRIPTION_ENABLED = false;
+
 export function isSpokenDescriptionTranscriptionAvailable(): boolean {
-  return getRecognitionConstructor() !== null;
+  return VOICE_TRANSCRIPTION_ENABLED && getRecognitionConstructor() !== null;
 }
 
 export function transcribeSpokenDescription(

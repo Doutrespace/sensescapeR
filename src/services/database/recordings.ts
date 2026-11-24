@@ -2,6 +2,7 @@ import { getDatabase } from './index';
 import { Recording, RecordingFilters, SyncStatus, RecordingWithPerception } from '../../types/recording';
 import type { ImageClassification } from '../../utils/imageClassification';
 import { LoggingService } from '../logging';
+import { createUuid } from '../../utils/ids';
 import { toRuntimeUri, toStoredUri } from '../media/uriMapping';
 import {
   sanitizeFilePath,
@@ -61,8 +62,9 @@ function applyRecordingFilters(
   return query;
 }
 
+// A UUID, so measurements from many devices can be merged without clashes.
 function generateId(): string {
-  return `rec_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  return createUuid();
 }
 
 // Create a new recording
@@ -110,9 +112,10 @@ export async function createRecording(
       photo_uri, photo_classification,
       field_notes, spoken_description,
       habitat_type, setting_chips, source_dominance,
+      participant_id, group_id, study_data,
       license, community_visibility, sync_status, remote_id,
       created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ) VALUES (${Array.from({ length: 43 }, () => '?').join(', ')})`,
     [
       newRecording.id,
       toStoredUri(newRecording.audioUri),
@@ -148,6 +151,9 @@ export async function createRecording(
       newRecording.habitatType ?? null,
       newRecording.settingChips ?? null,
       newRecording.sourceDominance ?? null,
+      newRecording.participantId ?? null,
+      newRecording.groupId ?? null,
+      newRecording.studyData ?? null,
       newRecording.license ?? null,
       newRecording.communityVisibility,
       newRecording.syncStatus,
@@ -445,6 +451,9 @@ function mapRowToRecording(row: any): Recording {
     habitatType: row.habitat_type,
     settingChips: row.setting_chips,
     sourceDominance: row.source_dominance,
+    participantId: row.participant_id ?? undefined,
+    groupId: row.group_id ?? undefined,
+    studyData: row.study_data ?? undefined,
     license: row.license,
     communityVisibility: row.community_visibility ?? 'private',
     syncStatus: row.sync_status,

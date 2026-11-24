@@ -1,45 +1,79 @@
 import React from 'react';
 import { fireEvent, render } from '@testing-library/react-native';
 import ContextScreen from './ContextScreen';
-import { usePreferencesStore } from '../../stores/usePreferencesStore';
 
 jest.mock('./HabitatSelector', () => () => null);
 jest.mock('./SettingChips', () => () => null);
-jest.mock('../../stores/usePreferencesStore', () => ({
-  usePreferencesStore: jest.fn(),
-}));
+
+function renderScreen(overrides: Partial<React.ComponentProps<typeof ContextScreen>> = {}) {
+  const props: React.ComponentProps<typeof ContextScreen> = {
+    habitatType: null,
+    settingContext: null,
+    visitMode: null,
+    siteCode: '',
+    respondent: 'self',
+    respondentPerson: {},
+    respondentConsent: false,
+    locationError: 'GPS unavailable',
+    onHabitatChange: jest.fn(),
+    onSettingContextChange: jest.fn(),
+    onVisitModeChange: jest.fn(),
+    onSiteCodeChange: jest.fn(),
+    onRespondentChange: jest.fn(),
+    onRespondentPersonChange: jest.fn(),
+    onRespondentConsentChange: jest.fn(),
+    onConfirm: jest.fn(),
+    ...overrides,
+  };
+
+  return { props, ...render(<ContextScreen {...props} />) };
+}
 
 describe('ContextScreen', () => {
-  beforeEach(() => {
-    (usePreferencesStore as unknown as jest.Mock).mockReturnValue({
-      defaultCommunityVisibility: 'community',
-      setDefaultCommunityVisibility: jest.fn().mockResolvedValue(undefined),
-    });
+  it('does not continue before the passing-by / staying question is answered', () => {
+    const { props, getByLabelText, getByText } = renderScreen();
+
+    fireEvent.press(getByLabelText('Continue'));
+
+    expect(props.onConfirm).not.toHaveBeenCalled();
+    expect(getByText('Please answer the marked questions.')).toBeTruthy();
   });
 
-  it('lets the user navigate sections and save or skip', () => {
-    const onConfirm = jest.fn();
-    const onCommunityVisibilityChange = jest.fn();
+  it('reports the chosen visit mode and continues once it is answered', () => {
+    const first = renderScreen();
+    fireEvent.press(first.getByLabelText('I am staying here'));
+    expect(first.props.onVisitModeChange).toHaveBeenCalledWith('staying');
+    first.unmount();
 
-    const { getByLabelText, getByText } = render(
-      <ContextScreen
-        habitatType={null}
-        settingContext={{ indoor: false, outdoor: true, alone: true, inGroup: false }}
-        privacyMode="exact"
-        communityVisibility="private"
-        locationError="GPS unavailable"
-        onHabitatChange={jest.fn()}
-        onSettingContextChange={jest.fn()}
-        onCommunityVisibilityChange={onCommunityVisibilityChange}
-        onConfirm={onConfirm}
-      />
-    );
+    const second = renderScreen({ visitMode: 'staying' });
+    fireEvent.press(second.getByLabelText('Continue'));
+    expect(second.props.onConfirm).toHaveBeenCalledTimes(1);
+  });
 
-    fireEvent.press(getByLabelText('Save recording'));
-    fireEvent.press(getByLabelText('Publish to the community'));
-    fireEvent.press(getByText('Share & Save'));
+  it('asks for the details and consent of an interviewed person', () => {
+    const { props, getByLabelText, getByText } = renderScreen({
+      visitMode: 'passing',
+      respondent: 'other',
+    });
 
-    expect(onCommunityVisibilityChange).toHaveBeenNthCalledWith(1, 'community');
-    expect(onConfirm).toHaveBeenCalledTimes(1);
+    expect(getByText('About the person you interviewed')).toBeTruthy();
+
+    fireEvent.press(getByLabelText('Continue'));
+    expect(props.onConfirm).not.toHaveBeenCalled();
+
+    fireEvent.press(getByLabelText('The person agreed to take part and to their answers being stored.'));
+    expect(props.onRespondentConsentChange).toHaveBeenCalledWith(true);
+  });
+
+  it('continues for an interview when the person details are complete', () => {
+    const { props, getByLabelText } = renderScreen({
+      visitMode: 'passing',
+      respondent: 'other',
+      respondentPerson: { birth_year: 1990, gender: 'female', years_in_wuerzburg__na: true },
+      respondentConsent: true,
+    });
+
+    fireEvent.press(getByLabelText('Continue'));
+    expect(props.onConfirm).toHaveBeenCalledTimes(1);
   });
 });

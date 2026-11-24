@@ -1,6 +1,6 @@
 import React, { useMemo, useCallback, useEffect, useRef, useState } from 'react';
 import { StyleProp, StyleSheet, TouchableOpacity, View, ViewStyle } from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { WebView, WebViewMessageEvent } from 'react-native-webview';
 import { LoggingService } from '../../services/logging';
@@ -30,16 +30,32 @@ export type OpenStreetMapBasemap = 'light' | 'satellite';
 
 interface Props {
   markers: OpenStreetMapMarker[];
+  /** Where the map opens while there is nothing to fit (see `fitToMarkers`). */
   initialCenter?: { latitude: number; longitude: number; zoom?: number } | null;
   userLocation?: { latitude: number; longitude: number } | null;
   selectedMarkerId?: string | null;
+  /**
+   * Open on the markers: the view is fitted to them once, as soon as there are
+   * any, unless the user has moved the map before that.
+   */
   fitToMarkers?: boolean;
   basemap?: OpenStreetMapBasemap;
   onMarkerPress?: (id: string) => void;
   onBoundsChange?: (bounds: OpenStreetMapBounds) => void;
   style?: StyleProp<ViewStyle>;
+  /** Height of the floating tab bar over the bottom of the map; the buttons sit above it. */
   bottomInset?: number;
+  /**
+   * Height of what else is drawn over the map: at its top edge (a header card)
+   * and directly above `bottomInset` (a legend). Fitting keeps the markers out of it.
+   */
+  fitInsets?: { top?: number; bottom?: number };
 }
+
+// Room kept around the outermost markers when the view is fitted to them. On
+// the right the markers also have to stay clear of the control buttons.
+const FIT_PADDING = 40;
+const FIT_PADDING_RIGHT = 80;
 
 export default function OpenStreetMapView({
   markers,
@@ -52,22 +68,43 @@ export default function OpenStreetMapView({
   onBoundsChange,
   style,
   bottomInset = 0,
+  fitInsets,
 }: Props) {
   const WebViewComponent = WebView as unknown as React.ComponentType<any>;
   const webViewRef = useRef<any>(null);
-  const [isMapReady, setIsMapReady] = useState(false);
+  // Number of "ready" messages: the page sends one each time it has (re)loaded.
+  const [readyCount, setReadyCount] = useState(0);
+  const isMapReady = readyCount > 0;
+  const hasLocatedMarkers = markers.some(
+    (marker) => Number.isFinite(marker.latitude) && Number.isFinite(marker.longitude)
+  );
+  const fitInsetTop = fitInsets?.top ?? 0;
+  const fitInsetBottom = bottomInset + (fitInsets?.bottom ?? 0);
   const payload = useMemo(
     () =>
+      // ASCII only and without "<": safe inside the page's <script> as well as in an
+      // injected one (no early </script>, no line separator, no encoding to get wrong).
       JSON.stringify({
         markers,
         initialCenter,
         userLocation,
         selectedMarkerId,
         fitToMarkers,
+        fitPadding: {
+          top: FIT_PADDING + fitInsetTop,
+          right: FIT_PADDING_RIGHT,
+          bottom: FIT_PADDING + fitInsetBottom,
+          left: FIT_PADDING,
+        },
         basemap,
-      }).replace(/</g, '\\u003c'),
-    [basemap, fitToMarkers, initialCenter, markers, selectedMarkerId, userLocation]
+      }).replace(
+        /[<\u007f-\uffff]/g,
+        (character) => '\\u' + character.charCodeAt(0).toString(16).padStart(4, '0')
+      ),
+    [basemap, fitInsetBottom, fitInsetTop, fitToMarkers, initialCenter, markers, selectedMarkerId, userLocation]
   );
+  // The page starts from what is known at mount, so its first view is already the right one.
+  const [initialPayload] = useState(payload);
   const html = useMemo(() => {
     const controlBottomOffset = Math.max(12, bottomInset + 8);
     return `
@@ -206,22 +243,30 @@ export default function OpenStreetMapView({
     <div id="map"></div>
     <script>${LEAFLET_JS}</script>
     <script>
-      const initialConfig = {
-        markers: [],
-        initialCenter: null,
-        userLocation: null,
-        selectedMarkerId: null,
-        fitToMarkers: false,
-        basemap: 'light',
-      };
+      const initialConfig = ${initialPayload};
 
-      function postMessage(payload) {
+      // Not named "postMessage": a global function of that name replaces
+      // window.postMessage, and in the browser that is the channel the app
+      // uses to send commands into this page.
+      function sendToApp(payload) {
         if (window.ReactNativeWebView) {
           window.ReactNativeWebView.postMessage(JSON.stringify(payload));
         }
       }
 
       function buildMap() {
+        const HTML_ESCAPES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+
+        // Marker texts come from recordings, on the community map from other people's.
+        function escapeHtml(value) {
+          return String(value).replace(/[&<>"']/g, (character) => HTML_ESCAPES[character]);
+        }
+
+        function hasCoordinates(point) {
+          return typeof point.latitude === 'number' && isFinite(point.latitude)
+            && typeof point.longitude === 'number' && isFinite(point.longitude);
+        }
+
         function hexToRgba(hex, alpha) {
           if (!hex) return 'rgba(23,23,23,' + alpha + ')';
           const normalized = hex.replace('#', '');
@@ -251,7 +296,7 @@ export default function OpenStreetMapView({
         }
 
         function buildMarkerIcon(marker, isSelected, zoom) {
-          const color = marker.color || '#171717';
+          const color = escapeHtml(marker.color || '#171717');
           const haloColor = hexToRgba(color, isSelected ? 0.3 : 0.18);
           const ringBackground = isSelected
             ? 'rgba(251, 248, 241, 0.96)'
@@ -285,10 +330,11 @@ export default function OpenStreetMapView({
           preferCanvas: true,
           attributionControl: true,
         });
+        // The whole world, until applyAutoView() below knows where to look.
+        map.setView([20, 0], 2);
         window.__soundscapeMap = map;
         window.__soundscapeMarkerLayer = [];
         window.__soundscapeUserLayers = [];
-        window.__soundscapeViewportInitialized = false;
         window.__lastConfig = initialConfig;
         window.__soundscapeBaseLayers = {
           // CARTO's light basemap now returns "API key required" tiles, so the
@@ -358,21 +404,24 @@ export default function OpenStreetMapView({
           markerLayer.forEach((layer) => map.removeLayer(layer));
           markerLayer.length = 0;
           const currentZoom = map.getZoom();
-          const bounds = [];
 
           config.markers.forEach((marker) => {
+          if (!hasCoordinates(marker)) {
+            return;
+          }
+
           const isSelected = marker.id === config.selectedMarkerId;
           const circle = L.marker([marker.latitude, marker.longitude], {
             icon: buildMarkerIcon(marker, isSelected, currentZoom),
           }).addTo(map);
 
           circle.on('click', () => {
-            postMessage({ type: 'markerPress', id: marker.id });
+            sendToApp({ type: 'markerPress', id: marker.id });
           });
 
           if (marker.title || marker.subtitle) {
-            const title = marker.title ? '<strong>' + marker.title + '</strong>' : '';
-            const subtitle = marker.subtitle ? '<div style="margin-top:4px;color:${Colors.textMuted};font-size:12px;">' + marker.subtitle + '</div>' : '';
+            const title = marker.title ? '<strong>' + escapeHtml(marker.title) + '</strong>' : '';
+            const subtitle = marker.subtitle ? '<div style="margin-top:4px;color:${Colors.textMuted};font-size:12px;">' + escapeHtml(marker.subtitle) + '</div>' : '';
             circle.bindPopup(
               '<div style="min-width:140px;color:${Colors.text};font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;">' + title + subtitle + '</div>',
               { autoPan: false }
@@ -382,35 +431,121 @@ export default function OpenStreetMapView({
             }
           }
 
-          bounds.push([marker.latitude, marker.longitude]);
           markerLayer.push(circle);
           });
+        }
 
-          if (!window.__soundscapeViewportInitialized) {
-            if (config.fitToMarkers && bounds.length > 0) {
-              map.fitBounds(bounds, { padding: [36, 36] });
-            } else {
-              const center = config.initialCenter || config.userLocation || { latitude: 20, longitude: 0, zoom: 2 };
-              map.setView([center.latitude, center.longitude], center.zoom || 13);
-            }
-            window.__soundscapeViewportInitialized = true;
+        function renderConfig(config) {
+          renderBasemap(config);
+          renderUserLocation(config);
+          renderMarkers(config);
+        }
+
+        // Automatic view: fitted to the markers or centred on the given position, each at
+        // most once, and never after the user has moved the map.
+        const autoView = { fitted: false, centered: false, userMoved: false };
+        let automaticMoves = 0;
+
+        function moveAutomatically(move) {
+          automaticMoves += 1;
+          try {
+            move();
+          } finally {
+            automaticMoves -= 1;
           }
         }
 
+        // Shows all markers, zoomed in to street level (16) at most, which is also what a
+        // single place gets. Returns false when there is nothing to fit or the map has no
+        // usable size yet.
+        function fitToMarkers(config, animate) {
+          const positions = config.markers
+            .filter(hasCoordinates)
+            .map((marker) => [marker.latitude, marker.longitude]);
+          const size = map.getSize();
+          if (positions.length === 0 || size.x < 64 || size.y < 64) {
+            return false;
+          }
+
+          // The markers stay clear of what covers the map, unless that leaves too little room.
+          let padding = config.fitPadding;
+          if (!padding || size.x - padding.left - padding.right < 120 || size.y - padding.top - padding.bottom < 120) {
+            padding = { top: 16, right: 16, bottom: 16, left: 16 };
+          }
+
+          const options = {
+            paddingTopLeft: [padding.left, padding.top],
+            paddingBottomRight: [padding.right, padding.bottom],
+            maxZoom: 16,
+          };
+          if (animate === false) {
+            options.animate = false;
+          }
+          map.fitBounds(L.latLngBounds(positions), options);
+          return true;
+        }
+
+        function applyAutoView(config) {
+          if (autoView.userMoved || autoView.fitted) {
+            return;
+          }
+
+          if (config.fitToMarkers) {
+            moveAutomatically(() => {
+              autoView.fitted = fitToMarkers(config, false);
+            });
+            if (autoView.fitted) {
+              return;
+            }
+          }
+
+          const center = config.initialCenter || config.userLocation;
+          if (center && hasCoordinates(center) && !autoView.centered) {
+            moveAutomatically(() => {
+              map.setView([center.latitude, center.longitude], center.zoom || 13, { animate: false });
+            });
+            autoView.centered = true;
+          }
+        }
+
+        // The "zoom to recordings" button.
+        window.__soundscapeFitToMarkers = function() {
+          fitToMarkers(window.__lastConfig);
+        };
+
         window.__updateMapConfig = function(nextConfig) {
           window.__lastConfig = nextConfig;
-          renderBasemap(nextConfig);
-          renderUserLocation(nextConfig);
-          renderMarkers(nextConfig);
+          renderConfig(nextConfig);
+          applyAutoView(nextConfig);
         };
+
+        // Any move that is not an automatic one is the user's: gestures as well as the
+        // zoom, location and fit buttons.
+        map.on('movestart zoomstart', () => {
+          if (automaticMoves === 0) {
+            autoView.userMoved = true;
+          }
+        });
+
+        // Marker sizes depend on the zoom level.
+        map.on('zoomend', () => {
+          renderConfig(window.__lastConfig);
+        });
+
+        // A map that had no size yet, such as one in a hidden tab, gets its automatic view
+        // as soon as it has one.
+        map.on('resize', () => {
+          applyAutoView(window.__lastConfig);
+        });
 
         window.__updateMapConfig(initialConfig);
 
+        // Registered after the first view is set: only later moves are reported.
         map.on('moveend', () => {
           const currentBounds = map.getBounds();
           const centerPoint = map.getCenter();
 
-          postMessage({
+          sendToApp({
             type: 'boundsChange',
             northeast: {
               latitude: currentBounds.getNorthEast().lat,
@@ -428,17 +563,11 @@ export default function OpenStreetMapView({
           });
         });
 
-        map.on('zoomend', () => {
-          if (window.__updateMapConfig && window.__lastConfig) {
-            window.__updateMapConfig(window.__lastConfig);
-          }
-        });
-
         setTimeout(() => {
           map.invalidateSize();
         }, 0);
 
-        postMessage({ type: 'ready' });
+        sendToApp({ type: 'ready' });
       }
 
       document.addEventListener('DOMContentLoaded', buildMap);
@@ -446,7 +575,7 @@ export default function OpenStreetMapView({
   </body>
 </html>
 `;
-  }, [bottomInset]);
+  }, [bottomInset, initialPayload]);
   const htmlSource = useMemo(() => ({ html }), [html]);
 
   const handleMessage = useCallback((event: WebViewMessageEvent) => {
@@ -457,7 +586,7 @@ export default function OpenStreetMapView({
         | ({ type: 'boundsChange' } & OpenStreetMapBounds);
 
       if (payload.type === 'ready') {
-        setIsMapReady(true);
+        setReadyCount((count) => count + 1);
         return;
       }
 
@@ -481,8 +610,9 @@ export default function OpenStreetMapView({
     }
   }, [onBoundsChange, onMarkerPress]);
 
+  // Sends the current configuration whenever it changes, and again to a reloaded page.
   useEffect(() => {
-    if (!isMapReady || !webViewRef.current) {
+    if (readyCount === 0 || !webViewRef.current) {
       return;
     }
 
@@ -494,7 +624,7 @@ export default function OpenStreetMapView({
       true;
     `;
     webViewRef.current.injectJavaScript(script);
-  }, [isMapReady, payload]);
+  }, [readyCount, payload]);
 
   const handleRecenterToUser = useCallback(() => {
     if (!isMapReady || !webViewRef.current || !userLocation) {
@@ -516,6 +646,20 @@ export default function OpenStreetMapView({
 
     webViewRef.current.injectJavaScript(script);
   }, [isMapReady, userLocation]);
+
+  const handleFitToMarkers = useCallback(() => {
+    if (!isMapReady || !webViewRef.current) {
+      return;
+    }
+
+    void Haptics.selectionAsync();
+    webViewRef.current.injectJavaScript(`
+      if (window.__soundscapeFitToMarkers) {
+        window.__soundscapeFitToMarkers();
+      }
+      true;
+    `);
+  }, [isMapReady]);
 
   const handleZoomIn = useCallback(() => {
     if (!isMapReady || !webViewRef.current) {
@@ -590,6 +734,21 @@ export default function OpenStreetMapView({
             <MaterialIcons name="my-location" size={18} color={Colors.text} />
           </TouchableOpacity>
         ) : null}
+        {/* Last, so that it keeps its place when the location button appears. */}
+        <TouchableOpacity
+          style={[styles.controlButton, !hasLocatedMarkers && styles.controlButtonDisabled]}
+          onPress={handleFitToMarkers}
+          disabled={!hasLocatedMarkers}
+          activeOpacity={0.85}
+          accessibilityRole="button"
+          accessibilityLabel={t('Zoom to recordings')}
+        >
+          <MaterialCommunityIcons
+            name="fit-to-screen-outline"
+            size={20}
+            color={hasLocatedMarkers ? Colors.text : Colors.textDisabled}
+          />
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -629,6 +788,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     ...Shadows.md,
+  },
+  controlButtonDisabled: {
+    opacity: 0.7,
+    shadowOpacity: 0,
+    elevation: 0,
   },
   zoomButton: {
     borderRadius: 0,

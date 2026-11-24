@@ -131,6 +131,14 @@ export interface Recording {
   settingChips?: string; // JSON string of SettingContext
   sourceDominance?: string; // JSON string of SourceDominance
 
+  // Study
+  /** Participant ID of the device that collected this measurement. */
+  participantId?: string;
+  /** Project group whose questions were answered, if any. */
+  groupId?: string;
+  /** JSON string of RunStudyData from study/runData. */
+  studyData?: string;
+
   // Upload
   license?: LicenseType;
   communityVisibility: CommunityVisibility;

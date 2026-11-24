@@ -13,6 +13,7 @@ export interface BadgeDefinition {
   id: string;
   name: string;
   description: string;
+  /** MaterialCommunityIcons glyph. */
   icon: string;
   color: string;
   glowColor: string;

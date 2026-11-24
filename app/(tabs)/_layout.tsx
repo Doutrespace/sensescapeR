@@ -4,6 +4,7 @@ import { StyleSheet, Platform, View } from 'react-native';
 import { Colors } from '../../src/theme/colors';
 import { MaterialIcons } from '@expo/vector-icons';
 import { t } from '../../src/i18n';
+import { isSupabaseConfigured } from '../../src/utils/supabase';
 
 // Fallback component for Android when BlurView fails
 function TabBarBackground() {
@@ -84,6 +85,9 @@ export default function TabLayout() {
                 name="explore"
                 options={{
                     title: t('Explore'),
+                    // Explore shows community recordings from the cloud backend;
+                    // without one the tab would lead nowhere, so it is left out.
+                    href: isSupabaseConfigured ? undefined : null,
                     tabBarIcon: ({ color, size }) => (
                         <MaterialIcons name="public" size={size} color={color} />
                     ),

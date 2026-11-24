@@ -12,6 +12,10 @@ import { Colors } from '../../theme/colors';
 import { t } from '../../i18n';
 
 const THUMB_SIZE = 38;
+/** Sideways movement after which a touch counts as dragging the thumb. */
+const DRAG_START_DISTANCE = 6;
+/** Largest movement that still counts as a tap. */
+const TAP_SLOP = 10;
 const TRACK_HEIGHT = 10;
 const TOUCH_HEIGHT = 56;
 const TICK_SIZE = 6;
@@ -74,7 +78,7 @@ export function StepSlider({
   latest.current = { min, max, value, onChange, trackWidth };
   // Touch position is tracked from the event itself rather than the gesture
   // state, which can skip moves that share a timestamp.
-  const gestureStart = useRef({ locationX: 0, pageX: 0 });
+  const gestureStart = useRef({ locationX: 0, pageX: 0, pageY: 0, dragging: false });
 
   const setFromPosition = (positionX: number) => {
     const current = latest.current;
@@ -98,15 +102,35 @@ export function StepSlider({
       onMoveShouldSetPanResponder: (_event, gesture) => (
         Math.abs(gesture.dx) > Math.abs(gesture.dy)
       ),
+      // A touch alone rates nothing: it may be the start of scrolling the
+      // page. The value is set by a tap (finger lifted where it went down)
+      // or by a sideways drag.
       onPanResponderGrant: (event) => {
-        const { locationX, pageX } = event.nativeEvent;
-        gestureStart.current = { locationX, pageX };
-        setFromPosition(locationX);
+        const { locationX, pageX, pageY } = event.nativeEvent;
+        gestureStart.current = { locationX, pageX, pageY, dragging: false };
       },
       onPanResponderMove: (event) => {
         const start = gestureStart.current;
-        setFromPosition(start.locationX + (event.nativeEvent.pageX - start.pageX));
+        const dx = event.nativeEvent.pageX - start.pageX;
+        const dy = event.nativeEvent.pageY - start.pageY;
+        if (!start.dragging) {
+          if (Math.abs(dx) < DRAG_START_DISTANCE || Math.abs(dx) <= Math.abs(dy)) {
+            return;
+          }
+          start.dragging = true;
+        }
+        setFromPosition(start.locationX + dx);
       },
+      onPanResponderRelease: (event) => {
+        const start = gestureStart.current;
+        const dx = event.nativeEvent.pageX - start.pageX;
+        const dy = event.nativeEvent.pageY - start.pageY;
+        if (!start.dragging && Math.abs(dx) < TAP_SLOP && Math.abs(dy) < TAP_SLOP) {
+          setFromPosition(start.locationX);
+        }
+      },
+      // Let the page take over (scroll) unless a drag on the scale has begun.
+      onPanResponderTerminationRequest: () => !gestureStart.current.dragging,
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     []

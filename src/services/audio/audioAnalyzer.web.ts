@@ -6,10 +6,19 @@
  * the WAV recorder, the spectrogram and the sound classifier work unchanged.
  */
 import { LoggingService } from '../logging';
+import { getCaptureInfo, setCaptureInfo } from './captureInfo';
 import { CAPTURE_SAMPLE_RATE, getAudioContext, replaceAudioContext } from '../../web/audioContext';
 
 const FFT_SIZE = 4096;
 const RECORDER_BUFFER_LENGTH = 512;
+/**
+ * Size of the blocks the browser hands over. The capture callback runs on the
+ * main thread, next to drawing and sound classification; with small blocks a
+ * short stall of that thread makes the browser drop audio. Large blocks
+ * tolerate stalls of about 85 ms. They are cut into frames of
+ * RECORDER_BUFFER_LENGTH samples before they are passed on.
+ */
+const CAPTURE_BLOCK_LENGTH = 4096;
 const SMOOTHING_TIME_CONSTANT = 0.75;
 const MIN_DECIBELS = -100;
 const MAX_DECIBELS = 0;
@@ -91,12 +100,54 @@ export class AudioAnalyzer {
   private latestAudioFrameDiagnostics: AudioFrameDiagnostics | null = null;
   private audioFrameListeners = new Set<(event: AudioFrameEvent) => void>();
   private isInitialized = false;
+  /** Length of the frames passed to listeners. */
+  private frameLength = RECORDER_BUFFER_LENGTH;
+  /** Captured samples (48 kHz) not yet passed on as a full frame. */
+  private pending = new Float32Array(0);
+  // Bookkeeping to detect audio the browser dropped.
+  private firstBlockTime: number | null = null;
+  private lastBlockTime = 0;
+  private samplesReceived = 0;
+  private wasInterrupted = false;
+  private wakeLock: { release: () => Promise<void> } | null = null;
+  private readonly handleVisibilityChange = () => {
+    if (typeof document === 'undefined' || !this.isInitialized) {
+      return;
+    }
+    if (document.hidden) {
+      // Screen locked or app switched: the browser pauses the microphone.
+      this.wasInterrupted = true;
+    } else {
+      void this.requestWakeLock();
+    }
+  };
 
   get frequencyBinCount(): number {
     return this.analyser?.frequencyBinCount ?? FFT_SIZE / 2;
   }
 
   /** Rate of the PCM frames handed to listeners (always 48 kHz on web). */
+  /** Records which microphone processing the browser really applied. */
+  private reportCaptureSettings(context: AudioContext): void {
+    try {
+      const track = this.stream?.getAudioTracks()[0];
+      const settings = (track?.getSettings?.() ?? {}) as MediaTrackSettings;
+      const flag = (value: unknown) => (typeof value === 'boolean' ? value : null);
+
+      setCaptureInfo({
+        echoCancellation: flag(settings.echoCancellation),
+        noiseSuppression: flag(settings.noiseSuppression),
+        autoGainControl: flag(settings.autoGainControl),
+        channelCount: typeof settings.channelCount === 'number' ? settings.channelCount : null,
+        contextSampleRate: context.sampleRate,
+        resampled: context.sampleRate !== CAPTURE_SAMPLE_RATE,
+        microphoneLabel: track?.label ? track.label : null,
+      });
+    } catch {
+      setCaptureInfo(null);
+    }
+  }
+
   get sampleRate(): number {
     return CAPTURE_SAMPLE_RATE;
   }
@@ -171,10 +222,24 @@ export class AudioAnalyzer {
 
       // ScriptProcessorNode delivers raw PCM blocks and works in every
       // browser, including iOS Safari.
-      this.processor = context.createScriptProcessor(bufferLength, 1, 1);
+      this.frameLength = bufferLength;
+      this.pending = new Float32Array(0);
+      this.firstBlockTime = null;
+      this.lastBlockTime = 0;
+      this.samplesReceived = 0;
+      this.wasInterrupted = false;
+
+      this.processor = context.createScriptProcessor(CAPTURE_BLOCK_LENGTH, 1, 1);
       this.processor.onaudioprocess = (event) => {
-        this.handleAudioBlock(event.inputBuffer.getChannelData(0));
+        this.handleCaptureBlock(event.inputBuffer.getChannelData(0), event.playbackTime);
       };
+
+      // Keep the screen on: an auto-lock during the 30 seconds would cut the
+      // recording.
+      void this.requestWakeLock();
+      if (typeof document !== 'undefined') {
+        document.addEventListener('visibilitychange', this.handleVisibilityChange);
+      }
 
       // The graph must reach the destination to be pulled; keep it silent.
       this.silentOutput = context.createGain();
@@ -186,6 +251,7 @@ export class AudioAnalyzer {
       this.silentOutput.connect(context.destination);
 
       this.isInitialized = true;
+      this.reportCaptureSettings(context);
       LoggingService.debug('Web audio analyzer initialized', {
         contextSampleRate: context.sampleRate,
         resampling: !!this.resampler,
@@ -201,12 +267,67 @@ export class AudioAnalyzer {
     }
   }
 
-  private handleAudioBlock(block: Float32Array): void {
+  private async requestWakeLock(): Promise<void> {
+    try {
+      const wakeLockApi = (navigator as unknown as {
+        wakeLock?: { request: (type: 'screen') => Promise<{ release: () => Promise<void> }> };
+      }).wakeLock;
+      if (wakeLockApi && this.isInitialized && typeof document !== 'undefined' && !document.hidden) {
+        this.wakeLock = await wakeLockApi.request('screen');
+      }
+    } catch {
+      // Not supported or refused (e.g. battery saver): recording still works.
+    }
+  }
+
+  /**
+   * Takes one block from the browser, notes whether audio went missing
+   * before it, and passes the samples on in frames of equal length.
+   */
+  private handleCaptureBlock(block: Float32Array, blockTime: number): void {
+    if (this.firstBlockTime === null) {
+      this.firstBlockTime = blockTime;
+    }
+    this.lastBlockTime = blockTime;
+    this.samplesReceived += block.length;
+
     // The browser reuses the block's memory, so always copy.
     const samples = this.resampler ? this.resampler.process(block) : new Float32Array(block);
     if (samples.length === 0) {
       return;
     }
+
+    let buffer = samples;
+    if (this.pending.length > 0) {
+      buffer = new Float32Array(this.pending.length + samples.length);
+      buffer.set(this.pending, 0);
+      buffer.set(samples, this.pending.length);
+    }
+
+    let offset = 0;
+    while (buffer.length - offset >= this.frameLength) {
+      this.handleAudioBlock(
+        buffer.slice(offset, offset + this.frameLength),
+        blockTime + offset / CAPTURE_SAMPLE_RATE
+      );
+      offset += this.frameLength;
+    }
+    this.pending = offset < buffer.length ? buffer.slice(offset) : new Float32Array(0);
+  }
+
+  /** Milliseconds of audio the browser dropped during the last capture. */
+  private measureDropoutMs(): number | null {
+    const rate = this.audioContext?.sampleRate;
+    if (!rate || this.firstBlockTime === null) {
+      return null;
+    }
+    const expected = (this.lastBlockTime - this.firstBlockTime) * rate + CAPTURE_BLOCK_LENGTH;
+    const missing = expected - this.samplesReceived;
+    // Timestamps and counts agree to within a fraction of a block.
+    return missing > CAPTURE_BLOCK_LENGTH / 2 ? Math.round((missing / rate) * 1000) : 0;
+  }
+
+  private handleAudioBlock(samples: Float32Array, when: number): void {
 
     let sum = 0;
     let sumSquares = 0;
@@ -226,7 +347,7 @@ export class AudioAnalyzer {
     const frameEvent: AudioFrameEvent = {
       samples,
       sampleRate: CAPTURE_SAMPLE_RATE,
-      when: this.audioContext?.currentTime ?? 0,
+      when,
       numFrames: samples.length,
       rms,
       peak,
@@ -326,6 +447,25 @@ export class AudioAnalyzer {
     if (this.processor) {
       this.processor.onaudioprocess = null;
     }
+
+    if (this.isInitialized) {
+      // Complete the capture report of this recording.
+      const info = getCaptureInfo();
+      if (info) {
+        setCaptureInfo({
+          ...info,
+          dropoutMs: this.measureDropoutMs(),
+          interrupted: this.wasInterrupted,
+        });
+      }
+    }
+
+    if (typeof document !== 'undefined') {
+      document.removeEventListener('visibilitychange', this.handleVisibilityChange);
+    }
+    void this.wakeLock?.release().catch(() => undefined);
+    this.wakeLock = null;
+    this.pending = new Float32Array(0);
 
     for (const node of [this.source, this.processor, this.analyser, this.silentOutput]) {
       try {

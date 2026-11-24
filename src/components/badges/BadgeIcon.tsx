@@ -2,7 +2,8 @@
  * BadgeIcon - Renders a single badge with glow effect
  */
 import React, { useEffect } from 'react';
-import { StyleSheet, View, Text, Pressable } from 'react-native';
+import { StyleSheet, View, Pressable } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -26,10 +27,10 @@ interface BadgeIconProps {
 }
 
 const SIZES = {
-  small: { container: 32, emoji: 16, glow: 40 },
-  medium: { container: 48, emoji: 24, glow: 60 },
-  large: { container: 72, emoji: 36, glow: 90 },
-  xlarge: { container: 120, emoji: 60, glow: 150 },
+  small: { container: 32, icon: 18, glow: 40 },
+  medium: { container: 48, icon: 26, glow: 60 },
+  large: { container: 72, icon: 38, glow: 90 },
+  xlarge: { container: 120, icon: 64, glow: 150 },
 };
 
 export function BadgeIcon({
@@ -150,9 +151,11 @@ export function BadgeIcon({
             },
           ]}
         >
-          <Text style={[styles.emoji, { fontSize: dimensions.emoji }]}>
-            {badge.icon}
-          </Text>
+          <MaterialCommunityIcons
+            name={badge.icon as keyof typeof MaterialCommunityIcons.glyphMap}
+            size={dimensions.icon}
+            color="#FFFFFF"
+          />
         </View>
       </Animated.View>
     </Container>
@@ -175,8 +178,5 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 6,
-  },
-  emoji: {
-    textAlign: 'center',
   },
 });

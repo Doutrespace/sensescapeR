@@ -31,28 +31,28 @@ interface OnboardingSlide {
 const SLIDES: OnboardingSlide[] = [
   {
     id: 'welcome',
-    icon: 'mic',
-    title: 'Welcome to\nSoundscape Explorer',
-    description: 'Capture and contribute to global soundscape research using standardized scientific methods.',
+    icon: 'explore',
+    title: 'Welcome to\nSensescape Explorer',
+    description: 'Capture how a place sounds, looks, smells and feels: a short recording and a few questions, right where you are.',
   },
   {
-    id: 'iso12913',
+    id: 'steps',
+    icon: 'graphic-eq',
+    title: 'One measurement, five minutes',
+    description: 'Thirty seconds of sound, a photo if you like, then your impressions of the soundscape and the other senses. At the end your project group adds its own questions.',
+  },
+  {
+    id: 'science',
     icon: 'science',
-    title: 'Based on ISO 12913',
-    description: 'Rate soundscapes on the pleasantness and eventfulness dimensions of the international soundscape standard used by researchers worldwide.',
-  },
-  {
-    id: 'perception',
-    icon: 'psychology',
-    title: 'Perceptual Assessment',
-    description: 'Rate how pleasant and eventful each soundscape feels using validated scientific scales based on decades of research.',
+    title: 'Built on research standards',
+    description: 'The questions follow established methods, among them the soundscape standard ISO/TS 12913. There are no right or wrong answers: what counts is how you perceive the place.',
   },
   {
     id: 'permissions',
     icon: 'security',
-    title: 'Permissions Needed',
-    description: 'We need microphone access to record and location to geotag your soundscapes. Your data stays private until you choose to share.',
-    action: 'Grant Permissions',
+    title: 'Microphone and location',
+    description: 'The app needs the microphone for the recording and your location to put the measurement on the map. Both are only used while you measure.',
+    action: 'Allow access',
   },
 ];
 
@@ -63,13 +63,18 @@ interface Props {
 export function OnboardingScreen({ onComplete }: Props) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [permissionsGranted, setPermissionsGranted] = useState(false);
+  // Asked at least once; a refusal must not lock the user out of the app.
+  const [permissionsRequested, setPermissionsRequested] = useState(false);
   const flatListRef = useRef<FlatList>(null);
   const scrollX = useRef(new Animated.Value(0)).current;
+  // Page the Next button is scrolling to; swipe tracking waits until it is reached.
+  const scrollTarget = useRef<number | null>(null);
 
   const handleNext = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
     if (currentIndex < SLIDES.length - 1) {
+      scrollTarget.current = currentIndex + 1;
       flatListRef.current?.scrollToIndex({ index: currentIndex + 1 });
       setCurrentIndex(currentIndex + 1);
     }
@@ -95,6 +100,8 @@ export function OnboardingScreen({ onComplete }: Props) {
         error: error instanceof Error ? error.message : String(error),
       });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    } finally {
+      setPermissionsRequested(true);
     }
   };
 
@@ -122,8 +129,14 @@ export function OnboardingScreen({ onComplete }: Props) {
             activeOpacity={0.8}
           >
             <MaterialIcons name="lock-open" size={20} color={Colors.background} />
-            <Text style={styles.actionButtonText}>{item.action}</Text>
+            <Text style={styles.actionButtonText}>{t(item.action)}</Text>
           </TouchableOpacity>
+        )}
+
+        {isLastSlide && permissionsRequested && !permissionsGranted && (
+          <Text style={styles.permissionNote}>
+            {t('Access was not granted completely. Without the microphone no recording is possible; without location the measurement has no place on the map. You can allow both later in the settings of your browser.')}
+          </Text>
         )}
 
         {isLastSlide && permissionsGranted && (
@@ -174,7 +187,7 @@ export function OnboardingScreen({ onComplete }: Props) {
   );
 
   const isLastSlide = currentIndex === SLIDES.length - 1;
-  const canProceed = !isLastSlide || permissionsGranted;
+  const canProceed = !isLastSlide || permissionsGranted || permissionsRequested;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -197,7 +210,22 @@ export function OnboardingScreen({ onComplete }: Props) {
         bounces={false}
         onScroll={Animated.event(
           [{ nativeEvent: { contentOffset: { x: scrollX } } }],
-          { useNativeDriver: false }
+          {
+            useNativeDriver: false,
+            listener: (event: { nativeEvent: { contentOffset: { x: number } } }) => {
+              const index = Math.round(event.nativeEvent.contentOffset.x / SCREEN_WIDTH);
+              if (scrollTarget.current !== null) {
+                // Still on the way to the page the button asked for.
+                if (index === scrollTarget.current) {
+                  scrollTarget.current = null;
+                }
+                return;
+              }
+              if (index >= 0 && index < SLIDES.length) {
+                setCurrentIndex(index);
+              }
+            },
+          }
         )}
         onMomentumScrollEnd={(event) => {
           const index = Math.round(event.nativeEvent.contentOffset.x / SCREEN_WIDTH);
@@ -300,6 +328,13 @@ const styles = StyleSheet.create({
     color: Colors.background,
     fontSize: 16,
     fontWeight: '600',
+  },
+  permissionNote: {
+    marginTop: Spacing.md,
+    fontSize: 14,
+    lineHeight: 20,
+    color: Colors.textMuted,
+    textAlign: 'center',
   },
   successContainer: {
     flexDirection: 'row',

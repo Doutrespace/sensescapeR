@@ -79,9 +79,6 @@ export async function queueForUpload(recordingId: string): Promise<void> {
     LoggingService.debug('Skipping upload queue because Supabase is not configured', {
       recordingId,
     });
-    useSyncStore
-      .getState()
-      .setLastSyncActivity(t('Cloud sync is not configured in this build.'), 'warning');
     return;
   }
 
@@ -128,7 +125,6 @@ export async function processQueue(options?: { ignoreWifiPreference?: boolean })
 
   if (!isSupabaseConfigured) {
     LoggingService.debug('Sync queue processing skipped because Supabase is not configured');
-    syncStore.setLastSyncActivity(t('Cloud sync is not configured in this build.'), 'warning');
     return;
   }
 

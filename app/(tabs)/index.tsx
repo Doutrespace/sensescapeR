@@ -1,8 +1,9 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { StyleSheet, Animated, Alert } from 'react-native';
+import { StyleSheet, Animated, Alert, Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 
 import { Colors } from '../../src/theme/colors';
@@ -17,6 +18,15 @@ import FieldNotesScreen from '../../src/components/notes/FieldNotesScreen';
 import CircumplexInput from '../../src/components/perception/CircumplexInput';
 import MultisensoryScreen from '../../src/components/multisensory/MultisensoryScreen';
 import ContextScreen from '../../src/components/context/ContextScreen';
+import SaveVisibilitySheet from '../../src/components/context/SaveVisibilitySheet';
+import GroupSelectScreen from '../../src/components/study/GroupSelectScreen';
+import GroupQuestionnaire from '../../src/components/study/GroupQuestionnaire';
+import DoneScreen from '../../src/components/study/DoneScreen';
+import { STUDY_GROUPS, getStudyGroup } from '../../src/study/groups';
+import { useParticipantStore } from '../../src/stores/useParticipantStore';
+import { toParticipantCode } from '../../src/utils/ids';
+import { getRecordingsWithPerceptions } from '../../src/services/database/recordings';
+import { ExportService } from '../../src/services/export';
 import { HomeScreen, SavingScreen } from '../../src/components/home';
 import { useSyncStore } from '../../src/stores/useSyncStore';
 import { usePreferencesStore } from '../../src/stores/usePreferencesStore';
@@ -42,7 +52,10 @@ const FLOW_STEPS = [
   { key: 'CIRCUMPLEX', label: 'Perception' },
   { key: 'SENSES', label: 'Senses' },
   { key: 'CONTEXT', label: 'Context' },
+  { key: 'GROUP', label: 'Project group' },
 ];
+
+const STEP_STATES = ['REVIEW', 'PHOTO_CAPTURE', 'NOTES', 'CIRCUMPLEX', 'SENSES', 'CONTEXT', 'GROUP_SELECT', 'GROUP'];
 
 export default function RecordScreen() {
   const flow = useRecordingFlow();
@@ -52,13 +65,21 @@ export default function RecordScreen() {
   const dismissCelebration = useBadgeStore((state) => state.dismissCelebration);
   const [communityCount, setCommunityCount] = useState<number | null>(null);
   const [isTranscribingSpokenDescription, setIsTranscribingSpokenDescription] = useState(false);
-  const showStepProgress = ['REVIEW', 'PHOTO_CAPTURE', 'NOTES', 'CIRCUMPLEX', 'SENSES', 'CONTEXT'].includes(flow.state);
+  const [showVisibilitySheet, setShowVisibilitySheet] = useState(false);
+  const router = useRouter();
+  const participantId = useParticipantStore((state) => state.participantId);
+  const lastGroupId = useParticipantStore((state) => state.lastGroupId);
+  const groupPersonAnswers = useParticipantStore((state) => state.groupPersonAnswers);
+  const runCounter = useParticipantStore((state) => state.runCounter);
+  const showStepProgress = STEP_STATES.includes(flow.state);
+  // Choosing the group and answering its questions are one step in the bar.
+  const progressStep = flow.state === 'GROUP_SELECT' ? 'GROUP' : flow.state;
   const queuedCount = queue.length;
   const failedCount = queue.filter((item) => !!item.lastError || item.attempts >= 5).length;
   const showSyncStatus = flow.state !== 'RECORDING'
     && flow.state !== 'SAVING'
     && (!isOnline || isUploading || queuedCount > 0 || failedCount > 0);
-  const showReturnHome = flow.state !== 'IDLE' && flow.state !== 'SAVING';
+  const showReturnHome = flow.state !== 'IDLE' && flow.state !== 'SAVING' && flow.state !== 'DONE';
 
   const refreshCommunityCount = useCallback(async () => {
     if (!isSupabaseConfigured) {
@@ -102,6 +123,21 @@ export default function RecordScreen() {
     };
   }, []);
 
+  // Browser: leaving the page (reload, back gesture, closing the tab) would
+  // discard a measurement in progress, so ask first.
+  const hasUnsavedSession = flow.state !== 'IDLE' && flow.state !== 'DONE';
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof window === 'undefined' || !hasUnsavedSession) {
+      return;
+    }
+    const warn = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = '';
+    };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [hasUnsavedSession]);
+
   const handleRecordSpokenDescription = useCallback(() => {
     if (isTranscribingSpokenDescription) {
       stopSpokenDescriptionTranscription();
@@ -141,6 +177,33 @@ export default function RecordScreen() {
     flow.store.setSpokenDescription('');
   }, [flow.store, isTranscribingSpokenDescription]);
 
+  // With cloud sync, ask once more whether the measurement is private or public.
+  const requestSave = useCallback(() => {
+    if (isSupabaseConfigured) {
+      setShowVisibilitySheet(true);
+    } else {
+      void flow.saveRecording();
+    }
+  }, [flow.saveRecording]);
+
+  const handleExportAll = useCallback(async () => {
+    try {
+      const recordings = await getRecordingsWithPerceptions();
+      if (recordings.length === 0) {
+        return;
+      }
+      const result = await ExportService.exportAsCSV(recordings);
+      if (!result.success) {
+        Alert.alert(t('Export failed'), result.error ?? t('The data could not be exported.'));
+      }
+    } catch (error) {
+      LoggingService.warn('Export from the completion screen failed', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      Alert.alert(t('Export failed'), t('The data could not be exported.'));
+    }
+  }, []);
+
   const renderContent = () => {
     switch (flow.state) {
       case 'IDLE':
@@ -148,6 +211,8 @@ export default function RecordScreen() {
           <HomeScreen
             onStartMeasurement={flow.startMeasurement}
             communityCount={communityCount}
+            participantCode={toParticipantCode(participantId)}
+            measurementCount={runCounter}
           />
         );
 
@@ -159,6 +224,7 @@ export default function RecordScreen() {
           <EnhancedRecorder
             targetDuration={flow.store.targetDuration}
             audioLevelingMode={audioLevelingMode}
+            location={flow.store.location}
             onRecordingComplete={flow.handleRecordingComplete}
             onCancel={flow.handleRecordingCancel}
           />
@@ -210,6 +276,7 @@ export default function RecordScreen() {
             hasSelection={flow.store.circumplex !== null}
             onChange={flow.store.setCircumplex}
             onConfirm={flow.handleCircumplexConfirm}
+            onBack={flow.handleBack}
           />
         );
 
@@ -219,6 +286,7 @@ export default function RecordScreen() {
             value={flow.store.multisensory}
             onChange={flow.store.setMultisensory}
             onConfirm={flow.handleSensesConfirm}
+            onBack={flow.handleBack}
           />
         );
 
@@ -226,16 +294,75 @@ export default function RecordScreen() {
         return (
           <ContextScreen
             habitatType={flow.store.habitatType}
-            settingContext={flow.store.settingContext ?? { indoor: false, outdoor: true, alone: true, inGroup: false }}
-            privacyMode={flow.store.privacyMode}
-            communityVisibility={flow.store.communityVisibility}
-            locationError={flow.store.locationError}
+            settingContext={flow.store.settingContext}
+            visitMode={flow.store.visitMode}
+            siteCode={flow.store.siteCode}
+            respondent={flow.store.respondent}
+            respondentPerson={flow.store.respondentPerson}
+            respondentConsent={flow.store.respondentConsent}
+            locationError={flow.store.location ? null : flow.store.locationError}
             onHabitatChange={flow.store.setHabitatType}
             onSettingContextChange={flow.store.setSettingContext}
-            onCommunityVisibilityChange={flow.store.setCommunityVisibility}
+            onVisitModeChange={flow.store.setVisitMode}
+            onSiteCodeChange={flow.store.setSiteCode}
+            onRespondentChange={flow.store.setRespondent}
+            onRespondentPersonChange={flow.store.setRespondentPerson}
+            onRespondentConsentChange={flow.store.setRespondentConsent}
             onConfirm={flow.handleContextConfirm}
+            onBack={flow.handleBack}
           />
         );
+
+      case 'GROUP_SELECT':
+        return (
+          <GroupSelectScreen
+            groups={STUDY_GROUPS}
+            lastGroupId={lastGroupId}
+            onSelect={flow.handleGroupSelect}
+            onSaveWithoutGroup={() => {
+              flow.store.setGroup(null);
+              requestSave();
+            }}
+            onBack={flow.handleBack}
+          />
+        );
+
+      case 'GROUP': {
+        const group = getStudyGroup(flow.store.groupId);
+        if (!group) {
+          return null;
+        }
+        return (
+          <GroupQuestionnaire
+            // A different group starts with its own first page.
+            key={group.id}
+            group={group}
+            answers={flow.store.groupAnswers}
+            onChange={flow.store.setGroupAnswers}
+            personAlreadyAnswered={
+              flow.store.respondent === 'self' && groupPersonAnswers[group.id] !== undefined
+            }
+            onBack={flow.handleBack}
+            onSave={requestSave}
+          />
+        );
+      }
+
+      case 'DONE':
+        return flow.store.lastSaved ? (
+          <DoneScreen
+            summary={flow.store.lastSaved}
+            participantCode={toParticipantCode(participantId)}
+            cloudConfigured={isSupabaseConfigured}
+            onNewMeasurement={flow.startMeasurement}
+            onOpenMap={() => {
+              flow.handleDoneClose();
+              router.push('/(tabs)/my-map');
+            }}
+            onExport={handleExportAll}
+            onGoHome={flow.handleDoneClose}
+          />
+        ) : null;
 
       case 'SAVING':
         return <SavingScreen />;
@@ -252,7 +379,7 @@ export default function RecordScreen() {
       {showStepProgress && (
         <StepProgress
           steps={FLOW_STEPS}
-          currentStep={flow.state}
+          currentStep={progressStep}
           onHomePress={showReturnHome ? flow.handleReturnHome : undefined}
         />
       )}
@@ -269,6 +396,18 @@ export default function RecordScreen() {
       <Animated.View style={[styles.content, { opacity: flow.fadeAnim }]}>
         {renderContent()}
       </Animated.View>
+
+      <SaveVisibilitySheet
+        visible={showVisibilitySheet}
+        privacyMode={flow.store.privacyMode}
+        communityVisibility={flow.store.communityVisibility}
+        onClose={() => setShowVisibilitySheet(false)}
+        onConfirm={(visibility) => {
+          flow.store.setCommunityVisibility(visibility);
+          setShowVisibilitySheet(false);
+          void flow.saveRecording();
+        }}
+      />
 
       {pendingCelebration && (
         <BadgeCelebration

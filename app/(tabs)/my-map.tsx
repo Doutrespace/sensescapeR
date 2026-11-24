@@ -29,11 +29,25 @@ import {
 import { queueForUpload } from '../../src/services/sync';
 import { isSupabaseConfigured } from '../../src/utils/supabase';
 import { getRecording, updateRecording } from '../../src/services/database/recordings';
+import { LoggingService } from '../../src/services/logging';
 import { t, tPlural } from '../../src/i18n';
 
 type ViewMode = 'map' | 'list';
 type Basemap = 'light' | 'satellite';
 type MappableRecording = RecordingWithPerception & { latitude: number; longitude: number };
+
+// The colours show the upload state, which only exists with cloud sync.
+const SHOW_SYNC_LEGEND = isSupabaseConfigured;
+const STATUS_LABELS: Record<SyncStatus, string> = {
+  local: 'Local',
+  queued: 'Queued',
+  uploading: 'Uploading',
+  uploaded: 'Uploaded',
+  failed: 'Failed',
+};
+
+// The legend lies over the map above the tab bar: up to two rows plus its margin.
+const MAP_FIT_INSETS = { bottom: SHOW_SYNC_LEGEND ? 76 : 16 };
 
 const BASEMAP_SEQUENCE: Basemap[] = ['light', 'satellite'];
 const BASEMAP_META: Record<
@@ -97,14 +111,21 @@ export default function MyMapScreen() {
 
   useEffect(() => {
     (async () => {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') return;
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') return;
 
-      const loc = await Location.getCurrentPositionAsync({});
-      setUserLocation({
-        latitude: loc.coords.latitude,
-        longitude: loc.coords.longitude,
-      });
+        const loc = await Location.getCurrentPositionAsync({});
+        setUserLocation({
+          latitude: loc.coords.latitude,
+          longitude: loc.coords.longitude,
+        });
+      } catch (error) {
+        // Location switched off, not supported or without a fix: the map shows the recordings anyway.
+        LoggingService.warn('Device location unavailable on My Map', {
+          error: String((error as Error | null)?.message ?? error),
+        });
+      }
     })();
   }, []);
 
@@ -345,6 +366,7 @@ export default function MyMapScreen() {
         <OpenStreetMapView
           style={styles.map}
           bottomInset={tabBarHeight}
+          fitInsets={MAP_FIT_INSETS}
           basemap={basemap}
           initialCenter={
             userLocation
@@ -358,7 +380,7 @@ export default function MyMapScreen() {
                 : null
           }
           userLocation={userLocation}
-          fitToMarkers={mappableRecordings.length > 0}
+          fitToMarkers
           selectedMarkerId={selectedRecording?.id ?? null}
           markers={mappableRecordings.map((recording) => ({
             id: recording.id,
@@ -431,12 +453,12 @@ export default function MyMapScreen() {
       )}
 
       {/* Legend */}
-      {viewMode === 'map' && mappableRecordings.length > 0 && (
+      {SHOW_SYNC_LEGEND && viewMode === 'map' && mappableRecordings.length > 0 && (
         <View style={[styles.legend, { bottom: tabBarHeight + 12 }]}>
           {Object.entries(STATUS_COLORS).map(([status, color]) => (
             <View key={status} style={styles.legendItem}>
               <View style={[styles.legendDot, { backgroundColor: color }]} />
-              <Text style={styles.legendText}>{status}</Text>
+              <Text style={styles.legendText}>{t(STATUS_LABELS[status as SyncStatus])}</Text>
             </View>
           ))}
         </View>
@@ -568,7 +590,7 @@ const styles = StyleSheet.create({
     bottom: 100,
     left: 20,
     right: 20,
-    backgroundColor: 'rgba(30, 41, 59, 0.95)',
+    backgroundColor: 'rgba(251, 248, 241, 0.97)',
     padding: 24,
     borderRadius: 16,
     alignItems: 'center',
@@ -591,7 +613,11 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 0,
     left: 20,
-    backgroundColor: 'rgba(30, 41, 59, 0.9)',
+    // Wraps on phones instead of running under the map buttons on the right.
+    maxWidth: '75%',
+    backgroundColor: 'rgba(251, 248, 241, 0.95)',
+    borderWidth: 1,
+    borderColor: Colors.surfaceHighlight,
     padding: 12,
     borderRadius: 8,
     flexDirection: 'row',
@@ -611,6 +637,5 @@ const styles = StyleSheet.create({
   legendText: {
     fontSize: 11,
     color: Colors.textMuted,
-    textTransform: 'capitalize',
   },
 });

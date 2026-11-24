@@ -10,6 +10,30 @@ import {
   formatRecordingSummary,
 } from './formatters';
 import { formatAsSoundscapyCSV } from './soundscapyExport';
+import { formatCodebookCSV, type ParticipantFallback } from './studyExport';
+import { useParticipantStore } from '../../stores/useParticipantStore';
+
+/** This device's participant, for measurements saved before IDs were stored. */
+function getParticipantFallback(): ParticipantFallback | null {
+  const participant = useParticipantStore.getState();
+  return participant.isLoaded
+    ? { participantId: participant.participantId, personAnswers: participant.personAnswers }
+    : null;
+}
+
+/** e.g. "2026-11-24_1405" for file names. */
+function fileStamp(): string {
+  const now = new Date();
+  const pad = (value: number) => String(value).padStart(2, '0');
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}`;
+}
+
+function participantFileTag(): string {
+  const participant = useParticipantStore.getState();
+  return participant.isLoaded
+    ? participant.participantId.replace(/-/g, '').slice(0, 6).toUpperCase()
+    : 'export';
+}
 
 export type ExportFormat =
   | 'audio'
@@ -110,10 +134,10 @@ export class ExportService {
       }
 
       const researchProfile = await getActiveResearchProfile();
-      const jsonContent = formatAsJSON(recordingsArray, researchProfile);
+      const jsonContent = formatAsJSON(recordingsArray, researchProfile, getParticipantFallback());
       const filename = recordingsArray.length === 1
-        ? `soundscape_${recordingsArray[0].id.slice(0, 8)}.json`
-        : `soundscapes_export_${Date.now()}.json`;
+        ? `sensescape_${recordingsArray[0].id.slice(0, 8)}.json`
+        : `sensescape_${participantFileTag()}_${fileStamp()}.json`;
       const file = createCacheFile(filename, jsonContent);
 
       await Sharing.shareAsync(file.uri, {
@@ -144,11 +168,12 @@ export class ExportService {
         return { success: false, error: 'Sharing is not available on this device' };
       }
 
-      const researchProfile = await getActiveResearchProfile();
-      const csvContent = formatAsCSV(recordingsArray, researchProfile);
+      const csvContent = formatAsCSV(recordingsArray, getParticipantFallback());
+      // The participant code and time in the name keep files from different
+      // phones apart when they are collected in one folder.
       const filename = recordingsArray.length === 1
-        ? `soundscape_${recordingsArray[0].id.slice(0, 8)}.csv`
-        : `soundscapes_export_${Date.now()}.csv`;
+        ? `sensescape_${recordingsArray[0].id.slice(0, 8)}.csv`
+        : `sensescape_${participantFileTag()}_${fileStamp()}.csv`;
       const file = createCacheFile(filename, csvContent);
 
       await Sharing.shareAsync(file.uri, {
@@ -179,11 +204,10 @@ export class ExportService {
         return { success: false, error: 'Sharing is not available on this device' };
       }
 
-      const researchProfile = await getActiveResearchProfile();
-      const geoJsonContent = formatAsGeoJSON(recordingsArray, researchProfile);
+      const geoJsonContent = formatAsGeoJSON(recordingsArray, getParticipantFallback());
       const filename = recordingsArray.length === 1
-        ? `soundscape_${recordingsArray[0].id.slice(0, 8)}.geojson`
-        : `soundscapes_export_${Date.now()}.geojson`;
+        ? `sensescape_${recordingsArray[0].id.slice(0, 8)}.geojson`
+        : `sensescape_${participantFileTag()}_${fileStamp()}.geojson`;
       const file = createCacheFile(filename, geoJsonContent);
 
       await Sharing.shareAsync(file.uri, {
@@ -241,6 +265,36 @@ export class ExportService {
   }
 
   /**
+   * Download the codebook: one line per column of the study table with the
+   * question wording, the type and the meaning of the codes.
+   */
+  static async exportCodebook(): Promise<ExportResult> {
+    try {
+      const isAvailable = await Sharing.isAvailableAsync();
+      if (!isAvailable) {
+        return { success: false, error: 'Sharing is not available on this device' };
+      }
+
+      const file = createCacheFile('sensescape_codebook.csv', formatCodebookCSV());
+
+      await Sharing.shareAsync(file.uri, {
+        mimeType: 'text/csv',
+        dialogTitle: 'Codebook (CSV)',
+        UTI: 'public.comma-separated-values-text',
+      });
+
+      deleteFileIfPresent(file);
+
+      return { success: true };
+    } catch (error: any) {
+      LoggingService.error('Failed to export codebook', {
+        error: error?.message || String(error),
+      });
+      return { success: false, error: error.message || 'Failed to export the codebook' };
+    }
+  }
+
+  /**
    * Share a text summary of the recording
    */
   static async shareSummary(recording: RecordingWithPerception): Promise<ExportResult> {
@@ -279,6 +333,13 @@ export {
   formatRecordingSummary,
 } from './formatters';
 export { formatAsSoundscapyCSV } from './soundscapyExport';
+export {
+  STUDY_COLUMNS,
+  buildCodebook,
+  buildStudyRow,
+  formatAsStudyCSV,
+  formatCodebookCSV,
+} from './studyExport';
 
 function createCacheFile(filename: string, content: string): File {
   const file = new File(Paths.cache, filename);

@@ -8,13 +8,13 @@ import {
   Animated,
   useWindowDimensions,
   ScrollView,
+  Platform,
 } from 'react-native';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { MaterialIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { Colors, Spacing, Radius } from '../../theme/colors';
 import { CircumplexPerception } from '../../types/recording';
-import { calculatePAQFromCircumplex } from '../../services/database/perceptions';
 import { t, getLanguage } from '../../i18n';
 
 const PIN_SIZE = 54;
@@ -24,6 +24,8 @@ interface Props {
   hasSelection: boolean;
   onChange: (value: CircumplexPerception) => void;
   onConfirm: () => void;
+  /** Back to the previous step of the questionnaire. */
+  onBack?: () => void;
 }
 
 // Quadrant definitions
@@ -55,6 +57,7 @@ export default function CircumplexInput({
   hasSelection,
   onChange,
   onConfirm,
+  onBack,
 }: Props) {
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const tabBarHeight = useBottomTabBarHeight();
@@ -73,7 +76,9 @@ export default function CircumplexInput({
     y: -v.eventful * (PLANE_SIZE / 2),
   }), [PLANE_SIZE]);
 
-  const [pinPosition, setPinPosition] = useState(() => valueToPosition(value));
+  // Derived on every render, so the pin stays right when the pad changes
+  // size (keyboard closing, rotation).
+  const pinPosition = valueToPosition(value);
 
   const triggerHaptic = useCallback(() => {
     const now = Date.now();
@@ -87,8 +92,6 @@ export default function CircumplexInput({
     const halfSize = PLANE_SIZE / 2;
     const constrainedX = Math.max(-halfSize, Math.min(halfSize, x));
     const constrainedY = Math.max(-halfSize, Math.min(halfSize, y));
-
-    setPinPosition({ x: constrainedX, y: constrainedY });
 
     const pleasant = constrainedX / halfSize;
     const eventful = -constrainedY / halfSize;
@@ -126,14 +129,22 @@ export default function CircumplexInput({
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   }, [pinScaleAnim]);
 
+  // The responder is created once, so it must call the handlers of the
+  // current render. Otherwise it keeps the pad size of the first render and
+  // records wrong positions after the screen area changed.
+  const handlers = useRef({ grant: handlePanGrant, move: handlePanMove, release: handlePanRelease });
+  handlers.current = { grant: handlePanGrant, move: handlePanMove, release: handlePanRelease };
+
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: () => true,
-      onPanResponderGrant: handlePanGrant,
-      onPanResponderMove: handlePanMove,
-      onPanResponderRelease: handlePanRelease,
-      onPanResponderTerminate: handlePanRelease,
+      // Keep the gesture when the finger moves vertically over a scroll view.
+      onPanResponderTerminationRequest: () => false,
+      onPanResponderGrant: (evt) => handlers.current.grant(evt),
+      onPanResponderMove: (evt) => handlers.current.move(evt),
+      onPanResponderRelease: () => handlers.current.release(),
+      onPanResponderTerminate: () => handlers.current.release(),
     })
   ).current;
 
@@ -147,7 +158,6 @@ export default function CircumplexInput({
 
   const currentQuadrant = getQuadrant();
   const quadrantInfo = QUADRANTS[currentQuadrant];
-  const derivedPaq = calculatePAQFromCircumplex(value);
 
   const axisStrength = (axisValue: number) => Math.round(Math.abs(axisValue) * 100);
   const pleasantLabel = value.pleasant >= 0 ? t('Pleasant') : t('Annoying');
@@ -182,7 +192,7 @@ export default function CircumplexInput({
 
         {/* Circumplex Plane - Fullscreen */}
         <View
-          style={[styles.planeContainer, { width: PLANE_SIZE, height: PLANE_SIZE }]}
+          style={[styles.planeContainer, { width: PLANE_SIZE, height: PLANE_SIZE }, webTouchStyle]}
           {...panResponder.panHandlers}
           accessible
           accessibilityRole="adjustable"
@@ -312,7 +322,6 @@ export default function CircumplexInput({
               accessibilityLabel={t('Reset perceptual marker')}
               accessibilityHint={t('Return the perceptual marker to the neutral center position')}
               onPress={() => {
-                setPinPosition({ x: 0, y: 0 });
                 onChange({ pleasant: 0, eventful: 0 });
                 Haptics.selectionAsync();
               }}
@@ -322,35 +331,25 @@ export default function CircumplexInput({
             </TouchableOpacity>
           </View>
 
-          <View
-            style={styles.paqSection}
-            accessible
-            accessibilityLabel={t('Derived perceptual attribute questionnaire values')}
-          >
-            <Text style={styles.paqTitle}>{t('Derived PAQ values')}</Text>
-            <View style={styles.paqGrid}>
-              {[
-                ['Pleasant', derivedPaq.pleasant],
-                ['Vibrant', derivedPaq.vibrant],
-                ['Eventful', derivedPaq.eventful],
-                ['Chaotic', derivedPaq.chaotic],
-                ['Annoying', derivedPaq.annoying],
-                ['Monotonous', derivedPaq.monotonous],
-                ['Uneventful', derivedPaq.uneventful],
-                ['Calm', derivedPaq.calm],
-              ].map(([label, score]) => (
-                <View key={label} style={styles.paqChip}>
-                  <Text style={styles.paqChipLabel}>{label}</Text>
-                  <Text style={styles.paqChipValue}>{score}/5</Text>
-                </View>
-              ))}
-            </View>
-          </View>
         </View>
       </ScrollView>
 
       {/* Footer - Floating at bottom */}
       <View style={[styles.footer, { paddingBottom: footerBottomPadding }]}>
+        {onBack ? (
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => {
+              Haptics.selectionAsync();
+              onBack();
+            }}
+            activeOpacity={0.8}
+            accessibilityRole="button"
+            accessibilityLabel={t('Back')}
+          >
+            <MaterialIcons name="arrow-back" size={22} color={Colors.text} />
+          </TouchableOpacity>
+        ) : null}
         <TouchableOpacity
           style={[styles.confirmButton, !hasSelection && styles.confirmButtonDisabled]}
           onPress={() => {
@@ -373,6 +372,11 @@ export default function CircumplexInput({
     </View>
   );
 }
+
+// In the browser a drag on the pad must not scroll the page.
+const webTouchStyle = Platform.OS === 'web'
+  ? ({ touchAction: 'none', userSelect: 'none' } as object)
+  : null;
 
 const styles = StyleSheet.create({
   container: {
@@ -648,62 +652,32 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: Colors.textMuted,
   },
-  paqSection: {
-    alignSelf: 'stretch',
-    marginTop: 12,
-    padding: 12,
-    borderRadius: Radius.md,
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.surfaceHighlight,
-  },
-  paqTitle: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: Colors.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-    marginBottom: 10,
-  },
-  paqGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  paqChip: {
-    width: '48%',
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-    borderRadius: Radius.sm,
-    backgroundColor: Colors.background,
-    borderWidth: 1,
-    borderColor: Colors.surfaceHighlight,
-  },
-  paqChipLabel: {
-    fontSize: 11,
-    color: Colors.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: 2,
-  },
-  paqChipValue: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: Colors.text,
-    fontVariant: ['tabular-nums'],
-  },
   footer: {
+    flexDirection: 'row',
+    gap: 10,
     borderTopWidth: 1,
     borderTopColor: Colors.surfaceHighlight,
     backgroundColor: Colors.background,
     paddingTop: 18,
     paddingHorizontal: Spacing.lg,
   },
+  backButton: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.surfaceHighlight,
+  },
   confirmButton: {
+    flex: 1,
     backgroundColor: Colors.primary,
-    paddingVertical: 18,
+    height: 58,
     borderRadius: Radius.full,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   confirmButtonDisabled: {
     opacity: 0.45,

@@ -139,7 +139,7 @@ export function BadgeDetailModal({
             {/* Progress to next badge */}
             {nextBadge && (
               <View style={styles.progressSection}>
-                <Text style={styles.sectionTitle}>Progress to {t(nextBadge.name)}</Text>
+                <Text style={styles.sectionTitle}>{t('Progress to {badge}', { badge: t(nextBadge.name) })}</Text>
                 <View style={styles.progressBar}>
                   <Animated.View
                     style={[

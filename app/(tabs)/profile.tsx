@@ -13,15 +13,10 @@ import { useBadgeStore } from '../../src/stores/useBadgeStore';
 import { AuthForm } from '../../src/components/auth/AuthForm';
 import { ProfileBadge } from '../../src/components/badges';
 import { ActivityHistorySheet } from '../../src/components/profile/ActivityHistorySheet';
-import { ResearchProfileFields } from '../../src/components/profile/ResearchProfileFields';
+import ParticipantSetupScreen from '../../src/components/participant/ParticipantSetupScreen';
 import LicenseSelector from '../../src/components/upload/LicenseSelector';
 import PrivacyModeSelector from '../../src/components/upload/PrivacyModeSelector';
 import type { CommunityVisibility } from '../../src/types/recording';
-import type { ResearchProfile } from '../../src/types/researchProfile';
-import {
-  hasResearchProfileData,
-  normalizeResearchProfile,
-} from '../../src/types/researchProfile';
 import { getRecordingsWithPerceptions } from '../../src/services/database/recordings';
 import { ExportService, type ExportFormat } from '../../src/services/export';
 import {
@@ -34,6 +29,10 @@ import {
 import { forceSyncNow } from '../../src/services/sync/syncManager';
 import { t, tPlural, getLocaleTag } from '../../src/i18n';
 import { LanguageToggle } from '../../src/components/ui/LanguageToggle';
+import Constants from 'expo-constants';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useParticipantStore } from '../../src/stores/useParticipantStore';
+import { toParticipantCode } from '../../src/utils/ids';
 
 export default function ProfileScreen() {
   const { totalCount, uploadedCount, pendingCount, loadRecordings } = useLibraryStore();
@@ -64,15 +63,15 @@ export default function ProfileScreen() {
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const [showLicenseModal, setShowLicenseModal] = useState(false);
   const [showAvatarModal, setShowAvatarModal] = useState(false);
-  const [showResearchProfileModal, setShowResearchProfileModal] = useState(false);
+  const [showParticipantModal, setShowParticipantModal] = useState(false);
+  const [isExportingCodebook, setIsExportingCodebook] = useState(false);
   const [showActivityHistory, setShowActivityHistory] = useState(false);
   const [storageUsage, setStorageUsage] = useState<LocalStorageUsage | null>(null);
   const [isLoadingStorage, setIsLoadingStorage] = useState(true);
   const [isClearingStorage, setIsClearingStorage] = useState(false);
   const [isRunningRetentionCleanup, setIsRunningRetentionCleanup] = useState(false);
   const [activeExportFormat, setActiveExportFormat] = useState<ExportFormat | null>(null);
-  const [draftResearchProfile, setDraftResearchProfile] = useState<ResearchProfile>({});
-  const isSignedIn = !!session;
+  const isSignedIn = !!session && !session.user?.is_anonymous;
   const remoteAvatarEmoji = typeof user?.user_metadata?.avatar_emoji === 'string'
     ? user.user_metadata.avatar_emoji
     : null;
@@ -80,19 +79,29 @@ export default function ProfileScreen() {
     ? (remoteAvatarEmoji ? 'emoji' : 'default')
     : profileAvatarMode;
   const effectiveAvatarEmoji = profileAvatarEmoji ?? remoteAvatarEmoji;
-  const researchProfile = useMemo(
-    () => normalizeResearchProfile(user?.user_metadata?.research_profile),
-    [user?.user_metadata?.research_profile]
-  );
-  const researchProfileSummary = useMemo(() => {
+  const insets = useSafeAreaInsets();
+  const earnedBadgeCount = useBadgeStore((state) => state.earnedBadges.length);
+  const participantId = useParticipantStore((state) => state.participantId);
+  const personAnswers = useParticipantStore((state) => state.personAnswers);
+  const resetParticipant = useParticipantStore((state) => state.resetParticipant);
+  const participantSummary = useMemo(() => {
+    const genderLabels: Record<string, string> = {
+      male: t('male'),
+      female: t('female'),
+      diverse: t('diverse'),
+    };
+    const years = personAnswers.years_in_wuerzburg;
     const parts = [
-      researchProfile.ageRange,
-      researchProfile.gender,
-      researchProfile.livingArea,
-      researchProfile.occupation,
-    ].filter(Boolean);
-    return parts.length > 0 ? parts.join(' · ') : t('Optional demographic context for soundscape research');
-  }, [researchProfile]);
+      typeof personAnswers.birth_year === 'number' ? t('born {year}', { year: personAnswers.birth_year }) : null,
+      typeof personAnswers.gender === 'string' ? genderLabels[personAnswers.gender] ?? null : null,
+      personAnswers.years_in_wuerzburg__na === true
+        ? t('not living in Würzburg')
+        : typeof years === 'number'
+          ? tPlural(years, '{count} year in Würzburg', '{count} years in Würzburg')
+          : null,
+    ].filter((part): part is string => !!part);
+    return parts.join(' · ');
+  }, [personAnswers]);
   const emojiAvatarOptions = ['🌿', '🌍', '🎧', '🌧️', '🕊️', '🌳', '🏙️', '🌊', '🎙️', '🚶'];
 
   const loadStorageUsage = useCallback(async () => {
@@ -142,6 +151,18 @@ export default function ProfileScreen() {
       color: Colors.warning,
     },
   ];
+  // Upload figures mean nothing when no course database is connected.
+  const visibleStats = isConfigured
+    ? stats
+    : [
+      stats[0],
+      {
+        icon: 'emoji-events' as const,
+        label: 'Badges earned',
+        value: earnedBadgeCount,
+        color: Colors.warning,
+      },
+    ];
 
   const getPrivacyLabel = (value: typeof defaultPrivacyMode) => {
     switch (value) {
@@ -252,38 +273,36 @@ export default function ProfileScreen() {
     await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
   }, [clearProfileAvatar, isSignedIn, updateProfileMetadata]);
 
-  const handleOpenResearchProfile = useCallback(() => {
-    if (!isSignedIn) {
-      Alert.alert(
-        t('Sign in required'),
-        t('Create or sign in to an account before saving optional research profile details securely.')
-      );
-      setShowAuthModal(true);
-      return;
-    }
+  const handleResetParticipant = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    Alert.alert(
+      t('New participant on this device?'),
+      t('A new participant code is created and the personal details are asked again. Use this when another person takes over this device. Saved measurements stay where they are.'),
+      [
+        { text: t('Cancel'), style: 'cancel' },
+        {
+          text: t('New participant'),
+          style: 'destructive',
+          onPress: () => {
+            void resetParticipant();
+          },
+        },
+      ]
+    );
+  }, [resetParticipant]);
 
+  const handleExportCodebook = useCallback(async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setDraftResearchProfile(researchProfile);
-    setShowResearchProfileModal(true);
-  }, [isSignedIn, researchProfile]);
-
-  const handleSaveResearchProfile = useCallback(async () => {
-    const { error } = await updateProfileMetadata({
-      research_profile: draftResearchProfile,
-    });
-
-    if (error) {
-      Alert.alert(
-        t('Profile update failed'),
-        error.message || 'The research profile could not be saved right now.'
-      );
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      return;
+    setIsExportingCodebook(true);
+    try {
+      const result = await ExportService.exportCodebook();
+      if (!result.success) {
+        Alert.alert(t('Export failed'), result.error ?? t('The data could not be exported.'));
+      }
+    } finally {
+      setIsExportingCodebook(false);
     }
-
-    setShowResearchProfileModal(false);
-    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-  }, [draftResearchProfile, updateProfileMetadata]);
+  }, []);
 
   const handleClearStorage = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -637,35 +656,18 @@ export default function ProfileScreen() {
       </Modal>
 
       <Modal
-        visible={showResearchProfileModal}
+        visible={showParticipantModal}
         animationType="slide"
         presentationStyle="pageSheet"
-        onRequestClose={() => setShowResearchProfileModal(false)}
+        onRequestClose={() => setShowParticipantModal(false)}
       >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalHeaderRow}>
-            <Text style={styles.modalTitle}>{t('Research Profile')}</Text>
-            <TouchableOpacity onPress={() => setShowResearchProfileModal(false)}>
-              <MaterialIcons name="close" size={24} color={Colors.text} />
-            </TouchableOpacity>
-          </View>
-          <ScrollView contentContainerStyle={styles.preferenceModalContent}>
-            <ResearchProfileFields
-              value={draftResearchProfile}
-              onChange={setDraftResearchProfile}
-            />
-
-            <TouchableOpacity
-              style={styles.profileSaveButton}
-              onPress={() => void handleSaveResearchProfile()}
-              activeOpacity={0.85}
-              accessibilityRole="button"
-              accessibilityLabel={t('Save research profile')}
-              accessibilityHint={t('Save optional demographic details securely to your account')}
-            >
-              <Text style={styles.profileSaveButtonText}>{t('Save Research Profile')}</Text>
-            </TouchableOpacity>
-          </ScrollView>
+        <View style={[styles.modalContainer, { paddingTop: Spacing.md }]}>
+          <ParticipantSetupScreen
+            mode="edit"
+            bottomInset={Math.max(insets.bottom, 16) + 8}
+            onDone={() => setShowParticipantModal(false)}
+            onCancel={() => setShowParticipantModal(false)}
+          />
         </View>
       </Modal>
 
@@ -692,7 +694,7 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         </ProfileBadge>
         <Text style={styles.title}>
-          {isSignedIn ? user?.email?.split('@')[0] : t('Soundscape Explorer')}
+          {isSignedIn ? user?.email?.split('@')[0] : 'Sensescape Explorer'}
         </Text>
         {isSignedIn && user && (
           <Text style={styles.emailText}>{user.email}</Text>
@@ -733,7 +735,7 @@ export default function ProfileScreen() {
 
       {/* Stats grid */}
       <View style={styles.statsGrid}>
-        {stats.map((stat, index) => (
+        {visibleStats.map((stat, index) => (
           <View key={index} style={styles.statCard}>
             <MaterialIcons name={stat.icon} size={24} color={stat.color} />
             <Text style={[styles.statValue, { color: stat.color }]}>
@@ -744,7 +746,8 @@ export default function ProfileScreen() {
         ))}
       </View>
 
-      {/* Contribution summary */}
+      {/* Contribution summary: uploads, so only with a course database */}
+      {isConfigured && (
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>{t('Your Contributions')}</Text>
         <View style={styles.contributionCard}>
@@ -772,8 +775,9 @@ export default function ProfileScreen() {
           )}
         </View>
       </View>
+      )}
 
-      {activityPreview.length > 0 && (
+      {isConfigured && activityPreview.length > 0 && (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{t('Recent Activity')}</Text>
           <View style={styles.activityCard}>
@@ -827,7 +831,7 @@ export default function ProfileScreen() {
         <Text style={styles.sectionTitle}>{t('Export')}</Text>
         <View style={styles.exportCard}>
           <Text style={styles.exportIntro}>
-            {t('Export your full local dataset for analysis or mapping.')}
+            {t('Export all measurements stored on this device. CSV is the study table: one row per measurement with your participant code, your answers and the questions of your project group.')}
           </Text>
           <View style={styles.exportActions}>
             {[
@@ -859,6 +863,22 @@ export default function ProfileScreen() {
               );
             })}
           </View>
+          <TouchableOpacity
+            style={[styles.exportActionButton, styles.codebookButton, isExportingCodebook && styles.exportActionButtonDisabled]}
+            onPress={() => void handleExportCodebook()}
+            disabled={isExportingCodebook}
+            activeOpacity={0.8}
+            accessibilityRole="button"
+            accessibilityLabel={t('Download the codebook')}
+            accessibilityHint={t('Explains every column of the CSV table')}
+          >
+            {isExportingCodebook ? (
+              <ActivityIndicator size="small" color={Colors.primary} />
+            ) : (
+              <MaterialIcons name="menu-book" size={18} color={Colors.primary} />
+            )}
+            <Text style={styles.exportActionText}>{t('Codebook (explains the CSV columns)')}</Text>
+          </TouchableOpacity>
           <Text style={styles.exportFootnote}>
             {t('JSON preserves the full payload, CSV works for spreadsheets, GeoJSON opens in GIS tools, and Soundscapy CSV mirrors research-focused field names.')}
           </Text>
@@ -869,6 +889,7 @@ export default function ProfileScreen() {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>{t('Settings')}</Text>
 
+        {isConfigured && (
         <TouchableOpacity
           style={styles.settingItem}
           activeOpacity={0.9}
@@ -898,6 +919,7 @@ export default function ProfileScreen() {
             thumbColor={autoUploadWifiOnly ? Colors.success : Colors.surface}
           />
         </TouchableOpacity>
+        )}
 
         <TouchableOpacity
           style={styles.settingItem}
@@ -926,6 +948,7 @@ export default function ProfileScreen() {
           <LanguageToggle />
         </View>
 
+        {isConfigured && (
         <TouchableOpacity
           style={styles.settingItem}
           onPress={() => {
@@ -943,29 +966,50 @@ export default function ProfileScreen() {
           </View>
           <MaterialIcons name="chevron-right" size={24} color={Colors.textMuted} />
         </TouchableOpacity>
+        )}
 
         <TouchableOpacity
           style={styles.settingItem}
-          onPress={handleOpenResearchProfile}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            setShowParticipantModal(true);
+          }}
           activeOpacity={0.7}
           accessibilityRole="button"
-          accessibilityLabel={t('Research profile')}
-          accessibilityHint={t('Set optional demographic details for soundscape research')}
+          accessibilityLabel={t('Personal details')}
+          accessibilityHint={t('Change the details asked once at the start')}
         >
-          <MaterialIcons
-            name={hasResearchProfileData(researchProfile) ? 'badge' : 'fact-check'}
-            size={24}
-            color={Colors.text}
-          />
+          <MaterialIcons name="badge" size={24} color={Colors.text} />
           <View style={styles.settingContent}>
-            <Text style={styles.settingLabel}>{t('Research profile')}</Text>
+            <Text style={styles.settingLabel}>
+              {t('Personal details')} · {toParticipantCode(participantId)}
+            </Text>
             <Text style={styles.settingDescription}>
-              {researchProfileSummary}
+              {participantSummary || t('Asked once, stored with every measurement')}
             </Text>
           </View>
           <MaterialIcons name="chevron-right" size={24} color={Colors.textMuted} />
         </TouchableOpacity>
 
+        <TouchableOpacity
+          style={styles.settingItem}
+          onPress={handleResetParticipant}
+          activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel={t('New participant on this device')}
+          accessibilityHint={t('Creates a new participant code and asks the personal details again')}
+        >
+          <MaterialIcons name="switch-account" size={24} color={Colors.text} />
+          <View style={styles.settingContent}>
+            <Text style={styles.settingLabel}>{t('New participant on this device')}</Text>
+            <Text style={styles.settingDescription}>
+              {t('For a device that is passed on to another person')}
+            </Text>
+          </View>
+          <MaterialIcons name="chevron-right" size={24} color={Colors.textMuted} />
+        </TouchableOpacity>
+
+        {isConfigured && (
         <TouchableOpacity
           style={styles.settingItem}
           onPress={handleDefaultCommunityVisibility}
@@ -984,6 +1028,7 @@ export default function ProfileScreen() {
           </View>
           <MaterialIcons name="chevron-right" size={24} color={Colors.textMuted} />
         </TouchableOpacity>
+        )}
 
         <TouchableOpacity
           style={styles.settingItem}
@@ -1035,6 +1080,7 @@ export default function ProfileScreen() {
             {storageUsage?.recordingCount ?? 0} recording{storageUsage?.recordingCount === 1 ? '' : 's'} stored locally across {storageUsage?.fileCount ?? 0} media file{storageUsage?.fileCount === 1 ? '' : 's'}.
           </Text>
 
+          {isConfigured && (
           <View style={styles.retentionPanel}>
             <TouchableOpacity
               style={styles.retentionRow}
@@ -1092,6 +1138,7 @@ export default function ProfileScreen() {
               </Text>
             </TouchableOpacity>
           </View>
+          )}
 
           <TouchableOpacity
             style={[styles.clearStorageButton, isClearingStorage && styles.clearStorageButtonDisabled]}
@@ -1119,40 +1166,14 @@ export default function ProfileScreen() {
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             Alert.alert(
-              t('Notifications not implemented'),
-              t('Background reminders and notification preferences are not wired yet.')
-            );
-          }}
-          activeOpacity={0.7}
-          accessibilityRole="button"
-          accessibilityLabel={t('Notifications setting')}
-          accessibilityHint={t('Notification preferences are not yet implemented')}
-        >
-          <MaterialIcons name="notifications" size={24} color={Colors.text} />
-          <View style={styles.settingContent}>
-            <Text style={styles.settingLabel}>{t('Notifications')}</Text>
-            <Text style={styles.settingDescription}>
-              {t('Recording reminders and upload status')}
-            </Text>
-          </View>
-          <View style={styles.comingSoonBadge}>
-            <Text style={styles.comingSoonText}>{t('Soon')}</Text>
-          </View>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.settingItem}
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            Alert.alert(
-              t('About Soundscape Explorer'),
-              t('Version 1.0.0\n\nAn ISO 12913-aligned soundscape perception capture app for acoustic research.\n\nBuilt with Expo and React Native.'),
+              t('About Sensescape Explorer'),
+              t('Version {version}\n\nCaptures how a place is perceived with all senses: a 30-second sound recording with its location, soundscape ratings based on ISO/TS 12913, multisensory ratings and the questions of the course project groups.', { version: Constants.expoConfig?.version ?? '' }),
               [{ text: t('OK') }]
             );
           }}
           activeOpacity={0.7}
           accessibilityRole="button"
-          accessibilityLabel={t('About Soundscape Explorer')}
+          accessibilityLabel={t('About Sensescape Explorer')}
           accessibilityHint={t('Show app version and ISO 12913 information')}
         >
           <MaterialIcons name="info" size={24} color={Colors.text} />
@@ -1174,7 +1195,9 @@ export default function ProfileScreen() {
         </Text>
       </View>
 
-      <Text style={styles.versionText}>{t('Version 1.0.0')}</Text>
+      <Text style={styles.versionText}>
+        {t('Version {version}', { version: Constants.expoConfig?.version ?? '' })}
+      </Text>
     </ScrollView>
   );
 }
@@ -1467,6 +1490,14 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
     color: Colors.primary,
+  },
+  codebookButton: {
+    // Sits below the row of formats, so it must not inherit the row sizing.
+    flexGrow: 0,
+    flexBasis: 'auto',
+    alignSelf: 'stretch',
+    paddingHorizontal: Spacing.md,
+    marginTop: Spacing.sm,
   },
   exportFootnote: {
     fontSize: 12,

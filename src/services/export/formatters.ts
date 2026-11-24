@@ -27,6 +27,7 @@ import {
   getIncludedDetectedSounds,
   parseDetectedSounds as parseStoredDetectedSounds,
 } from '../../utils/detectedSounds';
+import { buildStudyRow, formatAsStudyCSV, type ParticipantFallback } from './studyExport';
 
 // Multisensory ratings are exported as flat columns (visual_*, smell_*,
 // thermal_*, restor_*, emotion_*, psd_*); see types/multisensory.
@@ -243,12 +244,17 @@ export function formatRecordingForExport(
 
 export function formatAsJSON(
   recordings: RecordingWithPerception[],
-  researchProfile: ResearchProfile = {}
+  researchProfile: ResearchProfile = {},
+  participant?: ParticipantFallback | null
 ): string {
-  const data = recordings.map((recording) => formatRecordingForExport(recording, researchProfile));
+  const data = recordings.map((recording) => ({
+    ...formatRecordingForExport(recording, researchProfile),
+    // The same variables as in the CSV table (IDs, person, group answers).
+    study: buildStudyRow(recording, participant),
+  }));
   return JSON.stringify({
     exportDate: new Date().toISOString(),
-    version: '1.0',
+    version: '2.0',
     count: data.length,
     recordings: data,
   }, null, 2);
@@ -256,10 +262,11 @@ export function formatAsJSON(
 
 export function formatAsGeoJSON(
   recordings: RecordingWithPerception[],
-  researchProfile: ResearchProfile = {}
+  participant?: ParticipantFallback | null
 ): string {
   const features = recordings.map((recording) => {
-    const data = formatRecordingForExport(recording, researchProfile);
+    // Flat attributes, identical to the columns of the CSV table.
+    const data = buildStudyRow(recording, participant);
     const hasCoordinates =
       typeof data.latitude === 'number' &&
       typeof data.longitude === 'number';
@@ -286,181 +293,20 @@ export function formatAsGeoJSON(
   }, null, 2);
 }
 
+/**
+ * The study data table (one row per measurement). Same columns for every
+ * export; see studyExport.ts.
+ */
 export function formatAsCSV(
   recordings: RecordingWithPerception[],
-  researchProfile: ResearchProfile = {}
+  participant?: ParticipantFallback | null
 ): string {
-  if (recordings.length === 0) return '';
-
-  const headers = [
-    'id',
-    'recorded_at',
-    'timezone',
-    'latitude',
-    'longitude',
-    'gps_accuracy',
-    'privacy_mode',
-    'community_visibility',
-    'participant_age_range',
-    'participant_gender',
-    'participant_occupation',
-    'participant_living_area',
-    'participant_profile_json',
-    'protocol_type',
-    'duration_ms',
-    'sample_rate',
-    'bit_depth',
-    'habitat_type',
-    'photo_uri',
-    'photo_classification',
-    'photo_classification_count',
-    'photo_classification_labels',
-    'visual_context_dominant',
-    'visual_context_summary',
-    'visual_context_json',
-    'field_notes',
-    'spoken_description',
-    'note_keywords',
-    'note_themes_json',
-    'setting_chips',
-    'source_dominance',
-    'detected_sounds',
-    'detected_sound_count',
-    'detected_sound_labels',
-    'has_clipping',
-    'has_wind_handling',
-    'has_low_snr',
-    'peak_db',
-    'rms_db',
-    'normalization_applied',
-    'normalization_gain',
-    'iso_pleasant',
-    'iso_eventful',
-    'iso_pleasant_direction',
-    'iso_eventful_direction',
-    'iso_pleasant_percent',
-    'iso_eventful_percent',
-    'iso_quadrant',
-    'paq_pleasant',
-    'paq_vibrant',
-    'paq_eventful',
-    'paq_chaotic',
-    'paq_annoying',
-    'paq_monotonous',
-    'paq_uneventful',
-    'paq_calm',
-    'sync_status',
-    'remote_id',
-    'device_model',
-    'os_version',
-    'mic_route',
-    'laeq',
-    'laf_max',
-    'laf10',
-    'laf50',
-    'laf90',
-    'laf95',
-    'lzeq',
-    'level_reference',
-    'acoustic_calibrated',
-    'calibration_offset_db',
-    ...MULTISENSORY_EXPORT_COLUMNS,
-  ];
-
-  const rows = recordings.map(recording => {
-    const data = formatRecordingForExport(recording, researchProfile);
-    return [
-      data.id,
-      data.recordedAt,
-      data.timezone,
-      data.latitude,
-      data.longitude,
-      data.gpsAccuracy,
-      data.privacyMode,
-      data.communityVisibility,
-      escapeCSV(data.participantAgeRange ?? ''),
-      escapeCSV(data.participantGender ?? ''),
-      escapeCSV(data.participantOccupation ?? ''),
-      escapeCSV(data.participantLivingArea ?? ''),
-      escapeCSV(data.participantProfileJson),
-      data.protocolType,
-      data.durationMs,
-      data.sampleRate,
-      data.bitDepth,
-      data.habitatType ?? '',
-      escapeCSV(data.photoUri ?? ''),
-      escapeCSV(data.photoClassification),
-      data.photoClassificationCount,
-      escapeCSV(data.photoClassificationLabels),
-      escapeCSV(data.visualContextDominant),
-      escapeCSV(data.visualContextSummary),
-      escapeCSV(data.visualContextJson),
-      escapeCSV(data.fieldNotes ?? ''),
-      escapeCSV(data.spokenDescription ?? ''),
-      escapeCSV(data.noteKeywords),
-      escapeCSV(data.noteThemesJson),
-      escapeCSV(data.settingChips),
-      escapeCSV(data.sourceDominance),
-      escapeCSV(data.detectedSounds),
-      data.detectedSoundCount,
-      escapeCSV(data.detectedSoundLabels),
-      data.hasClipping,
-      data.hasWindHandling,
-      data.hasLowSNR,
-      data.peakDb ?? '',
-      data.rmsDb ?? '',
-      data.normalizationApplied,
-      data.normalizationGain ?? '',
-      data.isoPleasant ?? '',
-      data.isoEventful ?? '',
-      data.isoPleasantDirection ?? '',
-      data.isoEventfulDirection ?? '',
-      data.isoPleasantPercent ?? '',
-      data.isoEventfulPercent ?? '',
-      data.isoQuadrant ?? '',
-      data.paqPleasant ?? '',
-      data.paqVibrant ?? '',
-      data.paqEventful ?? '',
-      data.paqChaotic ?? '',
-      data.paqAnnoying ?? '',
-      data.paqMonotonous ?? '',
-      data.paqUneventful ?? '',
-      data.paqCalm ?? '',
-      data.syncStatus,
-      data.remoteId ?? '',
-      escapeCSV(data.deviceModel),
-      escapeCSV(data.osVersion),
-      escapeCSV(data.micRoute),
-      data.laeq ?? '',
-      data.lafMax ?? '',
-      data.laf10 ?? '',
-      data.laf50 ?? '',
-      data.laf90 ?? '',
-      data.laf95 ?? '',
-      data.lzeq ?? '',
-      data.levelReference ?? '',
-      data.acousticCalibrated ?? '',
-      data.calibrationOffsetDb ?? '',
-      ...MULTISENSORY_EXPORT_COLUMNS.map((column) => {
-        const value = data[column];
-        return typeof value === 'string' ? escapeCSV(value) : value ?? '';
-      }),
-    ].join(',');
-  });
-
-  return [headers.join(','), ...rows].join('\n');
-}
-
-function escapeCSV(value: string): string {
-  if (value.includes(',') || value.includes('"') || value.includes('\n')) {
-    return `"${value.replace(/"/g, '""')}"`;
-  }
-  return value;
+  return formatAsStudyCSV(recordings, participant);
 }
 
 export function formatRecordingSummary(recording: RecordingWithPerception): string {
   const lines = [
-    `Soundscape Recording - ${new Date(recording.recordedAt).toLocaleString()}`,
+    `Sensescape measurement - ${new Date(recording.recordedAt).toLocaleString()}`,
     '',
     '--- Recording Info ---',
     `Protocol: ${getProtocolLabel(recording.protocolType)}`,
@@ -520,7 +366,7 @@ export function formatRecordingSummary(recording: RecordingWithPerception): stri
     `Microphone: ${recording.micRoute}`,
     '',
     '---',
-    'Recorded with Soundscape Explorer',
+    'Recorded with Sensescape Explorer',
     'Soundscape assessment based on ISO 12913',
   );
 

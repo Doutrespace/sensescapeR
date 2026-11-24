@@ -3,11 +3,15 @@ import { StyleSheet, Text, View, TouchableOpacity, Pressable, Animated } from 'r
 import { MaterialIcons } from '@expo/vector-icons';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { Colors, Spacing, Radius, Shadows } from '../../theme/colors';
-import { t } from '../../i18n';
+import { t, tPlural } from '../../i18n';
 
 interface Props {
   onStartMeasurement: () => void;
   communityCount?: number | null;
+  /** Anonymous code of this device's participant. */
+  participantCode?: string;
+  /** Measurements saved on this device so far. */
+  measurementCount?: number;
 }
 
 const QUICK_FACTS = [
@@ -16,7 +20,7 @@ const QUICK_FACTS = [
   { icon: 'science', label: 'ISO 12913' },
 ] as const;
 
-export function HomeScreen({ onStartMeasurement, communityCount }: Props) {
+export function HomeScreen({ onStartMeasurement, communityCount, participantCode, measurementCount }: Props) {
   const tabBarHeight = useBottomTabBarHeight();
   const micScale = useRef(new Animated.Value(1)).current;
   const micHaloScale = useRef(new Animated.Value(1)).current;
@@ -95,8 +99,18 @@ export function HomeScreen({ onStartMeasurement, communityCount }: Props) {
             <MaterialIcons name="mic-none" size={28} color={Colors.primary} />
           </Animated.View>
         </Pressable>
-        <Text style={styles.title}>Soundscape{'\n'}Explorer</Text>
-        <Text style={styles.subtitle}>{t('Record the place as it sounds.')}</Text>
+        <Text style={styles.title}>Sensescape{'\n'}Explorer</Text>
+        <Text style={styles.subtitle}>{t('Capture a place with all your senses.')}</Text>
+        {participantCode ? (
+          <View style={styles.participantLine}>
+            <Text style={styles.participantCode}>{participantCode}</Text>
+            <Text style={styles.participantText}>
+              {typeof measurementCount === 'number' && measurementCount > 0
+                ? tPlural(measurementCount, '{count} measurement so far', '{count} measurements so far')
+                : t('Your first measurement is waiting')}
+            </Text>
+          </View>
+        ) : null}
         {typeof communityCount === 'number' ? (
           <View style={styles.communityLine}>
             <Text style={styles.communityCount}>{communityCount}</Text>
@@ -139,6 +153,31 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.lg,
     justifyContent: 'space-between',
     backgroundColor: Colors.background,
+  },
+  participantLine: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 10,
+  },
+  participantCode: {
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 0.8,
+    color: Colors.text,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: Colors.surfaceHighlight,
+    backgroundColor: Colors.surface,
+    overflow: 'hidden',
+    fontVariant: ['tabular-nums'],
+  },
+  participantText: {
+    fontSize: 13,
+    color: Colors.textMuted,
   },
   backgroundCircle: {
     position: 'absolute',

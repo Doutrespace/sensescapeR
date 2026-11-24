@@ -25,6 +25,7 @@ import { AudioAnalyzer } from '../../services/audio/audioAnalyzer';
 import { PcmWavRecorder } from '../../services/audio/pcmWavRecorder';
 import { LoggingService } from '../../services/logging/LoggingService';
 import type { AudioLevelingMode } from '../../stores/usePreferencesStore';
+import { MaterialIcons } from '@expo/vector-icons';
 import { t } from '../../i18n';
 
 interface Props {
@@ -116,6 +117,7 @@ export default function EnhancedRecorder({
   const liveAnalyzerRef = useRef<AudioAnalyzer | null>(null);
   const liveRecorderRef = useRef<PcmWavRecorder | null>(null);
   const hasAutoStartedRef = useRef(false);
+  const isStartingRef = useRef(false);
 
   // Threshold for showing low-level warning (dBFS)
   const LOW_LEVEL_WARNING_THRESHOLD_DB = -55;
@@ -164,7 +166,7 @@ export default function EnhancedRecorder({
     );
   };
 
-  const startRecording = useCallback(async () => {
+  const beginRecording = useCallback(async () => {
     LoggingService.debug('Starting recording');
     try {
       const permission = await Audio.requestPermissionsAsync();
@@ -240,6 +242,20 @@ export default function EnhancedRecorder({
     }
   }, [audioLevelingMode, startClassifier, startSpectrogram, stopClassifier, stopSpectrogram]);
 
+  // Starting takes a moment (permission prompt, model loading). A second tap
+  // in that time must not open a second microphone stream.
+  const startRecording = useCallback(async () => {
+    if (isStartingRef.current || liveRecorderRef.current) {
+      return;
+    }
+    isStartingRef.current = true;
+    try {
+      await beginRecording();
+    } finally {
+      isStartingRef.current = false;
+    }
+  }, [beginRecording]);
+
   useEffect(() => {
     if (hasAutoStartedRef.current) {
       return;
@@ -261,6 +277,8 @@ export default function EnhancedRecorder({
         normalizationApplied,
         normalizationGain,
         acousticMetrics,
+        originalPeakDb,
+        originalRmsDb,
       } = await liveRecorder.stop();
       liveRecorderRef.current = null;
       const acousticMetricsJson = acousticMetrics
@@ -315,9 +333,15 @@ export default function EnhancedRecorder({
       stopClassifier();
 
       // Calculate final quality flags
+      // Peak and mean level of the whole take, measured on every sample of
+      // the unprocessed signal (the live meter only sees part of it).
+      const hasMeasuredLevels = Number.isFinite(originalPeakDb) && Number.isFinite(originalRmsDb);
       const finalFlags: QualityFlags = {
         ...qualityFlagsRef.current,
-        hasClipping: clipCount.current > CLIP_COUNT_THRESHOLD,
+        ...(hasMeasuredLevels ? { peakDb: originalPeakDb, rmsDb: originalRmsDb } : {}),
+        // Clipped: a sample reached full scale, or the meter saw it repeatedly.
+        hasClipping: (hasMeasuredLevels && originalPeakDb >= -0.1)
+          || clipCount.current > CLIP_COUNT_THRESHOLD,
         hasLowSNR: totalSamples.current > 0 &&
           lowLevelSamples.current / totalSamples.current > LOW_SNR_RATIO_THRESHOLD,
       };
@@ -485,6 +509,15 @@ export default function EnhancedRecorder({
 
   return (
     <View style={styles.container}>
+      <TouchableOpacity
+        style={styles.cancelButton}
+        onPress={onCancel}
+        activeOpacity={0.8}
+        accessibilityRole="button"
+        accessibilityLabel={t('Cancel Recording')}
+      >
+        <MaterialIcons name="close" size={22} color={Colors.text} />
+      </TouchableOpacity>
       <View style={styles.header}>
         <Text style={styles.title}>
           {t('Soundscape')}
@@ -565,6 +598,20 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
+  },
+  cancelButton: {
+    position: 'absolute',
+    top: 8,
+    left: 12,
+    zIndex: 5,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.surfaceHighlight,
   },
   header: {
     alignItems: 'center',

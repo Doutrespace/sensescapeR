@@ -4,96 +4,81 @@
 
 import { BadgeDefinition } from './types';
 
+/**
+ * Milestones a student can reach during a course project. Keep the array
+ * sorted by `requirement.value`. Badge ids are stored on the device once
+ * earned: never reuse an id for a different badge.
+ */
 export const MILESTONE_BADGES: BadgeDefinition[] = [
   {
-    id: 'first_steps',
-    name: 'First Steps',
-    description: 'Record your first 10 soundscapes',
-    icon: '🌱',
-    color: '#84CC16',
-    glowColor: '#BEF264',
-    requirement: { type: 'recording_milestone', value: 10 },
+    id: 'first_measurement',
+    name: 'First Measurement',
+    description: 'Save your first measurement',
+    icon: 'flag-variant-outline',
+    color: '#8DA356',
+    glowColor: '#CFDCA8',
+    requirement: { type: 'recording_milestone', value: 1 },
     tier: 1,
   },
   {
-    id: 'getting_started',
-    name: 'Getting Started',
-    description: 'Reach 50 recordings',
-    icon: '🌿',
-    color: '#22C55E',
-    glowColor: '#86EFAC',
-    requirement: { type: 'recording_milestone', value: 50 },
+    id: 'warming_up',
+    name: 'Warming Up',
+    description: 'Save 3 measurements',
+    icon: 'sprout-outline',
+    color: '#6F9A4B',
+    glowColor: '#BFD9A3',
+    requirement: { type: 'recording_milestone', value: 3 },
     tier: 2,
   },
   {
-    id: 'sound_explorer',
-    name: 'Sound Explorer',
-    description: 'Complete 100 recordings',
-    icon: '🌳',
-    color: '#16A34A',
-    glowColor: '#4ADE80',
-    requirement: { type: 'recording_milestone', value: 100 },
+    id: 'field_worker',
+    name: 'Field Worker',
+    description: 'Save 5 measurements',
+    icon: 'walk',
+    color: '#4E8A68',
+    glowColor: '#A9D2BB',
+    requirement: { type: 'recording_milestone', value: 5 },
     tier: 3,
   },
   {
-    id: 'rising_star',
-    name: 'Rising Star',
-    description: 'Achieve 250 recordings',
-    icon: '⭐',
-    color: '#EAB308',
-    glowColor: '#FDE047',
-    requirement: { type: 'recording_milestone', value: 250 },
+    id: 'first_steps',
+    name: 'Keen Ear',
+    description: 'Save 10 measurements',
+    icon: 'ear-hearing',
+    color: '#2E7D7A',
+    glowColor: '#9FD3D0',
+    requirement: { type: 'recording_milestone', value: 10 },
     tier: 4,
   },
   {
-    id: 'on_fire',
-    name: 'On Fire',
-    description: 'Blaze through 500 recordings',
-    icon: '🔥',
-    color: '#F97316',
-    glowColor: '#FDBA74',
-    requirement: { type: 'recording_milestone', value: 500 },
+    id: 'sense_collector',
+    name: 'Sense Collector',
+    description: 'Save 25 measurements',
+    icon: 'leaf',
+    color: '#3B6E8C',
+    glowColor: '#A9C9DC',
+    requirement: { type: 'recording_milestone', value: 25 },
     tier: 5,
   },
   {
-    id: 'diamond_ears',
-    name: 'Diamond Ears',
-    description: 'Master 1,000 recordings',
-    icon: '💎',
-    color: '#06B6D4',
-    glowColor: '#67E8F9',
-    requirement: { type: 'recording_milestone', value: 1000 },
+    id: 'getting_started',
+    name: 'City Mapper',
+    description: 'Save 50 measurements',
+    icon: 'map-marker-multiple-outline',
+    color: '#6B5B95',
+    glowColor: '#C5BBE0',
+    requirement: { type: 'recording_milestone', value: 50 },
     tier: 6,
   },
   {
-    id: 'sound_royalty',
-    name: 'Sound Royalty',
-    description: 'Rule with 2,500 recordings',
-    icon: '👑',
-    color: '#A855F7',
-    glowColor: '#D8B4FE',
-    requirement: { type: 'recording_milestone', value: 2500 },
+    id: 'sound_explorer',
+    name: 'Sensescape Expert',
+    description: 'Save 100 measurements',
+    icon: 'compass-rose',
+    color: '#B9863D',
+    glowColor: '#EBD3A4',
+    requirement: { type: 'recording_milestone', value: 100 },
     tier: 7,
-  },
-  {
-    id: 'legend',
-    name: 'Legend',
-    description: 'Legendary status with 5,000 recordings',
-    icon: '🏆',
-    color: '#FBBF24',
-    glowColor: '#FDE68A',
-    requirement: { type: 'recording_milestone', value: 5000 },
-    tier: 8,
-  },
-  {
-    id: 'grandmaster',
-    name: 'Grandmaster',
-    description: 'Ultimate mastery with 10,000+ recordings',
-    icon: '🌟',
-    color: '#FFD700',
-    glowColor: '#FFF8DC',
-    requirement: { type: 'recording_milestone', value: 10000 },
-    tier: 9,
   },
 ];
 
@@ -101,8 +86,8 @@ export const SPECIAL_BADGES: BadgeDefinition[] = [
   {
     id: 'daily_burst',
     name: 'Daily Burst',
-    description: 'Record 5 soundscapes in a single day',
-    icon: '⚡',
+    description: 'Save 5 measurements in a single day',
+    icon: 'lightning-bolt',
     color: '#F59E0B',
     glowColor: '#FCD34D',
     requirement: { type: 'daily_burst', value: 5, timeWindow: 'day' },
@@ -112,8 +97,8 @@ export const SPECIAL_BADGES: BadgeDefinition[] = [
   {
     id: 'week_warrior',
     name: 'Week Warrior',
-    description: 'Record every day for 7 days straight',
-    icon: '🔥',
+    description: 'Measure every day for 7 days in a row',
+    icon: 'fire',
     color: '#EF4444',
     glowColor: '#FCA5A5',
     requirement: { type: 'streak', value: 7 },
@@ -123,8 +108,8 @@ export const SPECIAL_BADGES: BadgeDefinition[] = [
   {
     id: 'night_owl',
     name: 'Night Owl',
-    description: 'Record a soundscape after midnight',
-    icon: '🌙',
+    description: 'Save a measurement after midnight',
+    icon: 'weather-night',
     color: '#6366F1',
     glowColor: '#A5B4FC',
     requirement: { type: 'time_based', value: 0 },
@@ -134,8 +119,8 @@ export const SPECIAL_BADGES: BadgeDefinition[] = [
   {
     id: 'early_bird',
     name: 'Early Bird',
-    description: 'Record a soundscape at sunrise (5-7 AM)',
-    icon: '🌅',
+    description: 'Save a measurement at sunrise (5 to 7 am)',
+    icon: 'weather-sunset-up',
     color: '#FB923C',
     glowColor: '#FDBA74',
     requirement: { type: 'time_based', value: 5 },
@@ -169,9 +154,10 @@ export function getProgressToNextBadge(recordingCount: number): {
     return { current: recordingCount, target: recordingCount, percentage: 100 };
   }
 
-  const previousBadge = MILESTONE_BADGES.find(
-    (b) => b.requirement.value < nextBadge.requirement.value
-  );
+  // The milestone directly below the next one (the list is sorted).
+  const previousBadge = [...MILESTONE_BADGES]
+    .reverse()
+    .find((b) => b.requirement.value < nextBadge.requirement.value);
   const previousValue = previousBadge?.requirement.value ?? 0;
   const range = nextBadge.requirement.value - previousValue;
   const progress = recordingCount - previousValue;

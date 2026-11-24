@@ -10,8 +10,18 @@ import { isSupabaseConfigured } from '../../src/utils/supabase';
 import { formatDuration } from '../../src/constants/protocols';
 import OpenStreetMapView, { OpenStreetMapBounds } from '../../src/components/map/OpenStreetMapView';
 import { CommunityRecordingModal } from '../../src/components/explore/CommunityRecordingModal';
+import { LoggingService } from '../../src/services/logging';
 import { t, tPlural } from '../../src/i18n';
 type Basemap = 'light' | 'satellite';
+
+// What lies over the map besides the tab bar: the header card ends about 140 px
+// below the top edge, the legend takes about 44 px above the tab bar.
+const MAP_FIT_INSETS = { top: 140, bottom: 44 };
+// Where to look for recordings when the device position is not known.
+const WORLD_BOUNDS = {
+  northeast: { latitude: 90, longitude: 180 },
+  southwest: { latitude: -90, longitude: -180 },
+};
 
 const BASEMAP_SEQUENCE: Basemap[] = ['light', 'satellite'];
 const BASEMAP_META: Record<
@@ -42,28 +52,39 @@ export default function ExploreScreen() {
 
   useEffect(() => {
     (async () => {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        setIsLoadingLocation(false);
-        return;
+      let loc: Location.LocationObject | null = null;
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status === 'granted') {
+          loc = await Location.getCurrentPositionAsync({});
+        }
+      } catch (error) {
+        // Location switched off, not supported or without a fix: the map opens anyway.
+        LoggingService.warn('Device location unavailable on Explore', {
+          error: String((error as Error | null)?.message ?? error),
+        });
       }
 
-      const loc = await Location.getCurrentPositionAsync({});
       setLocation(loc);
       setIsLoadingLocation(false);
 
-      // Fetch recordings for initial region
+      // Fetch recordings for the initial region: around the user, or anywhere when
+      // the position is unknown. The map then fits itself to what was found.
       if (isSupabaseConfigured) {
-        fetchRecordingsInBounds({
-          northeast: {
-            latitude: loc.coords.latitude + 0.05,
-            longitude: loc.coords.longitude + 0.05,
-          },
-          southwest: {
-            latitude: loc.coords.latitude - 0.05,
-            longitude: loc.coords.longitude - 0.05,
-          },
-        });
+        fetchRecordingsInBounds(
+          loc
+            ? {
+                northeast: {
+                  latitude: loc.coords.latitude + 0.05,
+                  longitude: loc.coords.longitude + 0.05,
+                },
+                southwest: {
+                  latitude: loc.coords.latitude - 0.05,
+                  longitude: loc.coords.longitude - 0.05,
+                },
+              }
+            : WORLD_BOUNDS
+        );
       }
     })();
   }, []);
@@ -200,7 +221,9 @@ export default function ExploreScreen() {
       <OpenStreetMapView
           style={styles.map}
           bottomInset={tabBarHeight}
+          fitInsets={MAP_FIT_INSETS}
           basemap={basemap}
+          fitToMarkers
           initialCenter={
             location
               ? {

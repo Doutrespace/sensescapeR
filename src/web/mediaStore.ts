@@ -53,6 +53,46 @@ function requestToPromise<T>(request: IDBRequest<T>): Promise<T> {
   });
 }
 
+/**
+ * Writes one value and resolves only when the transaction has committed,
+ * i.e. when the data is really on disk. A request can succeed and the
+ * transaction still abort afterwards (for example when storage is full).
+ */
+function writeAndCommit(storeName: string, key: string, value: unknown): Promise<void> {
+  return openDb()
+    .catch((error) => {
+      // A failed open is not cached, so a later write can try again.
+      dbPromise = null;
+      throw error;
+    })
+    .then((db) => new Promise<void>((resolve, reject) => {
+      const transaction = db.transaction(storeName, 'readwrite');
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error ?? new Error('Storage write failed'));
+      transaction.onabort = () => reject(transaction.error ?? new Error('Storage write was aborted'));
+      transaction.objectStore(storeName).put(value, key);
+    }));
+}
+
+const pendingMediaWrites = new Set<Promise<void>>();
+let mediaWriteError: unknown = null;
+
+/**
+ * Waits until every media file handed to putMedia is on disk. Rejects when
+ * one of them could not be stored, so "saved" is only reported when the
+ * recording will still be there after a reload.
+ */
+export async function flushMedia(): Promise<void> {
+  while (pendingMediaWrites.size > 0) {
+    await Promise.all([...pendingMediaWrites]);
+  }
+  if (mediaWriteError) {
+    const error = mediaWriteError;
+    mediaWriteError = null;
+    throw error instanceof Error ? error : new Error('Storage write failed');
+  }
+}
+
 function register(path: string, blob: Blob): string {
   const previous = entriesByPath.get(path);
   if (previous) {
@@ -101,11 +141,15 @@ export function putMedia(path: string, blob: Blob, persist = true): string {
   const url = register(path, blob);
 
   if (persist) {
-    void openDb()
-      .then((db) => requestToPromise(
-        db.transaction(FILE_STORE, 'readwrite').objectStore(FILE_STORE).put(blob, path)
-      ))
-      .catch((error) => console.warn('[mediaStore] Could not persist media', path, error));
+    const write: Promise<void> = writeAndCommit(FILE_STORE, path, blob)
+      .catch((error) => {
+        mediaWriteError = error;
+        console.warn('[mediaStore] Could not persist media', path, error);
+      })
+      .finally(() => {
+        pendingMediaWrites.delete(write);
+      });
+    pendingMediaWrites.add(write);
   }
 
   return url;
@@ -177,10 +221,7 @@ export async function kvGet<T>(key: string): Promise<T | undefined> {
 }
 
 export async function kvSet(key: string, value: unknown): Promise<void> {
-  const db = await openDb();
-  await requestToPromise(
-    db.transaction(KV_STORE, 'readwrite').objectStore(KV_STORE).put(value, key)
-  );
+  await writeAndCommit(KV_STORE, key, value);
 }
 
 /** Triggers a normal browser download for a blob. */

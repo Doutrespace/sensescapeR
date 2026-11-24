@@ -14,6 +14,9 @@ import {
   LocationData,
 } from '../types/recording';
 import type { MultisensoryAssessment } from '../types/multisensory';
+import type { VisitMode } from '../study/core';
+import type { RespondentType } from '../study/runData';
+import type { Answers } from '../study/types';
 
 // Recording session states
 export type RecordingState =
@@ -27,10 +30,24 @@ export type RecordingState =
   | 'CIRCUMPLEX'
   | 'SENSES'
   | 'CONTEXT'
+  | 'GROUP_SELECT'
+  | 'GROUP'
   | 'UPLOAD'
-  | 'SAVING';
+  | 'SAVING'
+  | 'DONE';
 
 export type RecordingShortcutAction = 'START_RECORDING';
+
+/** What the completion screen shows about the measurement just saved. */
+export interface SavedRunSummary {
+  recordingId: string;
+  runNumber: number;
+  groupId: string | null;
+  hasLocation: boolean;
+  recordedAt: string;
+  answeredGroupItems: number;
+  totalGroupItems: number;
+}
 
 interface RecordingSession {
   // Current state
@@ -77,6 +94,21 @@ interface RecordingSession {
   settingContext: SettingContext | null;
   sourceDominance: SourceDominance | null;
 
+  // Study
+  /** When the audio recording started (ISO time). */
+  startedAt: string | null;
+  visitMode: VisitMode | null;
+  /** Optional label of the measuring point, e.g. "M1". */
+  siteCode: string;
+  /** Who answers this questionnaire: the device owner or an interviewed person. */
+  respondent: RespondentType;
+  /** Teil 1 answers of an interviewed person (respondent 'other'). */
+  respondentPerson: Answers;
+  respondentConsent: boolean;
+  groupId: string | null;
+  groupAnswers: Answers;
+  lastSaved: SavedRunSummary | null;
+
   // Upload config
   license: LicenseType;
   privacyMode: PrivacyMode;
@@ -113,6 +145,16 @@ interface RecordingStoreState extends RecordingSession {
   setMultisensory: (assessment: MultisensoryAssessment) => void;
   setHabitatType: (habitat: HabitatType) => void;
   setSettingContext: (context: SettingContext) => void;
+  setStartedAt: (startedAt: string | null) => void;
+  setVisitMode: (visitMode: VisitMode | null) => void;
+  setSiteCode: (siteCode: string) => void;
+  setRespondent: (respondent: RespondentType) => void;
+  setRespondentPerson: (answers: Answers) => void;
+  setRespondentConsent: (value: boolean) => void;
+  setGroup: (groupId: string | null, answers?: Answers) => void;
+  setGroupAnswers: (answers: Answers) => void;
+  /** Ends the session after a successful save and shows the completion screen. */
+  finishSession: (summary: SavedRunSummary) => void;
   setSourceDominance: (dominance: SourceDominance) => void;
   setLicense: (license: LicenseType) => void;
   setPrivacyMode: (mode: PrivacyMode) => void;
@@ -155,6 +197,15 @@ const initialState: RecordingSession = {
   habitatType: null,
   settingContext: null,
   sourceDominance: null,
+  startedAt: null,
+  visitMode: null,
+  siteCode: '',
+  respondent: 'self',
+  respondentPerson: {},
+  respondentConsent: false,
+  groupId: null,
+  groupAnswers: {},
+  lastSaved: null,
   license: 'CC-BY',
   privacyMode: 'exact',
   communityVisibility: 'community',
@@ -234,6 +285,33 @@ export const useRecordingStore = create<RecordingStoreState>((set) => ({
 
   setSourceDominance: (sourceDominance) =>
     set({ sourceDominance }),
+
+  setStartedAt: (startedAt) =>
+    set({ startedAt }),
+
+  setVisitMode: (visitMode) =>
+    set({ visitMode }),
+
+  setSiteCode: (siteCode) =>
+    set({ siteCode }),
+
+  setRespondent: (respondent) =>
+    set({ respondent }),
+
+  setRespondentPerson: (respondentPerson) =>
+    set({ respondentPerson }),
+
+  setRespondentConsent: (respondentConsent) =>
+    set({ respondentConsent }),
+
+  setGroup: (groupId, answers) =>
+    set({ groupId, groupAnswers: answers ?? {} }),
+
+  setGroupAnswers: (groupAnswers) =>
+    set({ groupAnswers }),
+
+  finishSession: (lastSaved) =>
+    set({ ...initialState, state: 'DONE', lastSaved }),
 
   setLicense: (license) =>
     set({ license }),

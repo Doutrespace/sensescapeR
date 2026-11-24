@@ -8,6 +8,8 @@ import { LoggingService } from '../logging';
 import { assessVisualContext } from '../../utils/visualContext';
 import { extractNoteThemes } from '../../utils/noteAnalysis';
 import { parseMultisensory } from '../../types/multisensory';
+import { parseRunStudyData } from '../../study/runData';
+import { buildStudyRow } from '../export/studyExport';
 import {
   getQueueItem,
   updateQueueItem,
@@ -225,12 +227,18 @@ export async function uploadRecording(
 
   try {
     const session = await supabase.auth.getSession();
-    const userId = session.data.session?.user?.id;
+    let userId = session.data.session?.user?.id;
     if (!userId) {
-      return {
-        success: false,
-        error: 'Cloud sync requires a signed-in user session.',
-      };
+      // Students do not need an account: an anonymous session is enough to
+      // upload. (Needs "Allow anonymous sign-ins" in the Supabase project.)
+      const anonymous = await supabase.auth.signInAnonymously();
+      userId = anonymous.data?.user?.id;
+      if (anonymous.error || !userId) {
+        return {
+          success: false,
+          error: 'Cloud sync requires a signed-in user session.',
+        };
+      }
     }
 
     // Get recording from local DB
@@ -271,11 +279,13 @@ export async function uploadRecording(
     });
 
     const mediaPaths = await uploadMediaAssets(recording);
+    const perception = await getPerceptionByRecordingId(recordingId);
     const metadataResult = await uploadMetadata(
       recording,
       audioResult.path!,
       userId,
-      mediaPaths
+      mediaPaths,
+      perception
     );
     if (!metadataResult.success) {
       throw new Error(metadataResult.error ?? 'Metadata upload failed');
@@ -294,7 +304,6 @@ export async function uploadRecording(
       progress: 0,
     });
 
-    const perception = await getPerceptionByRecordingId(recordingId);
     if (perception) {
       const perceptionResult = await uploadPerception(
         perception,
@@ -479,7 +488,8 @@ async function uploadMetadata(
   mediaPaths: {
     photoPath: string | null;
     spectrogramPath: string | null;
-  }
+  },
+  perception: Perception | null
 ): Promise<{ success: boolean; remoteId?: string; error?: string }> {
   try {
     // Parse JSON fields
@@ -526,61 +536,75 @@ async function uploadMetadata(
       location = `POINT(${recording.longitude} ${recording.latitude})`;
     }
 
-    const { data, error } = await supabase
-      .from('recordings')
-      .insert([
-        {
-          audio_path: audioPath,
-          photo_path: mediaPaths.photoPath,
-          spectrogram_path: mediaPaths.spectrogramPath,
-          sample_rate: toIntegerOrNull(recording.sampleRate),
-          bit_depth: toIntegerOrNull(recording.bitDepth),
-          duration_ms: toIntegerOrNull(recording.durationMs),
-          device_model: recording.deviceModel,
-          os_version: recording.osVersion,
-          mic_route: recording.micRoute,
-          recorded_at: recording.recordedAt,
-          timezone: recording.timezone,
-          latitude: recording.latitude,
-          longitude: recording.longitude,
-          location,
-          gps_accuracy: recording.gpsAccuracy,
-          privacy_mode: recording.privacyMode,
-          protocol_type: recording.protocolType,
-          project_id: recording.projectId,
-          has_clipping: recording.hasClipping,
-          has_wind_handling: recording.hasWindHandling,
-          has_low_snr: recording.hasLowSNR,
-          peak_db: recording.peakDb,
-          rms_db: recording.rmsDb,
-          normalization_applied: recording.normalizationApplied ?? false,
-          normalization_gain: recording.normalizationGain ?? null,
-          habitat_type: recording.habitatType,
-          setting_chips: settingChips,
-          source_dominance: sourceDominance,
-          field_notes: recording.fieldNotes ?? null,
-          spoken_description: recording.spokenDescription ?? null,
-          photo_classification: photoClassification,
-          visual_context: visualContext,
-          note_themes: noteThemes,
-          detected_sounds: detectedSounds,
-          license: recording.license,
-          community_visibility: recording.communityVisibility,
-          local_id: recording.id,
-          user_id: userId,
-          // Only sent when rated, so recordings without it still upload to a
-          // database that has not added the `multisensory` column yet.
-          ...(multisensory ? { multisensory } : {}),
-        },
-      ])
-      .select('id')
-      .single();
+    const basePayload = {
+      audio_path: audioPath,
+      photo_path: mediaPaths.photoPath,
+      spectrogram_path: mediaPaths.spectrogramPath,
+      sample_rate: toIntegerOrNull(recording.sampleRate),
+      bit_depth: toIntegerOrNull(recording.bitDepth),
+      duration_ms: toIntegerOrNull(recording.durationMs),
+      device_model: recording.deviceModel,
+      os_version: recording.osVersion,
+      mic_route: recording.micRoute,
+      recorded_at: recording.recordedAt,
+      timezone: recording.timezone,
+      latitude: recording.latitude,
+      longitude: recording.longitude,
+      location,
+      gps_accuracy: recording.gpsAccuracy,
+      privacy_mode: recording.privacyMode,
+      protocol_type: recording.protocolType,
+      project_id: recording.projectId,
+      has_clipping: recording.hasClipping,
+      has_wind_handling: recording.hasWindHandling,
+      has_low_snr: recording.hasLowSNR,
+      peak_db: recording.peakDb,
+      rms_db: recording.rmsDb,
+      normalization_applied: recording.normalizationApplied ?? false,
+      normalization_gain: recording.normalizationGain ?? null,
+      habitat_type: recording.habitatType,
+      setting_chips: settingChips,
+      source_dominance: sourceDominance,
+      field_notes: recording.fieldNotes ?? null,
+      spoken_description: recording.spokenDescription ?? null,
+      photo_classification: photoClassification,
+      visual_context: visualContext,
+      note_themes: noteThemes,
+      detected_sounds: detectedSounds,
+      license: recording.license,
+      community_visibility: recording.communityVisibility,
+      local_id: recording.id,
+      user_id: userId,
+      // Only sent when rated, so recordings without it still upload to a
+      // database that has not added the `multisensory` column yet.
+      ...(multisensory ? { multisensory } : {}),
+    };
 
-    if (error) {
-      return { success: false, error: error.message };
+    // Study variables: IDs, the answers of the project group, and the same
+    // flat row the CSV export writes, so the table can be read straight
+    // from the database.
+    const studyPayload = {
+      participant_id: recording.participantId ?? null,
+      group_id: recording.groupId ?? null,
+      study_data: parseRunStudyData(recording.studyData),
+      export_row: buildStudyRow({ ...recording, perception: perception ?? undefined }),
+    };
+
+    let result = await writeRecordingRow({ ...basePayload, ...studyPayload }, userId, recording.id);
+    if (result.error && isMissingColumnError(result.error)) {
+      // A database set up before the study columns existed: the measurement
+      // itself still has to arrive.
+      LoggingService.warn('Remote database has no study columns yet; uploading without them', {
+        error: result.error.message,
+      });
+      result = await writeRecordingRow(basePayload, userId, recording.id);
     }
 
-    return { success: true, remoteId: data.id };
+    if (result.error || !result.id) {
+      return { success: false, error: result.error?.message ?? 'Metadata upload failed' };
+    }
+
+    return { success: true, remoteId: result.id };
   } catch (error) {
     return {
       success: false,
@@ -589,12 +613,45 @@ async function uploadMetadata(
   }
 }
 
+function isMissingColumnError(error: { code?: string; message?: string }): boolean {
+  return error.code === 'PGRST204'
+    || /could not find the '.*' column|column .* does not exist/i.test(error.message ?? '');
+}
+
+/**
+ * Inserts the row, or updates it when this measurement was uploaded before
+ * (a retry after a broken connection must not create a second row).
+ */
+async function writeRecordingRow(
+  payload: Record<string, unknown>,
+  userId: string,
+  localId: string
+): Promise<{ id?: string; error: { code?: string; message: string } | null }> {
+  const existing = await supabase
+    .from('recordings')
+    .select('id')
+    .eq('local_id', localId)
+    .eq('user_id', userId)
+    .limit(1)
+    .maybeSingle();
+
+  if (existing.data?.id) {
+    const { error } = await supabase.from('recordings').update(payload).eq('id', existing.data.id);
+    return { id: existing.data.id, error };
+  }
+
+  const { data, error } = await supabase.from('recordings').insert([payload]).select('id').single();
+  return { id: data?.id, error };
+}
+
 async function uploadPerception(
   perception: Perception,
   remoteRecordingId: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const ratedPaq = getRatedPaq(perception);
+    // Replace instead of add, so a repeated upload leaves one row.
+    await supabase.from('perceptions').delete().eq('recording_id', remoteRecordingId);
     const { error } = await supabase.from('perceptions').insert([
       {
         recording_id: remoteRecordingId,

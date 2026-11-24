@@ -1,6 +1,6 @@
 {
   "name": "soundscape-app",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "main": "expo-router/entry",
   "scripts": {
     "start": "expo start",
@@ -9,7 +9,8 @@
     "web": "node scripts/prepare-web.js && expo start --web",
     "test": "jest",
     "test:watch": "jest --watch",
-    "build:web": "node scripts/prepare-web.js && expo export --platform web && node scripts/finish-web-build.js"
+    "build:web": "node scripts/prepare-web.js && expo export --platform web && node scripts/finish-web-build.js",
+    "merge-exports": "node scripts/merge-exports.mjs"
   },
   "dependencies": {
     "@expo/metro-runtime": "~6.1.2",

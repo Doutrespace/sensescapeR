@@ -250,6 +250,14 @@ export default function PhotoCaptureScreen({ onPhotoCaptured, onSkip }: Props) {
           <Text style={styles.permissionText}>
             {t('Loading camera permissions...')}
           </Text>
+          <TouchableOpacity
+            style={styles.skipLink}
+            onPress={onSkip}
+            accessibilityRole="button"
+            accessibilityLabel={t('Skip photo step')}
+          >
+            <Text style={styles.skipLinkText}>{t('Skip this step')}</Text>
+          </TouchableOpacity>
         </View>
       </View>
     );

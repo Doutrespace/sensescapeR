@@ -35,6 +35,8 @@ interface Props {
   value: MultisensoryAssessment;
   onChange: (value: MultisensoryAssessment) => void;
   onConfirm: () => void;
+  /** Back to the previous step, from the first section. */
+  onBack?: () => void;
 }
 
 type IconName = keyof typeof MaterialCommunityIcons.glyphMap;
@@ -104,7 +106,7 @@ function signedPercent(value: number): string {
  * Multisensory ratings, one section per page so each fits a phone screen:
  * a coloured header, large touch inputs, and Back / Next at thumb height.
  */
-export default function MultisensoryScreen({ value, onChange, onConfirm }: Props) {
+export default function MultisensoryScreen({ value, onChange, onConfirm, onBack }: Props) {
   const tabBarHeight = useBottomTabBarHeight();
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const [pageIndex, setPageIndex] = useState(0);
@@ -504,13 +506,20 @@ export default function MultisensoryScreen({ value, onChange, onConfirm }: Props
       </Animated.View>
 
       <View style={[styles.footer, { paddingBottom: tabBarHeight + 16 }]}>
-        {pageIndex > 0 && (
+        {(pageIndex > 0 || onBack) && (
           <TouchableOpacity
             style={styles.backButton}
-            onPress={() => goToPage(pageIndex - 1)}
+            onPress={() => {
+              if (pageIndex > 0) {
+                goToPage(pageIndex - 1);
+              } else {
+                void Haptics.selectionAsync();
+                onBack?.();
+              }
+            }}
             activeOpacity={0.8}
             accessibilityRole="button"
-            accessibilityLabel={t('Back to previous section')}
+            accessibilityLabel={pageIndex > 0 ? t('Back to previous section') : t('Back')}
           >
             <MaterialIcons name="arrow-back" size={22} color={Colors.text} />
           </TouchableOpacity>
