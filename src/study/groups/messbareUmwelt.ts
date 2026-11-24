@@ -17,8 +17,6 @@ export const MESSBARE_UMWELT: StudyGroup = {
     'Sensory perception and the objectively measurable environment'
   ),
   icon: 'scale-balance',
-  color: '#6B5B95',
-  softColor: '#E3DDF0',
   sections: [
     {
       key: 'visuell',

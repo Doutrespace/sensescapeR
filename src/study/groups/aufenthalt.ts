@@ -14,8 +14,6 @@ export const AUFENTHALT: StudyGroup = {
   id: 'aufenthalt',
   topic: lt('Klangumgebung und Aufenthaltsqualität', 'Sound environment and quality of stay'),
   icon: 'waveform',
-  color: '#3B6E8C',
-  softColor: '#D6E3EC',
   sections: [
     {
       key: 'person',

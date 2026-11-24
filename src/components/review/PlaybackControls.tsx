@@ -126,7 +126,7 @@ const styles = StyleSheet.create({
   },
   seekBarTrack: {
     height: 5,
-    backgroundColor: '#D8D1C3',
+    backgroundColor: '#E3DED4',
     borderRadius: 999,
     position: 'relative',
   },

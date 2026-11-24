@@ -63,7 +63,7 @@ export default function GroupSelectScreen({
           return (
             <TouchableOpacity
               key={group.id}
-              style={[styles.card, isLast && { borderColor: group.color, borderWidth: 2 }]}
+              style={[styles.card, isLast && { borderColor: Colors.accent, borderWidth: 2 }]}
               onPress={() => {
                 void Haptics.selectionAsync();
                 onSelect(group);
@@ -73,12 +73,12 @@ export default function GroupSelectScreen({
               accessibilityLabel={tx(group.topic)}
               accessibilityHint={t('Continues with the questions of this group')}
             >
-              <View style={[styles.cardIcon, { backgroundColor: group.color }]}>
-                <MaterialCommunityIcons name={group.icon as IconName} size={26} color="#FFFFFF" />
+              <View style={[styles.cardIcon, { backgroundColor: Colors.accentSoft }]}>
+                <MaterialCommunityIcons name={group.icon as IconName} size={26} color={Colors.accent} />
               </View>
               <View style={styles.cardText}>
                 {isLast ? (
-                  <Text style={[styles.cardEyebrow, { color: group.color }]}>{t('Last chosen')}</Text>
+                  <Text style={[styles.cardEyebrow, { color: Colors.accent }]}>{t('Last chosen')}</Text>
                 ) : null}
                 <Text style={styles.cardTitle}>{tx(group.topic)}</Text>
                 <Text style={styles.cardMeta}>

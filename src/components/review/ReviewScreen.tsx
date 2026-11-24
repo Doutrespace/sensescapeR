@@ -461,7 +461,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     backgroundColor: '#F5EDE4',
     borderWidth: 1,
-    borderColor: '#E4D1BE',
+    borderColor: '#E3DED4',
   },
   issueHeader: {
     marginBottom: 10,
@@ -513,7 +513,7 @@ const styles = StyleSheet.create({
     borderColor: Colors.surfaceHighlight,
   },
   detectedSoundRowRepeated: {
-    backgroundColor: '#FFF8E0',
+    backgroundColor: '#F2EFE9',
   },
   detectedSoundRowExcluded: {
     opacity: 0.55,
@@ -555,7 +555,7 @@ const styles = StyleSheet.create({
   },
   detectedSoundRepeatBadge: {
     borderRadius: Radius.full,
-    backgroundColor: 'rgb(225,173,1)',
+    backgroundColor: '#E4EDEE',
     paddingHorizontal: 6,
     paddingVertical: 2,
   },
@@ -573,7 +573,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   detectedSoundRepeatBadgeText: {
-    color: '#4A3712',
+    color: '#2D5C68',
     fontSize: 10,
     fontWeight: '800',
   },

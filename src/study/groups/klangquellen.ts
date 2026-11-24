@@ -29,8 +29,6 @@ export const KLANGQUELLEN: StudyGroup = {
   id: 'klangquellen',
   topic: lt('Klangquellen, Klangqualität und Umgebung', 'Sound sources, sound quality and surroundings'),
   icon: 'ear-hearing',
-  color: '#69782F',
-  softColor: '#E4E8CD',
   sections: [
     {
       key: 'person',

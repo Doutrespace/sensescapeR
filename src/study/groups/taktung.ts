@@ -10,8 +10,6 @@ export const TAKTUNG: StudyGroup = {
   id: 'taktung',
   topic: lt('Kommerzielle und saisonale Taktung', 'Commercial and seasonal rhythm'),
   icon: 'storefront-outline',
-  color: '#8A5A2B',
-  softColor: '#F1E2CF',
   sections: [
     {
       key: 'zusatzfragen',

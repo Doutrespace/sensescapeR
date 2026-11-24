@@ -18,8 +18,6 @@ export const GRUENRAEUME: StudyGroup = {
     'Perception and restorativeness of urban green spaces'
   ),
   icon: 'tree-outline',
-  color: '#4B7A58',
-  softColor: '#D7E6DA',
   sections: [
     {
       key: 'person',

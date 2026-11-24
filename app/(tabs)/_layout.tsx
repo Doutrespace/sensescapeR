@@ -34,7 +34,7 @@ function TabBarBackground() {
             tint="light"
             style={{
                 ...baseStyle,
-                backgroundColor: '#FBF8F1D9',
+                backgroundColor: '#FFFFFFE6',
             }}
         />
     );

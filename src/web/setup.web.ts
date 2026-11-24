@@ -30,7 +30,7 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
       -webkit-tap-highlight-color: transparent;
       -webkit-text-size-adjust: 100%;
       touch-action: manipulation;
-      background: #F3EFE6;
+      background: #F5F3EE;
     }
   `;
   document.head.appendChild(style);

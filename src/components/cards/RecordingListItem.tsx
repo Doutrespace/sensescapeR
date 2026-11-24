@@ -14,11 +14,11 @@ interface Props {
 }
 
 const STATUS_CONFIG: Record<SyncStatus, { color: string; icon: string; label: string }> = {
-  local: { color: '#6B7280', icon: 'save', label: 'Local' },
-  queued: { color: '#F59E0B', icon: 'schedule', label: 'Queued' },
-  uploading: { color: '#3B82F6', icon: 'cloud-upload', label: 'Uploading' },
-  uploaded: { color: '#22C55E', icon: 'cloud-done', label: 'Uploaded' },
-  failed: { color: '#EF4444', icon: 'error', label: 'Failed' },
+  local: { color: '#7A756C', icon: 'save', label: 'Local' },
+  queued: { color: '#B0956A', icon: 'schedule', label: 'Queued' },
+  uploading: { color: '#4F6F86', icon: 'cloud-upload', label: 'Uploading' },
+  uploaded: { color: '#5E8068', icon: 'cloud-done', label: 'Uploaded' },
+  failed: { color: '#B0463A', icon: 'error', label: 'Failed' },
 };
 
 const VISIBILITY_CONFIG: Record<CommunityVisibility, { color: string; icon: string; label: string }> = {

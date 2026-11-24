@@ -254,7 +254,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#C07D72',
+    backgroundColor: Colors.error,
   },
   statusChipText: {
     color: Colors.text,
@@ -269,7 +269,7 @@ const styles = StyleSheet.create({
   progressTrack: {
     height: 5,
     borderRadius: Radius.full,
-    backgroundColor: '#DED7CA',
+    backgroundColor: '#E3DED4',
     overflow: 'hidden',
     marginBottom: 14,
   },
@@ -303,13 +303,14 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: Colors.textMuted,
   },
+  // Stacked: side by side, the class names broke mid-word on a phone.
   dualPanel: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     gap: 10,
     marginBottom: 8,
   },
   panelColumn: {
-    flex: 1,
+    alignSelf: 'stretch',
     backgroundColor: Colors.surface,
     borderWidth: 1,
     borderColor: Colors.surfaceHighlight,
@@ -387,16 +388,16 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   rowRepeated: {
-    backgroundColor: '#FFF8E0',
+    backgroundColor: Colors.surfaceSubtle,
   },
   repeatBadge: {
     borderRadius: Radius.full,
-    backgroundColor: 'rgb(225,173,1)',
+    backgroundColor: Colors.accentSoft,
     paddingHorizontal: 6,
     paddingVertical: 2,
   },
   repeatBadgeText: {
-    color: '#4A3712',
+    color: Colors.accent,
     fontSize: 10,
     fontWeight: '800',
   },
@@ -418,7 +419,7 @@ const styles = StyleSheet.create({
     height: 3,
     borderRadius: Radius.full,
     overflow: 'hidden',
-    backgroundColor: '#DED7CA',
+    backgroundColor: '#E3DED4',
   },
   rowFill: {
     height: '100%',
@@ -440,7 +441,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.lg,
     backgroundColor: Colors.surface,
     borderWidth: 1,
-    borderColor: '#E4D1BE',
+    borderColor: '#E3DED4',
   },
   errorText: {
     fontSize: 13,

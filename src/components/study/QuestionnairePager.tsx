@@ -225,7 +225,7 @@ export function QuestionnairePager({
           </TouchableOpacity>
         ) : null}
         <TouchableOpacity
-          style={[styles.nextButton, { backgroundColor: color }]}
+          style={[styles.nextButton, { backgroundColor: Colors.primary }]}
           onPress={handleNext}
           activeOpacity={0.85}
           accessibilityRole="button"
@@ -256,7 +256,7 @@ const styles = StyleSheet.create({
   segment: {
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#DCD5C7',
+    backgroundColor: '#E3DED4',
   },
   page: {
     flex: 1,

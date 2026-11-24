@@ -87,8 +87,8 @@ export default function GroupQuestionnaire({
       answers={answers}
       onChange={onChange}
       icon={group.icon}
-      color={group.color}
-      softColor={group.softColor}
+      color={Colors.accent}
+      softColor={Colors.accentSoft}
       eyebrow={tx(group.topic)}
       bottomInset={tabBarHeight + 16}
       completeLabel={t('Save measurement')}

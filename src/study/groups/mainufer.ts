@@ -16,8 +16,6 @@ export const MAINUFER: StudyGroup = {
     'Würzburg Main riverbank: smell, sound and recreation'
   ),
   icon: 'waves',
-  color: '#2E7D7A',
-  softColor: '#D3E9E7',
   sections: [
     {
       key: 'geruch',

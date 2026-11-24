@@ -251,7 +251,7 @@ const styles = StyleSheet.create({
     right: THUMB_SIZE / 2 - TRACK_HEIGHT / 2,
     height: TRACK_HEIGHT,
     borderRadius: TRACK_HEIGHT / 2,
-    backgroundColor: '#E6E0D4',
+    backgroundColor: '#E3DED4',
   },
   tick: {
     position: 'absolute',

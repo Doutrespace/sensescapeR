@@ -19,11 +19,11 @@ interface Props {
 }
 
 const STATUS_CONFIG: Record<SyncStatus, { color: string; icon: string; label: string }> = {
-  local: { color: '#6B7280', icon: 'save', label: 'Saved Locally' },
-  queued: { color: '#F59E0B', icon: 'schedule', label: 'Queued for Upload' },
-  uploading: { color: '#3B82F6', icon: 'cloud-upload', label: 'Uploading...' },
-  uploaded: { color: '#22C55E', icon: 'cloud-done', label: 'Uploaded' },
-  failed: { color: '#EF4444', icon: 'error', label: 'Upload Failed' },
+  local: { color: '#7A756C', icon: 'save', label: 'Saved Locally' },
+  queued: { color: '#B0956A', icon: 'schedule', label: 'Queued for Upload' },
+  uploading: { color: '#4F6F86', icon: 'cloud-upload', label: 'Uploading...' },
+  uploaded: { color: '#5E8068', icon: 'cloud-done', label: 'Uploaded' },
+  failed: { color: '#B0463A', icon: 'error', label: 'Upload Failed' },
 };
 
 export default function RecordingCard({
@@ -199,17 +199,17 @@ export default function RecordingCard({
             <Text style={styles.sectionTitle}>{t('Sound Sources')}</Text>
             <View style={styles.sourceGrid}>
               <View style={styles.sourceItem}>
-                <MaterialIcons name="eco" size={20} color="#22C55E" />
+                <MaterialIcons name="eco" size={20} color="#5E8068" />
                 <Text style={styles.sourceLabel}>{t('Biophony')}</Text>
                 <Text style={styles.sourceValue}>{sourceDominance.biophony}%</Text>
               </View>
               <View style={styles.sourceItem}>
-                <MaterialIcons name="air" size={20} color="#3B82F6" />
+                <MaterialIcons name="air" size={20} color="#4F6F86" />
                 <Text style={styles.sourceLabel}>{t('Geophony')}</Text>
                 <Text style={styles.sourceValue}>{sourceDominance.geophony}%</Text>
               </View>
               <View style={styles.sourceItem}>
-                <MaterialIcons name="directions-car" size={20} color="#F59E0B" />
+                <MaterialIcons name="directions-car" size={20} color="#B0956A" />
                 <Text style={styles.sourceLabel}>{t('Anthrophony')}</Text>
                 <Text style={styles.sourceValue}>{sourceDominance.anthrophony}%</Text>
               </View>

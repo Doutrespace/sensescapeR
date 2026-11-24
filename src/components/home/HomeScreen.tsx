@@ -187,8 +187,8 @@ const styles = StyleSheet.create({
     height: 320,
     borderRadius: 160,
     borderWidth: 1,
-    borderColor: '#DED7CA',
-    backgroundColor: '#F7F3EA',
+    borderColor: '#E3DED4',
+    backgroundColor: '#FFFFFF',
   },
   gridLineHorizontal: {
     position: 'absolute',
@@ -196,7 +196,7 @@ const styles = StyleSheet.create({
     left: Spacing.lg,
     right: Spacing.lg,
     height: 1,
-    backgroundColor: '#E2DBCF',
+    backgroundColor: '#E3DED4',
   },
   gridLineVertical: {
     position: 'absolute',
@@ -204,7 +204,7 @@ const styles = StyleSheet.create({
     bottom: 164,
     right: 84,
     width: 1,
-    backgroundColor: '#E2DBCF',
+    backgroundColor: '#E3DED4',
   },
   hero: {
     flex: 1,
@@ -225,7 +225,7 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: '#B8C9A3',
+    backgroundColor: Colors.accentSoft,
   },
   markerBadge: {
     width: 56,
@@ -326,6 +326,6 @@ const styles = StyleSheet.create({
     borderRadius: 17,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#2B2B2B',
+    backgroundColor: Colors.primary,
   },
 });

@@ -12,12 +12,12 @@ interface AlertButton {
 
 const COLORS = {
   backdrop: 'rgba(23, 23, 23, 0.45)',
-  surface: '#FBF8F1',
+  surface: '#FFFFFF',
   text: '#171717',
   muted: '#6E685D',
   primary: '#171717',
   destructive: '#B55245',
-  border: '#D8D1C3',
+  border: '#E3DED4',
 };
 
 function styleElement(element: HTMLElement, style: Partial<CSSStyleDeclaration>): void {

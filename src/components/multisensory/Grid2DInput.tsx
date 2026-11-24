@@ -208,7 +208,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     borderRadius: Radius.lg,
     overflow: 'hidden',
-    backgroundColor: '#F8F5EE',
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: Colors.surfaceHighlight,
   },

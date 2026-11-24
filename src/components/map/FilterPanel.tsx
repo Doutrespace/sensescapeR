@@ -15,11 +15,11 @@ interface Props {
 }
 
 const SYNC_STATUSES: { value: SyncStatus; label: string; color: string }[] = [
-  { value: 'local', label: 'Local', color: '#6B7280' },
-  { value: 'queued', label: 'Queued', color: '#F59E0B' },
-  { value: 'uploading', label: 'Uploading', color: '#3B82F6' },
-  { value: 'uploaded', label: 'Uploaded', color: '#22C55E' },
-  { value: 'failed', label: 'Failed', color: '#EF4444' },
+  { value: 'local', label: 'Local', color: '#7A756C' },
+  { value: 'queued', label: 'Queued', color: '#B0956A' },
+  { value: 'uploading', label: 'Uploading', color: '#4F6F86' },
+  { value: 'uploaded', label: 'Uploaded', color: '#5E8068' },
+  { value: 'failed', label: 'Failed', color: '#B0463A' },
 ];
 
 export default function FilterPanel({

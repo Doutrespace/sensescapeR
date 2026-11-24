@@ -24,14 +24,14 @@ const PAQ_ATTRIBUTES: {
   color: string;
   angle: number;
 }[] = [
-  { key: 'eventful', label: 'Eventful', color: '#F59E0B', angle: 0 },
-  { key: 'chaotic', label: 'Chaotic', color: '#EF4444', angle: 45 },
-  { key: 'annoying', label: 'Annoying', color: '#DC2626', angle: 90 },
-  { key: 'monotonous', label: 'Monotonous', color: '#6B7280', angle: 135 },
-  { key: 'uneventful', label: 'Uneventful', color: '#3B82F6', angle: 180 },
-  { key: 'calm', label: 'Calm', color: '#06B6D4', angle: 225 },
-  { key: 'pleasant', label: 'Pleasant', color: '#22C55E', angle: 270 },
-  { key: 'vibrant', label: 'Vibrant', color: '#84CC16', angle: 315 },
+  { key: 'eventful', label: 'Eventful', color: '#B0956A', angle: 0 },
+  { key: 'chaotic', label: 'Chaotic', color: '#B0463A', angle: 45 },
+  { key: 'annoying', label: 'Annoying', color: '#B0463A', angle: 90 },
+  { key: 'monotonous', label: 'Monotonous', color: '#7A756C', angle: 135 },
+  { key: 'uneventful', label: 'Uneventful', color: '#4F6F86', angle: 180 },
+  { key: 'calm', label: 'Calm', color: '#5B8A92', angle: 225 },
+  { key: 'pleasant', label: 'Pleasant', color: '#5E8068', angle: 270 },
+  { key: 'vibrant', label: 'Vibrant', color: '#97A07A', angle: 315 },
 ];
 
 interface Props {

@@ -509,7 +509,8 @@ const styles = StyleSheet.create({
     color: Colors.text,
   },
   headerTitleCompact: {
-    fontSize: 21,
+    // Small enough for "Meine Aufnahmen" next to the three buttons on a phone.
+    fontSize: 18,
   },
   headerStats: {
     fontSize: 13,

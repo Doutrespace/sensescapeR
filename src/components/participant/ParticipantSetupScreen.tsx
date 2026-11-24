@@ -17,8 +17,8 @@ import { toParticipantCode } from '../../utils/ids';
 import { isSupabaseConfigured } from '../../utils/supabase';
 import { QuestionItem } from '../study/QuestionItem';
 
-const ACCENT = '#35566E';
-const SOFT = '#DCE5EC';
+const ACCENT = Colors.accent;
+const SOFT = Colors.accentSoft;
 
 interface Props {
   /**
@@ -231,7 +231,7 @@ export default function ParticipantSetupScreen({ mode, bottomInset, onDone, onCa
             </TouchableOpacity>
           ) : null}
           <TouchableOpacity
-            style={[styles.submitButton, { backgroundColor: isComplete ? ACCENT : '#8A9AA6' }]}
+            style={[styles.submitButton, { backgroundColor: isComplete ? Colors.primary : Colors.textDisabled }]}
             onPress={handleSubmit}
             disabled={isSaving}
             activeOpacity={0.85}

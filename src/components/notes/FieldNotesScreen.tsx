@@ -296,7 +296,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.lg,
     borderWidth: 1,
     borderColor: Colors.surfaceHighlight,
-    backgroundColor: '#F7F3EA',
+    backgroundColor: '#FFFFFF',
     paddingHorizontal: 14,
     paddingVertical: 14,
     // 16px keeps iOS Safari from zooming into the field on focus.
@@ -340,7 +340,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.lg,
     borderWidth: 1,
     borderColor: Colors.surfaceHighlight,
-    backgroundColor: '#F7F3EA',
+    backgroundColor: '#FFFFFF',
     padding: 14,
   },
   transcriptCardHeader: {

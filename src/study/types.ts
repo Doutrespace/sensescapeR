@@ -156,10 +156,8 @@ export interface StudyGroup {
    */
   id: string;
   topic: LocalizedText;
-  /** MaterialCommunityIcons glyph. */
+  /** MaterialCommunityIcons glyph. Groups share the app's accent colour. */
   icon: string;
-  color: string;
-  softColor: string;
   sections: StudySection[];
 }
 

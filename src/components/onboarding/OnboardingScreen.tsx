@@ -285,7 +285,10 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: Spacing.xl,
+    // Keeps the content clear of the language switch and "Skip" above it.
+    paddingTop: 112,
+    paddingBottom: Spacing.xl,
+    paddingHorizontal: Spacing.xl,
   },
   iconContainer: {
     width: 120,

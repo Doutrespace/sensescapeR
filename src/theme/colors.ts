@@ -1,36 +1,60 @@
+/**
+ * One calm colour system for the whole app:
+ * - neutrals for backgrounds, cards and lines,
+ * - ink for text and the main buttons,
+ * - a single accent (petrol) for selections, progress, scales and icons,
+ * - muted data colours (DataColors) only where colour carries meaning.
+ * Avoid introducing new hues in components; use these tokens.
+ */
 export const Colors = {
-  // Core backgrounds - warm neutral, inspired by editorial map interfaces
-  background: '#F3EFE6',
-  surface: '#FBF8F1',
-  surfaceHighlight: '#D8D1C3',
+  // Core backgrounds: warm off-white page, white cards, fine lines
+  background: '#F5F3EE',
+  surface: '#FFFFFF',
+  surfaceSubtle: '#F2EFE9',
+  surfaceHighlight: '#E3DED4',
 
-  // Primary accent - keep the UI monochrome and let data pop
-  primary: '#171717',
-  primaryMuted: '#17171714',
+  // Ink: text and main buttons
+  primary: '#16191D',
+  primaryMuted: '#16191D14',
+
+  // The one accent colour
+  accent: '#2D5C68',
+  accentSoft: '#E4EDEE',
+  accentMuted: '#2D5C681F',
 
   // Secondary accents
   secondary: '#7A725F',
   secondaryMuted: '#7A725F20',
 
   // Semantic colors
-  success: '#3D7D5E',
-  successMuted: '#3D7D5E20',
-  warning: '#B9863D',
-  warningMuted: '#B9863D1C',
-  error: '#B55245',
-  errorMuted: '#B552451A',
+  success: '#2F7556',
+  successMuted: '#2F755620',
+  warning: '#A8741F',
+  warningMuted: '#A8741F1C',
+  error: '#B0463A',
+  errorMuted: '#B0463A1A',
 
   // Text colors
-  text: '#171717',
-  textMuted: '#6E685D',
-  textDisabled: '#A29B8F',
+  text: '#16191D',
+  textMuted: '#625E57',
+  textDisabled: '#A59F95',
 
   // Sync status colors
-  statusLocal: '#756F64',
-  statusQueued: '#C59A4A',
-  statusUploading: '#6C8AA7',
-  statusUploaded: '#4E8A68',
-  statusFailed: '#B55245',
+  statusLocal: '#77726A',
+  statusQueued: '#A8741F',
+  statusUploading: '#4F6F86',
+  statusUploaded: '#2F7556',
+  statusFailed: '#B0463A',
+};
+
+/** Muted colours for data (categories, map markers, charts); not for UI chrome. */
+export const DataColors = {
+  slate: '#4F6F86',
+  sage: '#5E8068',
+  sand: '#B0956A',
+  clay: '#A4664F',
+  plum: '#76658A',
+  stone: '#7A756C',
 };
 
 export const Spacing = {

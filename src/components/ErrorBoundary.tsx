@@ -85,13 +85,13 @@ const styles = StyleSheet.create({
   },
   message: {
     fontSize: 16,
-    color: '#6B7280',
+    color: '#7A756C',
     textAlign: 'center',
     marginBottom: 24,
     lineHeight: 24,
   },
   button: {
-    backgroundColor: '#0066FF',
+    backgroundColor: '#16191D',
     paddingHorizontal: 32,
     paddingVertical: 14,
     borderRadius: 12,

@@ -30,25 +30,26 @@ interface Props {
 
 // Quadrant definitions
 const QUADRANTS = {
+  // Muted data colours (theme DataColors) on near-neutral backgrounds.
   vibrant: {
     label: 'Vibrant',
-    color: '#8FA37E',
-    bg: '#DDE8D5',
+    color: '#5E8068',
+    bg: '#EDF2EE',
   },
   chaotic: {
     label: 'Chaotic',
-    color: '#BC5B4F',
-    bg: '#E8C9C4',
+    color: '#A4664F',
+    bg: '#F5ECE7',
   },
   calm: {
     label: 'Calm',
-    color: '#3B6E8C',
-    bg: '#CADBE6',
+    color: '#4F6F86',
+    bg: '#EAF0F4',
   },
   monotonous: {
     label: 'Monotonous',
-    color: '#94666E',
-    bg: '#DECED1',
+    color: '#7A756C',
+    bg: '#F0EEEA',
   },
 };
 
@@ -413,7 +414,7 @@ const styles = StyleSheet.create({
     position: 'relative',
     borderRadius: Radius.lg,
     overflow: 'hidden',
-    backgroundColor: '#F8F5EE',
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: Colors.surfaceHighlight,
   },
@@ -486,7 +487,7 @@ const styles = StyleSheet.create({
   },
   axisLabelContainer: {
     position: 'absolute',
-    backgroundColor: '#F8F5EE',
+    backgroundColor: '#FFFFFF',
     paddingHorizontal: 5,
     paddingVertical: 2,
   },
@@ -544,14 +545,14 @@ const styles = StyleSheet.create({
   },
   pin: {
     position: 'absolute',
-    backgroundColor: '#FBF8F1EE',
+    backgroundColor: '#FFFFFFEE',
     borderWidth: 2.5,
     borderColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
   pinActive: {
-    backgroundColor: '#FBF8F1',
+    backgroundColor: '#FFFFFF',
     borderWidth: 3,
   },
   pinCore: {
@@ -575,7 +576,7 @@ const styles = StyleSheet.create({
   touchHintText: {
     fontSize: 11,
     color: Colors.textMuted,
-    backgroundColor: '#FBF8F1',
+    backgroundColor: '#FFFFFF',
     paddingHorizontal: 10,
     paddingVertical: 2,
     borderRadius: Radius.full,

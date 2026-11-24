@@ -90,10 +90,8 @@ describe('project groups', () => {
   it.each(STUDY_GROUPS.map((group) => [group.id, group] as const))('%s is well formed', (_id, group) => {
     expectText(group.topic, 'topic');
     // Groups are known by topic only; no student names in the app or the data.
-    expect(Object.keys(group).sort()).toEqual(['color', 'icon', 'id', 'sections', 'softColor', 'topic']);
+    expect(Object.keys(group).sort()).toEqual(['icon', 'id', 'sections', 'topic']);
     expect(glyphs[group.icon]).toBeDefined();
-    expect(group.color).toMatch(/^#[0-9A-F]{6}$/i);
-    expect(group.softColor).toMatch(/^#[0-9A-F]{6}$/i);
     expect(runSections(group).length).toBeGreaterThan(0);
     expect(personSections(group).length + runSections(group).length).toBe(group.sections.length);
 

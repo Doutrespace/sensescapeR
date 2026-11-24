@@ -152,7 +152,7 @@ export default function SourceDominanceMixer({ value, onChange }: Props) {
         label="Biophony"
         description="Birds, insects, animals"
         icon="eco"
-        color="#22C55E"
+        color="#5E8068"
         value={localValue.biophony}
         onChange={(v) => handleChange('biophony', v)}
       />
@@ -161,7 +161,7 @@ export default function SourceDominanceMixer({ value, onChange }: Props) {
         label="Geophony"
         description="Wind, water, thunder"
         icon="air"
-        color="#3B82F6"
+        color="#4F6F86"
         value={localValue.geophony}
         onChange={(v) => handleChange('geophony', v)}
       />
@@ -170,7 +170,7 @@ export default function SourceDominanceMixer({ value, onChange }: Props) {
         label="Anthrophony"
         description="Traffic, voices, machines"
         icon="directions-car"
-        color="#F59E0B"
+        color="#B0956A"
         value={localValue.anthrophony}
         onChange={(v) => handleChange('anthrophony', v)}
       />

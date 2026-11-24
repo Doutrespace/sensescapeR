@@ -56,20 +56,16 @@ const SLIDER_ITEMS: Partial<Record<MultisensoryModuleKey, ScaleItem[]>> = {
   restorativeness: RESTORATIVENESS_ITEMS,
 };
 
-// Quiet tints: the pads should read as one surface, not four coloured tiles.
+// Near-neutral tints: the pads read as one surface. The pleasant (right) half
+// carries a faint hint of the accent, the unpleasant half stays warm grey.
 const SMELL_QUADRANT_COLORS: Quadrants<string> = {
-  topLeft: '#F1E7EA',
-  topRight: '#ECE6F3',
-  bottomLeft: '#F7F3F1',
-  bottomRight: '#F3F0F7',
+  topLeft: '#F1EEE8',
+  topRight: '#EAF0F0',
+  bottomLeft: '#F6F4F0',
+  bottomRight: '#EFF3F3',
 };
 
-const EMOTION_QUADRANT_COLORS: Quadrants<string> = {
-  topLeft: '#F5E6E8',
-  topRight: '#F7ECE4',
-  bottomLeft: '#EEEDF0',
-  bottomRight: '#EDF1EC',
-};
+const EMOTION_QUADRANT_COLORS: Quadrants<string> = SMELL_QUADRANT_COLORS;
 
 // Corner words of the Affect Grid (Russell, Weiss & Mendelsohn, 1989).
 const EMOTION_QUADRANT_LABELS: Quadrants<string> = {
@@ -525,7 +521,7 @@ export default function MultisensoryScreen({ value, onChange, onConfirm, onBack 
           </TouchableOpacity>
         )}
         <TouchableOpacity
-          style={[styles.nextButton, { backgroundColor: section.color }]}
+          style={[styles.nextButton, { backgroundColor: Colors.primary }]}
           onPress={handleNext}
           activeOpacity={0.85}
           accessibilityRole="button"
@@ -557,7 +553,7 @@ const styles = StyleSheet.create({
   segment: {
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#DCD5C7',
+    backgroundColor: '#E3DED4',
   },
   page: {
     flex: 1,

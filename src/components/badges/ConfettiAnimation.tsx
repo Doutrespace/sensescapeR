@@ -29,14 +29,14 @@ interface Particle {
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 const COLORS = [
-  '#FFD700', // Gold
-  '#FF6B6B', // Coral
-  '#4ECDC4', // Teal
-  '#A855F7', // Purple
-  '#F97316', // Orange
-  '#22C55E', // Green
-  '#3B82F6', // Blue
-  '#EC4899', // Pink
+  '#2D5C68', // accent
+  '#4F6F86', // slate
+  '#5E8068', // sage
+  '#B0956A', // sand
+  '#A4664F', // clay
+  '#76658A', // plum
+  '#16191D', // ink
+  '#C4BEB3', // stone
 ];
 
 function ConfettiParticle({ particle }: { particle: Particle }) {

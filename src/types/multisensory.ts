@@ -123,10 +123,14 @@ export const VISUAL_ITEMS: ScaleItem<VisualKey>[] = [
   },
 ];
 
-/** Cold-to-hot ramp for the 7-point thermal scales (index 0 = -3). */
-export const THERMAL_RAMP = ['#3B6E8C', '#6C9AB5', '#A3C0D0', '#B8B2A4', '#E0AE86', '#D0834F', '#B5483A'];
-/** Comfortable-to-uncomfortable ramp for the 5-point comfort scale. */
-export const COMFORT_RAMP = ['#4B7A58', '#9AA85A', '#D3A64A', '#C97A45', '#B5483A'];
+/** Cold-to-hot ramp for the 7-point thermal scales (index 0 = -3), muted. */
+export const THERMAL_RAMP = ['#4F6F86', '#7D97A8', '#ABBCC6', '#C4BEB3', '#D2AE8E', '#BC8763', '#A35F48'];
+/** Comfortable-to-uncomfortable ramp for the 5-point comfort scale, muted. */
+export const COMFORT_RAMP = ['#5E8068', '#97A07A', '#C6A66C', '#BC8763', '#A35F48'];
+
+/** All sections share the app's one accent colour (see theme/colors). */
+const SECTION_COLOR = '#2D5C68';
+const SECTION_SOFT = '#E4EDEE';
 
 export const THERMAL_ITEMS: ScaleItem<ThermalKey>[] = [
   {
@@ -267,12 +271,12 @@ export interface MultisensoryModuleInfo {
 }
 
 export const MULTISENSORY_MODULES: MultisensoryModuleInfo[] = [
-  { key: 'visual', icon: 'eye-outline', color: '#3B6E8C', softColor: '#D6E3EC', title: 'Visualscape', framework: 'Kaplan preference matrix', requiredItems: 4 },
-  { key: 'smell', icon: 'scent', color: '#7A5C9C', softColor: '#E4DBEE', title: 'Smellscape', framework: 'Pleasantness × intensity', requiredItems: 2 },
-  { key: 'thermal', icon: 'thermometer', color: '#B0602F', softColor: '#F3DFCF', title: 'Thermal perception', framework: 'Scales after ISO 10551', requiredItems: 3 },
-  { key: 'restorativeness', icon: 'meditation', color: '#4B7A58', softColor: '#D7E6DA', title: 'Restorativeness', framework: 'Attention Restoration Theory', requiredItems: 4 },
-  { key: 'emotion', icon: 'heart-pulse', color: '#B04A5C', softColor: '#F2D6DB', title: 'Emotional response', framework: 'Affect Grid · SAM dominance', requiredItems: 2 },
-  { key: 'environment', icon: 'tree-outline', color: '#69782F', softColor: '#E4E8CD', title: 'Environmental qualities', framework: 'Perceived Sensory Dimensions', requiredItems: 8 },
+  { key: 'visual', icon: 'eye-outline', color: SECTION_COLOR, softColor: SECTION_SOFT, title: 'Visualscape', framework: 'Kaplan preference matrix', requiredItems: 4 },
+  { key: 'smell', icon: 'scent', color: SECTION_COLOR, softColor: SECTION_SOFT, title: 'Smellscape', framework: 'Pleasantness × intensity', requiredItems: 2 },
+  { key: 'thermal', icon: 'thermometer', color: SECTION_COLOR, softColor: SECTION_SOFT, title: 'Thermal perception', framework: 'Scales after ISO 10551', requiredItems: 3 },
+  { key: 'restorativeness', icon: 'meditation', color: SECTION_COLOR, softColor: SECTION_SOFT, title: 'Restorativeness', framework: 'Attention Restoration Theory', requiredItems: 4 },
+  { key: 'emotion', icon: 'heart-pulse', color: SECTION_COLOR, softColor: SECTION_SOFT, title: 'Emotional response', framework: 'Affect Grid · SAM dominance', requiredItems: 2 },
+  { key: 'environment', icon: 'tree-outline', color: SECTION_COLOR, softColor: SECTION_SOFT, title: 'Environmental qualities', framework: 'Perceived Sensory Dimensions', requiredItems: 8 },
 ];
 
 function isNumber(value: unknown): value is number {

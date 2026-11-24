@@ -101,16 +101,16 @@ const CATEGORY_KEYWORDS: Record<SceneCategory, string[]> = {
 
 // Category display info
 export const CATEGORY_INFO: Record<SceneCategory, { emoji: string; label: string; color: string }> = {
-  nature: { emoji: '🌲', label: 'Nature', color: '#22C55E' },
-  water: { emoji: '🌊', label: 'Water', color: '#3B82F6' },
-  urban: { emoji: '🏙️', label: 'Urban', color: '#6B7280' },
-  indoor: { emoji: '🏠', label: 'Indoor', color: '#F59E0B' },
-  traffic: { emoji: '🚗', label: 'Traffic', color: '#EF4444' },
-  park: { emoji: '🌳', label: 'Park', color: '#84CC16' },
-  industrial: { emoji: '🏭', label: 'Industrial', color: '#78716C' },
-  residential: { emoji: '🏡', label: 'Residential', color: '#EC4899' },
-  sky: { emoji: '☁️', label: 'Sky', color: '#06B6D4' },
-  unknown: { emoji: '❓', label: 'Unknown', color: '#9CA3AF' },
+  nature: { emoji: '🌲', label: 'Nature', color: '#5E8068' },
+  water: { emoji: '🌊', label: 'Water', color: '#4F6F86' },
+  urban: { emoji: '🏙️', label: 'Urban', color: '#7A756C' },
+  indoor: { emoji: '🏠', label: 'Indoor', color: '#B0956A' },
+  traffic: { emoji: '🚗', label: 'Traffic', color: '#B0463A' },
+  park: { emoji: '🌳', label: 'Park', color: '#97A07A' },
+  industrial: { emoji: '🏭', label: 'Industrial', color: '#7A756C' },
+  residential: { emoji: '🏡', label: 'Residential', color: '#76658A' },
+  sky: { emoji: '☁️', label: 'Sky', color: '#5B8A92' },
+  unknown: { emoji: '❓', label: 'Unknown', color: '#A59F95' },
 };
 
 /**

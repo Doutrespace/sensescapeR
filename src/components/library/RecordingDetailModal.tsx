@@ -231,7 +231,7 @@ export function RecordingDetailModal({
                 <View style={styles.classificationList}>
                   {detectedSounds.map((sound, index) => {
                     const accentColor = sound.occurrenceCount && sound.occurrenceCount > 1
-                      ? 'rgb(225,173,1)'
+                      ? '#E4EDEE'
                       : getDetectionAccent(index);
                     const confidencePercent = typeof sound.score === 'number'
                       ? Math.round(sound.score * 100)

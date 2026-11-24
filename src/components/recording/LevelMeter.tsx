@@ -26,7 +26,7 @@ export default function LevelMeter({ level, peakLevel, isRecording }: Props) {
   const getSegmentColor = (index: number, totalSegments: number) => {
     const position = index / totalSegments;
     if (position > 0.85) return Colors.error; // Red zone (clipping)
-    if (position > 0.65) return '#F59E0B'; // Yellow/orange zone
+    if (position > 0.65) return '#B0956A'; // Yellow/orange zone
     return Colors.success; // Green zone
   };
 
@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.error,
   },
   labelYellow: {
-    backgroundColor: '#F59E0B',
+    backgroundColor: '#B0956A',
   },
   labelGreen: {
     backgroundColor: Colors.success,

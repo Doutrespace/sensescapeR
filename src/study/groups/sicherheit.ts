@@ -16,8 +16,6 @@ export const SICHERHEIT: StudyGroup = {
   id: 'sicherheit',
   topic: lt('Wohlbefinden, Sicherheit und Geräuschkulisse', 'Well-being, safety and soundscape'),
   icon: 'shield-check-outline',
-  color: '#B04A5C',
-  softColor: '#F2D6DB',
   sections: [
     {
       key: 'allgemeines',

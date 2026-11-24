@@ -254,7 +254,7 @@ const styles = StyleSheet.create({
     gap: 10,
     padding: 14,
     borderRadius: 16,
-    backgroundColor: '#ECE6DA',
+    backgroundColor: '#F2EFE9',
   },
   noticeText: {
     flex: 1,

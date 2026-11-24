@@ -316,7 +316,7 @@ const styles = StyleSheet.create({
     gap: 12,
     padding: 12,
     borderRadius: 24,
-    backgroundColor: '#ECE6DA',
+    backgroundColor: '#F2EFE9',
   },
   interviewHeader: {
     flexDirection: 'row',

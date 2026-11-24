@@ -156,7 +156,7 @@ const styles = StyleSheet.create({
   },
   placeholder: {
     flex: 1,
-    backgroundColor: '#F3EFE6',
+    backgroundColor: '#F5F3EE',
     borderRadius: Radius.xl,
     justifyContent: 'center',
     alignItems: 'center',
