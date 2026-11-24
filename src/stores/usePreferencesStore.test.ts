@@ -24,7 +24,7 @@ describe('usePreferencesStore', () => {
       autoUploadWifiOnly: true,
       defaultPrivacyMode: 'exact',
       defaultLicense: 'CC-BY',
-      defaultCommunityVisibility: 'community',
+      defaultCommunityVisibility: 'private',
       audioLevelingMode: 'playback',
       autoCleanupRetentionDays: 90,
       autoCleanupUploadedOnly: true,
@@ -42,7 +42,7 @@ describe('usePreferencesStore', () => {
       autoUploadWifiOnly: true,
       defaultPrivacyMode: 'exact',
       defaultLicense: 'CC-BY',
-      defaultCommunityVisibility: 'community',
+      defaultCommunityVisibility: 'private',
       audioLevelingMode: 'playback',
       autoCleanupRetentionDays: 90,
       autoCleanupUploadedOnly: true,
@@ -55,10 +55,11 @@ describe('usePreferencesStore', () => {
       autoUploadWifiOnly: false,
       defaultPrivacyMode: 'hidden',
       defaultLicense: 'CC0',
-      defaultCommunityVisibility: 'private',
+      defaultCommunityVisibility: 'community',
       audioLevelingMode: 'off',
       autoCleanupRetentionDays: 180,
       autoCleanupUploadedOnly: false,
+      visibilityDefaultVersion: 2,
     }));
 
     await usePreferencesStore.getState().initialize();
@@ -67,11 +68,25 @@ describe('usePreferencesStore', () => {
       autoUploadWifiOnly: false,
       defaultPrivacyMode: 'hidden',
       defaultLicense: 'CC0',
-      defaultCommunityVisibility: 'private',
+      defaultCommunityVisibility: 'community',
       audioLevelingMode: 'off',
       autoCleanupRetentionDays: 180,
       autoCleanupUploadedOnly: false,
       isLoaded: true,
+    });
+  });
+
+  it('does not carry over the old "community" default saved before version 2', async () => {
+    mockedAsyncStorage.getItem.mockResolvedValueOnce(JSON.stringify({
+      defaultCommunityVisibility: 'community',
+      defaultLicense: 'CC0',
+    }));
+
+    await usePreferencesStore.getState().initialize();
+
+    expect(usePreferencesStore.getState()).toMatchObject({
+      defaultCommunityVisibility: 'private',
+      defaultLicense: 'CC0',
     });
   });
 
@@ -107,6 +122,7 @@ describe('usePreferencesStore', () => {
         profileAvatarMode: 'default',
         profileAvatarEmoji: null,
         profileAvatarImageUri: null,
+        visibilityDefaultVersion: 2,
       })
     );
   });

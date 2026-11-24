@@ -208,7 +208,7 @@ const initialState: RecordingSession = {
   lastSaved: null,
   license: 'CC-BY',
   privacyMode: 'exact',
-  communityVisibility: 'community',
+  communityVisibility: 'private',
   pendingShortcutAction: null,
 };
 

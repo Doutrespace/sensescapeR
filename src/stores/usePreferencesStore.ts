@@ -34,11 +34,19 @@ interface PreferencesStoreState extends StoredPreferences {
   clearProfileAvatar: () => Promise<void>;
 }
 
+/**
+ * Version 2 made "private" the default share setting: course measurements
+ * reach the public map only when the participant chooses so. A setting saved
+ * before (usually the old default "community", never chosen on purpose) is
+ * not carried over.
+ */
+const VISIBILITY_DEFAULT_VERSION = 2;
+
 const DEFAULT_PREFERENCES: StoredPreferences = {
   autoUploadWifiOnly: true,
   defaultPrivacyMode: 'exact',
   defaultLicense: 'CC-BY',
-  defaultCommunityVisibility: 'community',
+  defaultCommunityVisibility: 'private',
   audioLevelingMode: 'playback',
   autoCleanupRetentionDays: 90,
   autoCleanupUploadedOnly: true,
@@ -48,7 +56,10 @@ const DEFAULT_PREFERENCES: StoredPreferences = {
 };
 
 async function persistPreferences(preferences: StoredPreferences): Promise<void> {
-  await AsyncStorage.setItem(PREFERENCES_KEY, JSON.stringify(preferences));
+  await AsyncStorage.setItem(
+    PREFERENCES_KEY,
+    JSON.stringify({ ...preferences, visibilityDefaultVersion: VISIBILITY_DEFAULT_VERSION })
+  );
 }
 
 export const usePreferencesStore = create<PreferencesStoreState>((set, get) => ({
@@ -63,7 +74,9 @@ export const usePreferencesStore = create<PreferencesStoreState>((set, get) => (
         return;
       }
 
-      const parsed = JSON.parse(storedValue) as Partial<StoredPreferences>;
+      const parsed = JSON.parse(storedValue) as Partial<StoredPreferences> & {
+        visibilityDefaultVersion?: number;
+      };
       set({
         autoUploadWifiOnly: typeof parsed.autoUploadWifiOnly === 'boolean'
           ? parsed.autoUploadWifiOnly
@@ -71,7 +84,8 @@ export const usePreferencesStore = create<PreferencesStoreState>((set, get) => (
         defaultPrivacyMode: parsed.defaultPrivacyMode ?? DEFAULT_PREFERENCES.defaultPrivacyMode,
         defaultLicense: parsed.defaultLicense ?? DEFAULT_PREFERENCES.defaultLicense,
         defaultCommunityVisibility:
-          parsed.defaultCommunityVisibility === 'private' || parsed.defaultCommunityVisibility === 'community'
+          parsed.visibilityDefaultVersion === VISIBILITY_DEFAULT_VERSION
+          && (parsed.defaultCommunityVisibility === 'private' || parsed.defaultCommunityVisibility === 'community')
             ? parsed.defaultCommunityVisibility
             : DEFAULT_PREFERENCES.defaultCommunityVisibility,
         audioLevelingMode:
