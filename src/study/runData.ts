@@ -33,6 +33,12 @@ export interface RunStudyData {
   groupId: string | null;
   /** Answers to the questions of the project group (personal ones included). */
   groupAnswers: Answers;
+  /**
+   * True when the participant went from the notes straight to the project
+   * group, so perception, senses and context were not shown. False for
+   * measurements saved before this shortcut existed.
+   */
+  mainQuestionnaireSkipped: boolean;
   /** Sequential number of the measurement on this device. */
   runNumber: number | null;
   questionnaireVersion: string;
@@ -97,6 +103,7 @@ export function parseRunStudyData(value: string | null | undefined): RunStudyDat
     siteCode: asString(parsed.siteCode),
     groupId: asString(parsed.groupId),
     groupAnswers: isRecord(parsed.groupAnswers) ? (parsed.groupAnswers as Answers) : {},
+    mainQuestionnaireSkipped: parsed.mainQuestionnaireSkipped === true,
     runNumber: typeof parsed.runNumber === 'number' ? parsed.runNumber : null,
     questionnaireVersion: asString(parsed.questionnaireVersion) ?? '',
     appVersion: asString(parsed.appVersion) ?? '',

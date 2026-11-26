@@ -28,6 +28,7 @@ function study(overrides: Partial<RunStudyData> = {}): RunStudyData {
     siteCode: 'M1',
     groupId: null,
     groupAnswers: {},
+    mainQuestionnaireSkipped: false,
     runNumber: 3,
     questionnaireVersion: '2026-11-24',
     appVersion: '1.1.0',
@@ -89,6 +90,7 @@ describe('study table rows', () => {
       participant_code: 'P-AAAAAA',
       respondent: 'self',
       collector_id: COLLECTOR,
+      main_questionnaire_skipped: 0,
       site_code: 'M1',
       visit_mode: 'staying',
       recorded_at: '2026-11-24T13:05:09.000Z',
@@ -111,6 +113,35 @@ describe('study table rows', () => {
       app_language: 'de',
     });
     expect(Object.keys(row)).toEqual(STUDY_COLUMNS);
+  });
+
+  it('marks a measurement that took the shortcut to the project group', () => {
+    const row = buildStudyRow(recording({
+      perception: undefined,
+      studyData: serializeRunStudyData(study({
+        mainQuestionnaireSkipped: true,
+        visitMode: null,
+        siteCode: null,
+        groupId: 'taktung',
+        groupAnswers: { personen_blickfeld: 2 },
+      })),
+    }));
+
+    expect(row).toMatchObject({
+      main_questionnaire_skipped: 1,
+      group_id: 'taktung',
+      visit_mode: null,
+      iso_pleasant: null,
+      iso_eventful: null,
+      taktung__personen_blickfeld: 2,
+    });
+  });
+
+  it('counts measurements from before the shortcut as not skipped', () => {
+    const { mainQuestionnaireSkipped: _omitted, ...older } = study();
+    const row = buildStudyRow(recording({ studyData: JSON.stringify(older) }));
+
+    expect(row.main_questionnaire_skipped).toBe(0);
   });
 
   it('keeps an interviewed person apart from the student who collected the data', () => {

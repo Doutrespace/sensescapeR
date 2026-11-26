@@ -266,6 +266,7 @@ export default function RecordScreen() {
             onRecordSpokenDescription={handleRecordSpokenDescription}
             onClearSpokenDescription={handleClearSpokenDescription}
             onContinue={flow.handleNotesConfirm}
+            onJumpToGroups={flow.handleJumpToGroups}
           />
         );
 
@@ -318,6 +319,7 @@ export default function RecordScreen() {
           <GroupSelectScreen
             groups={STUDY_GROUPS}
             lastGroupId={lastGroupId}
+            mainQuestionnaireSkipped={flow.store.mainQuestionnaireSkipped}
             onSelect={flow.handleGroupSelect}
             onSaveWithoutGroup={() => {
               flow.store.setGroup(null);

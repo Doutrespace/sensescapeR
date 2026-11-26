@@ -15,6 +15,8 @@ interface Props {
   groups: StudyGroup[];
   /** Group chosen at the previous measurement; listed first. */
   lastGroupId: string | null;
+  /** Reached by the shortcut from the notes, past the main questionnaire. */
+  mainQuestionnaireSkipped?: boolean;
   onSelect: (group: StudyGroup) => void;
   /** Save the measurement with the main questionnaire only. */
   onSaveWithoutGroup: () => void;
@@ -29,6 +31,7 @@ interface Props {
 export default function GroupSelectScreen({
   groups,
   lastGroupId,
+  mainQuestionnaireSkipped = false,
   onSelect,
   onSaveWithoutGroup,
   onBack,
@@ -48,10 +51,19 @@ export default function GroupSelectScreen({
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
-          <View style={styles.headerBadge}>
-            <MaterialCommunityIcons name="check-decagram" size={18} color={Colors.success} />
-            <Text style={styles.headerBadgeText}>{t('Main questionnaire complete')}</Text>
-          </View>
+          {mainQuestionnaireSkipped ? (
+            <View style={styles.headerBadge}>
+              <MaterialCommunityIcons name="debug-step-over" size={18} color={Colors.textMuted} />
+              <Text style={[styles.headerBadgeText, { color: Colors.textMuted }]}>
+                {t('Main questionnaire skipped')}
+              </Text>
+            </View>
+          ) : (
+            <View style={styles.headerBadge}>
+              <MaterialCommunityIcons name="check-decagram" size={18} color={Colors.success} />
+              <Text style={styles.headerBadgeText}>{t('Main questionnaire complete')}</Text>
+            </View>
+          )}
           <Text style={styles.title}>{t('Your project group')}</Text>
           <Text style={styles.subtitle}>
             {t('Choose your group to continue with the questions of your own project.')}

@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { MaterialIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import { Colors, Radius, Spacing } from '../../theme/colors';
 import {
   NOTE_PROMPTS,
@@ -30,6 +30,8 @@ interface Props {
   onRecordSpokenDescription?: () => void;
   onClearSpokenDescription?: () => void;
   onContinue: () => void;
+  /** Shortcut past perception, senses and context to the project group. */
+  onJumpToGroups?: () => void;
 }
 
 export default function FieldNotesScreen({
@@ -42,10 +44,12 @@ export default function FieldNotesScreen({
   onRecordSpokenDescription,
   onClearSpokenDescription,
   onContinue,
+  onJumpToGroups,
 }: Props) {
   const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight();
-  const bottomPadding = tabBarHeight + insets.bottom + 12;
+  // The tab bar floats 16 px above the bottom edge, as on the other steps.
+  const bottomPadding = tabBarHeight + insets.bottom + 16;
   const noteThemes = extractNoteThemes(fieldNotes, spokenDescription);
 
   return (
@@ -213,6 +217,23 @@ export default function FieldNotesScreen({
         >
           <Text style={styles.continueButtonText}>{t('Continue')}</Text>
         </TouchableOpacity>
+        {onJumpToGroups ? (
+          <TouchableOpacity
+            style={styles.groupShortcut}
+            onPress={onJumpToGroups}
+            activeOpacity={0.6}
+            accessibilityRole="button"
+            accessibilityLabel={t('Straight to the project group')}
+            accessibilityHint={t('Skips perception, senses and context')}
+          >
+            <View style={styles.groupShortcutRow}>
+              <MaterialCommunityIcons name="account-group-outline" size={18} color={Colors.accent} />
+              <Text style={styles.groupShortcutText}>{t('Straight to the project group')}</Text>
+              <MaterialIcons name="chevron-right" size={18} color={Colors.accent} />
+            </View>
+            <Text style={styles.groupShortcutHint}>{t('Skips perception, senses and context')}</Text>
+          </TouchableOpacity>
+        ) : null}
       </View>
     </KeyboardAvoidingView>
   );
@@ -451,5 +472,25 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
     color: Colors.background,
+  },
+  groupShortcut: {
+    alignItems: 'center',
+    paddingTop: 10,
+    paddingBottom: 6,
+    gap: 1,
+  },
+  groupShortcutRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  groupShortcutText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: Colors.accent,
+  },
+  groupShortcutHint: {
+    fontSize: 12,
+    color: Colors.textMuted,
   },
 });

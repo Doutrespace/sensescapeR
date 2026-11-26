@@ -259,6 +259,13 @@ const BASE_COLUMNS: ColumnSpec[] = [
     get: ({ study, recording }) => study?.groupId ?? recording.groupId ?? null,
   },
   {
+    column: 'main_questionnaire_skipped',
+    question: 'Shortcut taken: from the notes straight to the project group, so perception, senses and context were not shown',
+    type: 'flag',
+    values: '1 = skipped (iso_*, senses and context columns are then usually empty); 0 = shown',
+    get: ({ study }) => (study ? flag(study.mainQuestionnaireSkipped) : null),
+  },
+  {
     column: 'site_code',
     question: SITE_CODE_ITEM.prompt.de,
     type: 'free text',

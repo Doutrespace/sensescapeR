@@ -280,7 +280,21 @@ export function useRecordingFlow() {
 
   const handleNotesConfirm = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    store.setMainQuestionnaireSkipped(false);
     animateTransition(() => store.setState('CIRCUMPLEX'));
+  }, [animateTransition, store]);
+
+  /**
+   * Shortcut from the notes straight to the choice of the project group,
+   * past perception, senses and context. Without the context step nobody
+   * records an interviewed person's consent, so the answers count as the
+   * participant's own.
+   */
+  const handleJumpToGroups = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    store.setRespondent('self');
+    store.setMainQuestionnaireSkipped(true);
+    animateTransition(() => store.setState('GROUP_SELECT'));
   }, [animateTransition, store]);
 
   const handleReviewRetake = useCallback(() => {
@@ -319,7 +333,11 @@ export function useRecordingFlow() {
 
   /** One step back in the questionnaire; answers given so far are kept. */
   const handleBack = useCallback(() => {
-    const previous = PREVIOUS_STEP[useRecordingStore.getState().state];
+    const current = useRecordingStore.getState();
+    // After the shortcut, the group choice leads back to the notes.
+    const previous = current.state === 'GROUP_SELECT' && current.mainQuestionnaireSkipped
+      ? 'NOTES'
+      : PREVIOUS_STEP[current.state];
     if (previous) {
       animateTransition(() => store.setState(previous));
     }
@@ -385,6 +403,7 @@ export function useRecordingFlow() {
         siteCode: current.siteCode.trim() || null,
         groupId: group?.id ?? null,
         groupAnswers,
+        mainQuestionnaireSkipped: current.mainQuestionnaireSkipped,
         runNumber,
         questionnaireVersion: QUESTIONNAIRE_VERSION,
         appVersion: APP_VERSION,
@@ -546,6 +565,7 @@ export function useRecordingFlow() {
     handlePhotoCaptured,
     handlePhotoSkip,
     handleNotesConfirm,
+    handleJumpToGroups,
     handleCircumplexConfirm,
     handleSensesConfirm,
     handleContextConfirm,

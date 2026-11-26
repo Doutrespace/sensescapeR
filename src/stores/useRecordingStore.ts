@@ -107,6 +107,11 @@ interface RecordingSession {
   respondentConsent: boolean;
   groupId: string | null;
   groupAnswers: Answers;
+  /**
+   * True after the shortcut from the notes straight to the project group:
+   * perception, senses and context were not shown.
+   */
+  mainQuestionnaireSkipped: boolean;
   lastSaved: SavedRunSummary | null;
 
   // Upload config
@@ -153,6 +158,7 @@ interface RecordingStoreState extends RecordingSession {
   setRespondentConsent: (value: boolean) => void;
   setGroup: (groupId: string | null, answers?: Answers) => void;
   setGroupAnswers: (answers: Answers) => void;
+  setMainQuestionnaireSkipped: (skipped: boolean) => void;
   /** Ends the session after a successful save and shows the completion screen. */
   finishSession: (summary: SavedRunSummary) => void;
   setSourceDominance: (dominance: SourceDominance) => void;
@@ -205,6 +211,7 @@ const initialState: RecordingSession = {
   respondentConsent: false,
   groupId: null,
   groupAnswers: {},
+  mainQuestionnaireSkipped: false,
   lastSaved: null,
   license: 'CC-BY',
   privacyMode: 'exact',
@@ -309,6 +316,9 @@ export const useRecordingStore = create<RecordingStoreState>((set) => ({
 
   setGroupAnswers: (groupAnswers) =>
     set({ groupAnswers }),
+
+  setMainQuestionnaireSkipped: (mainQuestionnaireSkipped) =>
+    set({ mainQuestionnaireSkipped }),
 
   finishSession: (lastSaved) =>
     set({ ...initialState, state: 'DONE', lastSaved }),

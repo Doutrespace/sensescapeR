@@ -40,6 +40,9 @@ column. Mixed app versions are fine: columns are matched by name.
   `participant_id` when another person was interviewed).
 - `group_id`: project group; its answers are in the columns
   `<group_id>__<question>`.
+- `main_questionnaire_skipped`: 1 when the student took the shortcut from the
+  notes straight to the project group; perception, senses and context columns
+  are then usually empty.
 - The **codebook** (Profile > Export > Codebook) explains every column: the
   question as asked, the type, and the meaning of the codes.
 
